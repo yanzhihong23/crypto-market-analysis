@@ -6,7 +6,7 @@ const About = lazy(() => import('../pages/About'))
 
 export default function Pages() {
   return (
-    <Suspense>
+    <Suspense fallback={<div>Loading...</div>}>
       <Router>
         <Routes>
           <Route path="/" element={<Home />} />
