@@ -8,7 +8,7 @@ export default function SymbolSelect(props: {
 }) {
   const symbols = useBinanceSymbols()
   const [symbol, setSymbol] = useState<string>(props.value)
-  const handleChange = (event: any, value: string | null) => {
+  const handleChange = (event: unknown, value: string | null) => {
     setSymbol(String(value))
     props.onChange(String(value))
   }

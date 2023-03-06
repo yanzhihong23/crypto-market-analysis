@@ -7,6 +7,7 @@ import { getPeriodPattern } from '../utils'
 export default function RatioTrendChart(props: {
   symbol: string
   period: string
+  syncId?: string
 }) {
   const [data, setData] = useState<{ openTime: string; closePrice: number }[]>(
     []
@@ -40,6 +41,7 @@ export default function RatioTrendChart(props: {
       xKey="openTime"
       yKey="closePrice"
       label="Kline"
+      syncId={props.syncId}
     />
   )
 }

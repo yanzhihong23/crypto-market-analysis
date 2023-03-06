@@ -7,6 +7,7 @@ import { compactNumberFormatter, getPeriodPattern } from '../utils'
 export default function RatioTrendChart(props: {
   symbol: string
   period: string
+  syncId?: string
 }) {
   const [data, setData] = useState<{ time: string; sumOpenInterest: number }[]>(
     []
@@ -41,6 +42,7 @@ export default function RatioTrendChart(props: {
       yKey="sumOpenInterest"
       yDataFormatter={compactNumberFormatter}
       label="Open Interest Hist"
+      syncId={props.syncId}
     />
   )
 }

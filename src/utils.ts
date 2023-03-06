@@ -13,6 +13,7 @@ export function getPeriodPattern(period: string) {
 export function compactNumberFormatter(val: number) {
   return new Intl.NumberFormat('en-GB', {
     notation: 'compact',
-    compactDisplay: 'short'
+    compactDisplay: 'short',
+    minimumFractionDigits: 1
   }).format(val)
 }

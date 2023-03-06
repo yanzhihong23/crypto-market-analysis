@@ -7,6 +7,7 @@ import KlineChart from '../components/KlineChart'
 import OpenInterestHistChart from '../components/OpenInterestHistChart'
 
 function Home() {
+  const syncId = 'any'
   const [symbol, setSymbol] = useState('BTCUSDT')
   const [period, setPeriod] = useState('5m')
   return (
@@ -15,9 +16,22 @@ function Home() {
         <SymbolSelect value={symbol} onChange={setSymbol} />
         <PeriodSelect value={period} onChange={setPeriod} />
       </Box>
-      <KlineChart symbol={symbol} period={period} />
-      <RatioTrendChart symbol={symbol} period={period} />
-      <OpenInterestHistChart symbol={symbol} period={period} />
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          gap: '24px'
+        }}
+      >
+        <KlineChart symbol={symbol} period={period} syncId={syncId} />
+        <RatioTrendChart symbol={symbol} period={period} syncId={syncId} />
+        <OpenInterestHistChart
+          symbol={symbol}
+          period={period}
+          syncId={syncId}
+        />
+      </Box>
     </Box>
   )
 }
