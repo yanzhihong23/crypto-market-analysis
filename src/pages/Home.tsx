@@ -5,13 +5,15 @@ import SymbolSelect from '../components/SymbolSelect'
 import PeriodSelect from '../components/PeriodSelect'
 import KlineChart from '../components/KlineChart'
 import OpenInterestHistChart from '../components/OpenInterestHistChart'
+import Ticker from '../components/Ticker'
 
 function Home() {
   const syncId = 'any'
   const [symbol, setSymbol] = useState('BTCUSDT')
   const [period, setPeriod] = useState('5m')
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
+      <Ticker symbol={symbol} />
       <Box sx={{ display: 'flex', gap: '24px' }}>
         <SymbolSelect value={symbol} onChange={setSymbol} />
         <PeriodSelect value={period} onChange={setPeriod} />
