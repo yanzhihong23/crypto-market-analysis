@@ -10,7 +10,7 @@ export default function RatioTrendChart(props: {
   syncId?: string
 }) {
   const [data, setData] = useState<{ time: string; sumOpenInterest: number }[]>(
-    []
+    [],
   )
 
   const initData = async () => {
@@ -19,14 +19,14 @@ export default function RatioTrendChart(props: {
     const res = await fetchBinanceOpenInterestHist({
       symbol: props.symbol,
       period: props.period,
-      limit: 96
+      limit: 96,
     })
     if (res?.length) {
       setData(
         res.map((i) => ({
           sumOpenInterest: +i.sumOpenInterest,
-          time: format(+i.timestamp, getPeriodPattern(props.period))
-        }))
+          time: format(+i.timestamp, getPeriodPattern(props.period)),
+        })),
       )
     }
   }

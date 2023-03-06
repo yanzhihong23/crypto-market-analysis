@@ -21,7 +21,7 @@ function Home() {
           display: 'flex',
           flexWrap: 'wrap',
           justifyContent: 'space-between',
-          gap: '24px'
+          gap: '24px',
         }}
       >
         <KlineChart symbol={symbol} period={period} syncId={syncId} />

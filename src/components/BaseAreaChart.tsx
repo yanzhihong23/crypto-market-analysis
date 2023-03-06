@@ -6,7 +6,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-  Label
+  Label,
 } from 'recharts'
 
 export default function BaseAreaChart({
@@ -15,7 +15,7 @@ export default function BaseAreaChart({
   yKey,
   label,
   syncId,
-  yDataFormatter
+  yDataFormatter,
 }: {
   data: { [key: string]: number | string }[]
   xKey: string
@@ -62,7 +62,7 @@ export default function BaseAreaChart({
           wrapperStyle={{ border: 'none' }}
           contentStyle={{
             border: 'none',
-            background: 'rgba(255, 255, 255, .8)'
+            background: 'rgba(255, 255, 255, .8)',
           }}
         />
         <Area

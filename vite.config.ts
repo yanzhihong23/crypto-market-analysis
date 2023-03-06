@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     viteEslint({
-      failOnError: false
-    })
-  ]
+      failOnError: false,
+    }),
+  ],
 })

@@ -10,7 +10,7 @@ export default function RatioTrendChart(props: {
   syncId?: string
 }) {
   const [data, setData] = useState<{ openTime: string; closePrice: number }[]>(
-    []
+    [],
   )
 
   const initData = async () => {
@@ -19,14 +19,14 @@ export default function RatioTrendChart(props: {
     const res = await fetchBinanceKlines({
       symbol: props.symbol,
       interval: props.period,
-      limit: 96
+      limit: 96,
     })
     if (res?.length) {
       setData(
         res.map((i) => ({
           openTime: format(i[0], getPeriodPattern(props.period)),
-          closePrice: +i[4]
-        }))
+          closePrice: +i[4],
+        })),
       )
     }
   }

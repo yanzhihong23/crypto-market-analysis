@@ -13,7 +13,7 @@ interface RatioResponse {
 
 export const fetchOkxRatio = ({
   coin,
-  period = '5m'
+  period = '5m',
 }: {
   coin: string
   period: '5m' | '1H' | '1D'
@@ -21,7 +21,7 @@ export const fetchOkxRatio = ({
   const url = urlcat(
     baseUrl,
     '/api/v5/rubik/stat/contracts/long-short-account-ratio',
-    { ccy: coin.toUpperCase(), period }
+    { ccy: coin.toUpperCase(), period },
   )
 
   return proxyGet(url)

@@ -20,8 +20,8 @@ export default function RatioTrendChart(props: {
         res.map((i) => ({
           ...i,
           ratio: +i.longShortRatio,
-          time: format(i.timestamp, getPeriodPattern(props.period))
-        }))
+          time: format(i.timestamp, getPeriodPattern(props.period)),
+        })),
       )
     }
   }

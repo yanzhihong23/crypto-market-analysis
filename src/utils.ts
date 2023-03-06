@@ -14,6 +14,6 @@ export function compactNumberFormatter(val: number) {
   return new Intl.NumberFormat('en-GB', {
     notation: 'compact',
     compactDisplay: 'short',
-    minimumFractionDigits: 1
+    minimumFractionDigits: 1,
   }).format(val)
 }

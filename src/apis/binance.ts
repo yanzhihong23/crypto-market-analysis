@@ -4,8 +4,8 @@ const http: AxiosInstance = axios.create({
   baseURL: 'https://fapi.binance.com',
   timeout: 5000,
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 })
 
 http.interceptors.response.use((res: AxiosResponse) => {
@@ -39,7 +39,7 @@ export interface Ratio {
 export const fetchBinanceRatio = async ({
   symbol,
   period = '15m',
-  limit = 1
+  limit = 1,
 }: {
   symbol: string
   period?: string
@@ -49,8 +49,8 @@ export const fetchBinanceRatio = async ({
     params: {
       symbol: symbol.toUpperCase(),
       period,
-      limit
-    }
+      limit,
+    },
   })
 }
 
@@ -71,7 +71,7 @@ type Kline = [
   closeTime: number,
   trades: number,
   takerBaseVolume: string,
-  takerQuoteVolume: string
+  takerQuoteVolume: string,
 ]
 
 export const fetchBinanceKlines = (params: Params): Promise<Kline[]> => {
@@ -86,7 +86,7 @@ export interface OpenInterestHist {
 }
 
 export const fetchBinanceOpenInterestHist = (
-  params: Params
+  params: Params,
 ): Promise<OpenInterestHist[]> => {
   return http.get('/futures/data/openInterestHist', { params })
 }
