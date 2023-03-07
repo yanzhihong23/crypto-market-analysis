@@ -9,6 +9,7 @@ export default function SymbolSelect(props: {
   const symbols = useBinanceSymbols()
   const [symbol, setSymbol] = useState<string>(props.value)
   const handleChange = (event: unknown, value: string | null) => {
+    if (!value) return
     setSymbol(String(value))
     props.onChange(String(value))
   }
