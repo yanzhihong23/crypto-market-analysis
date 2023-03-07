@@ -34,7 +34,7 @@ export default function BaseAreaChart({
   }, [data])
 
   return (
-    <ResponsiveContainer width={620} height={300}>
+    <ResponsiveContainer width="99%" height={300}>
       <AreaChart
         data={data}
         syncId={syncId}

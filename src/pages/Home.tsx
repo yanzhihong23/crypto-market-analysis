@@ -1,40 +1,43 @@
-import RatioTrendChart from '../components/RatioTrendChart'
-import { Box } from '@mui/material'
+import { Box, Fab } from '@mui/material'
+import AddIcon from '@mui/icons-material/Add'
 import { useState } from 'react'
-import SymbolSelect from '../components/SymbolSelect'
-import PeriodSelect from '../components/PeriodSelect'
-import KlineChart from '../components/KlineChart'
-import OpenInterestHistChart from '../components/OpenInterestHistChart'
-import Ticker from '../components/Ticker'
 import { v4 as uuid } from 'uuid'
+import SymbolOverview from '../components/SymbolOverview'
 
 function Home() {
-  const syncId = uuid()
-  const [symbol, setSymbol] = useState('BTCUSDT')
-  const [period, setPeriod] = useState('5m')
+  const [overviews, setOverviews] = useState([uuid()])
+  const onRemove = (id: string) => {
+    const arr = [...overviews]
+    arr.splice(
+      arr.findIndex((i) => i === id),
+      1,
+    )
+
+    setOverviews(arr)
+  }
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
-      <Ticker symbol={symbol} />
-      <Box sx={{ display: 'flex', gap: '24px' }}>
-        <SymbolSelect value={symbol} onChange={setSymbol} />
-        <PeriodSelect value={period} onChange={setPeriod} />
-      </Box>
-      <Box
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          gap: '24px',
-        }}
-      >
-        <KlineChart symbol={symbol} period={period} syncId={syncId} />
-        <RatioTrendChart symbol={symbol} period={period} syncId={syncId} />
-        <OpenInterestHistChart
-          symbol={symbol}
-          period={period}
-          syncId={syncId}
-        />
-      </Box>
+    <Box
+      sx={{
+        display: 'flex',
+        gap: '48px',
+        justifyContent: 'space-between',
+        width: '100%',
+      }}
+    >
+      {overviews.map((i) => (
+        <SymbolOverview key={i} onRemove={() => onRemove(i)} />
+      ))}
+
+      {overviews.length < 4 ? (
+        <Fab
+          color="primary"
+          aria-label="add"
+          sx={{ position: 'fixed', bottom: 50, right: 50 }}
+          onClick={() => setOverviews([...overviews, uuid()])}
+        >
+          <AddIcon />
+        </Fab>
+      ) : null}
     </Box>
   )
 }
