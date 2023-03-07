@@ -44,7 +44,7 @@ export default function Ticker({ symbol }: { symbol: string }) {
     >
       <Typography
         sx={{ fontSize: '48px', lineHeight: 1 }}
-        color={isMaker ? '#82ca9d' : '#E04A59'}
+        color={!isMaker ? '#82ca9d' : '#E04A59'}
       >
         {price}
       </Typography>
