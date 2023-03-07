@@ -6,9 +6,10 @@ import PeriodSelect from '../components/PeriodSelect'
 import KlineChart from '../components/KlineChart'
 import OpenInterestHistChart from '../components/OpenInterestHistChart'
 import Ticker from '../components/Ticker'
+import { v4 as uuid } from 'uuid'
 
 function Home() {
-  const syncId = 'any'
+  const syncId = uuid()
   const [symbol, setSymbol] = useState('BTCUSDT')
   const [period, setPeriod] = useState('5m')
   return (
