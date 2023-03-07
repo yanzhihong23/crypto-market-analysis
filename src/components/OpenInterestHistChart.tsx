@@ -43,7 +43,7 @@ export default function RatioTrendChart(props: {
       data={data}
       xKey="time"
       yKey="sumOpenInterest"
-      yDataFormatter={compactNumberFormatter}
+      yDataFormatter={(val: number) => compactNumberFormatter(val, 1)}
       label="Open Interest Hist"
       syncId={props.syncId}
     />
