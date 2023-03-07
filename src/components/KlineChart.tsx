@@ -3,6 +3,7 @@ import { fetchBinanceKlines } from '../apis'
 import format from 'date-fns/format'
 import BaseAreaChart from './BaseAreaChart'
 import { getPeriodPattern } from '../utils'
+import { useInterval } from 'usehooks-ts'
 
 export default function RatioTrendChart(props: {
   symbol: string
@@ -21,6 +22,7 @@ export default function RatioTrendChart(props: {
       interval: props.period,
       limit: 96,
     })
+
     if (res?.length) {
       setData(
         res.map((i) => ({
@@ -31,9 +33,11 @@ export default function RatioTrendChart(props: {
     }
   }
 
+  useInterval(initData, 1000 * 30)
+
   useEffect(() => {
     initData()
-  }, [props])
+  }, [props.symbol, props.period])
 
   return (
     <BaseAreaChart

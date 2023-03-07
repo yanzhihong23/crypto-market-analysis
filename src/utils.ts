@@ -10,10 +10,13 @@ export function getPeriodPattern(period: string) {
   }
 }
 
-export function compactNumberFormatter(val: number) {
+export function compactNumberFormatter(
+  val: number,
+  minimumFractionDigits?: number,
+) {
   return new Intl.NumberFormat('en-GB', {
     notation: 'compact',
     compactDisplay: 'short',
-    minimumFractionDigits: 1,
+    minimumFractionDigits,
   }).format(val)
 }

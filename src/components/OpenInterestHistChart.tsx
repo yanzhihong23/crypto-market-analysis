@@ -3,6 +3,7 @@ import { fetchBinanceOpenInterestHist } from '../apis'
 import format from 'date-fns/format'
 import BaseAreaChart from './BaseAreaChart'
 import { compactNumberFormatter, getPeriodPattern } from '../utils'
+import { useInterval } from 'usehooks-ts'
 
 export default function RatioTrendChart(props: {
   symbol: string
@@ -30,6 +31,8 @@ export default function RatioTrendChart(props: {
       )
     }
   }
+
+  useInterval(initData, 1000 * 5 * 60)
 
   useEffect(() => {
     initData()
