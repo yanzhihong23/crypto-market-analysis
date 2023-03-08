@@ -71,6 +71,8 @@ export default function Ticker({ symbol }: { symbol: string }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '24px',
       }}
     >
       <Stack spacing={1}>
