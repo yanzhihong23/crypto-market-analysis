@@ -18,7 +18,7 @@ function SymbolOverview({
 }) {
   const syncId = uuid()
   const [symbol, setSymbol] = useState('BTCUSDT')
-  const [period, setPeriod] = useState('15m')
+  const [period, setPeriod] = useState('5m')
   return (
     <Box
       sx={{

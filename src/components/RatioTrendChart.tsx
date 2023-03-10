@@ -15,7 +15,10 @@ export default function RatioTrendChart(props: {
   const initData = async () => {
     if (!props.symbol) return
 
-    const res = await fetchBinanceRatio({ ...props, limit: 96 })
+    const res = await fetchBinanceRatio({
+      ...props,
+      limit: props.period === '5m' ? 288 : 96,
+    })
     if (res?.length) {
       setData(
         res.map((i) => ({

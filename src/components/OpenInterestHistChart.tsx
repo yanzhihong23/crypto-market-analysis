@@ -20,7 +20,7 @@ export default function RatioTrendChart(props: {
     const res = await fetchBinanceOpenInterestHist({
       symbol: props.symbol,
       period: props.period,
-      limit: 96,
+      limit: props.period === '5m' ? 288 : 96,
     })
     if (res?.length) {
       setData(

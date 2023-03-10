@@ -20,7 +20,7 @@ export default function RatioTrendChart(props: {
     const res = await fetchBinanceKlines({
       symbol: props.symbol,
       interval: props.period,
-      limit: 96,
+      limit: props.period === '5m' ? 288 : 96,
     })
 
     if (res?.length) {
