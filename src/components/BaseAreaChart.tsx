@@ -28,6 +28,26 @@ export default function BaseAreaChart({
 }) {
   const [isUp, setIsUp] = useState(true)
 
+  const renderLabel = ({
+    index,
+    value,
+    x,
+    y,
+  }: {
+    value: number
+    index: number
+    x: number
+    y: number
+  }) => {
+    if (index === data.length - 1) {
+      return (
+        <text x={x} y={y} dx={-66} dy={-10} fill={isUp ? '#82ca9d' : '#E04A59'}>
+          {yDataFormatter ? yDataFormatter(value) : value}
+        </text>
+      )
+    }
+  }
+
   useEffect(() => {
     if (!data?.length) return
     setIsUp(Number(data[data.length - 1][yKey]) > Number(data[0][yKey]))
@@ -38,7 +58,7 @@ export default function BaseAreaChart({
       <AreaChart
         data={data}
         syncId={syncId}
-        margin={{ top: 10, right: 0, left: 5, bottom: 30 }}
+        margin={{ top: 10, right: 10, left: 5, bottom: 30 }}
       >
         <defs>
           <linearGradient id="colorUp" x1="0" y1="0" x2="0" y2="1">
@@ -71,6 +91,7 @@ export default function BaseAreaChart({
           stroke={isUp ? '#82ca9d' : '#E04A59'}
           fillOpacity={1}
           fill={isUp ? 'url(#colorUp)' : 'url(#colorDown)'}
+          label={renderLabel}
         />
       </AreaChart>
     </ResponsiveContainer>
