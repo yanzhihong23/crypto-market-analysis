@@ -9,7 +9,13 @@ import Ticker from './Ticker'
 import RemoveIcon from '@mui/icons-material/Remove'
 import { v4 as uuid } from 'uuid'
 
-function SymbolOverview({ onRemove }: { onRemove?: () => void }) {
+function SymbolOverview({
+  mobile,
+  onRemove,
+}: {
+  mobile?: boolean
+  onRemove?: () => void
+}) {
   const syncId = uuid()
   const [symbol, setSymbol] = useState('BTCUSDT')
   const [period, setPeriod] = useState('15m')
@@ -27,9 +33,11 @@ function SymbolOverview({ onRemove }: { onRemove?: () => void }) {
       <Box sx={{ display: 'flex', gap: '24px' }}>
         <SymbolSelect value={symbol} onChange={setSymbol} />
         <PeriodSelect value={period} onChange={setPeriod} />
-        <IconButton size="large" aria-label="delete" onClick={onRemove}>
-          <RemoveIcon />
-        </IconButton>
+        {!mobile && (
+          <IconButton size="large" aria-label="delete" onClick={onRemove}>
+            <RemoveIcon />
+          </IconButton>
+        )}
       </Box>
       <Box
         sx={{

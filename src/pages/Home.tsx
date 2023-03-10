@@ -5,6 +5,7 @@ import { v4 as uuid } from 'uuid'
 import SymbolOverview from '../components/SymbolOverview'
 
 function Home() {
+  const mobile = /mobile/i.test(navigator.userAgent)
   const [overviews, setOverviews] = useState([uuid()])
   const onRemove = (id: string) => {
     const arr = [...overviews]
@@ -25,10 +26,10 @@ function Home() {
       }}
     >
       {overviews.map((i) => (
-        <SymbolOverview key={i} onRemove={() => onRemove(i)} />
+        <SymbolOverview key={i} mobile={mobile} onRemove={() => onRemove(i)} />
       ))}
 
-      {overviews.length < 4 ? (
+      {!mobile && overviews.length < 4 ? (
         <Fab
           color="primary"
           aria-label="add"
