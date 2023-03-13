@@ -1,5 +1,6 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
+import { FullTicker } from '../types'
 import { compactNumberFormatter } from '../utils'
 
 export default function Ticker({ symbol }: { symbol: string }) {
@@ -11,21 +12,7 @@ export default function Ticker({ symbol }: { symbol: string }) {
     q: string // quantity
     m: string // market maker?
   }>()
-  const [ticker, setTicker] = useState<{
-    e: string // event type
-    E: string // event time
-    s: string // symbol
-    p: string // 24h price change
-    P: string // 24h price change percent
-    w: string // weighted price
-    c: string // current price
-    Q: string // current price quantity
-    o: string // 24h open price
-    h: string // 24h high price
-    l: string // 24h low price
-    v: string // total trades base asset volume
-    q: string // total trades quote asset volume
-  }>()
+  const [ticker, setTicker] = useState<FullTicker>()
 
   useEffect(() => {
     const socket = new WebSocket(
@@ -41,19 +28,17 @@ export default function Ticker({ symbol }: { symbol: string }) {
       )
     }
     const onMessage = (event: MessageEvent) => {
-      if (event.data === 'ping') {
-        socket.send('pong')
-      } else {
-        try {
-          const data = JSON.parse(event.data)
-          if (data.e === 'aggTrade') {
-            setAggTrade(data)
-          } else if (data.e === '24hrTicker') {
-            setTicker(data)
-          }
-        } catch (error) {
-          // TODO
+      try {
+        const data = JSON.parse(event.data)
+        if (data.ping) {
+          socket.send(JSON.stringify({ pong: Date.now() }))
+        } else if (data.e === 'aggTrade') {
+          setAggTrade(data)
+        } else if (data.e === '24hrTicker') {
+          setTicker(data)
         }
+      } catch (error) {
+        // TODO
       }
     }
 
@@ -119,7 +104,7 @@ export default function Ticker({ symbol }: { symbol: string }) {
       </Stack>
       <Stack spacing={2}>
         <Typography fontSize={20}>
-          Volumn: {compactNumberFormatter(Number(ticker?.v))}
+          Volume: {compactNumberFormatter(Number(ticker?.v))}
         </Typography>
         <Typography fontSize={20}>
           Quote: {compactNumberFormatter(Number(ticker?.q))}
