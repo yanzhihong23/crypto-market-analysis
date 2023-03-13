@@ -3,9 +3,10 @@ import AddIcon from '@mui/icons-material/Add'
 import { useState } from 'react'
 import { v4 as uuid } from 'uuid'
 import SymbolOverview from '../components/SymbolOverview'
+import useMobile from '../hooks/useMobile'
 
 function Home() {
-  const mobile = /mobile/i.test(navigator.userAgent)
+  const mobile = useMobile()
   const [overviews, setOverviews] = useState([uuid()])
   const onRemove = (id: string) => {
     const arr = [...overviews]
@@ -16,6 +17,7 @@ function Home() {
 
     setOverviews(arr)
   }
+
   return (
     <Box
       sx={{
