@@ -2,9 +2,16 @@ import { Typography, Box } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { FullTicker } from '../types'
 import { compactNumberFormatter } from '../utils'
+import useIcons from '../hooks/useIcons'
 
 export default function Market() {
   const [tickers, setTickers] = useState<FullTicker[]>([])
+  const icons = useIcons()
+
+  const getImgUrl = (symbol: string) => {
+    const name = symbol.replace('1000', '').replace('DOM', '')
+    return icons.get(name)
+  }
 
   useEffect(() => {
     const socket = new WebSocket('wss://fstream.binance.com/ws/!ticker@arr')
@@ -52,18 +59,29 @@ export default function Market() {
   }, [])
 
   return (
-    <Box sx={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        gap: '24px',
+        flexWrap: 'wrap',
+        justifyContent: 'space-evenly',
+      }}
+    >
       {tickers.map((t) => (
         <Box
           key={t.s}
-          sx={{ width: 200, border: 'dashed 1px #ccc', padding: '8px 0' }}
+          sx={{ width: 220, border: 'dashed 1px #ccc', padding: '8px 0' }}
         >
-          <Typography>{t.s}</Typography>
-          <Typography>{+t.c}</Typography>
-          <Typography>
+          <img src={getImgUrl(t.s)} width={32} />
+          <Typography>{t.s.replace('USDT', '')}</Typography>
+          <Typography fontSize={24}>{+t.c}</Typography>
+          <Typography fontSize={18} color={+t.p > 0 ? '#82ca9d' : '#E04A59'}>
             {+t.p}({+t.P}%)
           </Typography>
-          <Typography>{compactNumberFormatter(+t.q)}</Typography>
+          <Typography>
+            {+t.l} - {+t.w} - {+t.h}
+          </Typography>
+          <Typography color="gray">{compactNumberFormatter(+t.q)}</Typography>
         </Box>
       ))}
     </Box>
