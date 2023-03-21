@@ -1,4 +1,4 @@
-import { Typography, Box } from '@mui/material'
+import { Typography, Box, Avatar } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { FullTicker } from '../types'
 import { compactNumberFormatter } from '../utils'
@@ -70,12 +70,32 @@ export default function Market() {
       {tickers.map((t) => (
         <Box
           key={t.s}
-          sx={{ width: 220, border: 'dashed 1px #ccc', padding: '8px 0' }}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            width: 220,
+            border: 'dashed 1px #ccc',
+            padding: '8px 0',
+          }}
         >
-          <img src={getImgUrl(t.s)} width={32} />
-          <Typography>{t.s.replace('USDT', '')}</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Avatar
+              src={getImgUrl(t.s)}
+              sx={{ width: 32, height: 32 }}
+              alt={t.s.charAt(0)}
+            >
+              {t.s.charAt(0)}
+            </Avatar>
+            <Typography>{t.s.replace('USDT', '')}</Typography>
+          </Box>
           <Typography fontSize={24}>{+t.c}</Typography>
-          <Typography fontSize={18} color={+t.p > 0 ? '#82ca9d' : '#E04A59'}>
+          <Typography
+            fontSize={18}
+            fontWeight="bold"
+            color={+t.p > 0 ? '#82ca9d' : '#E04A59'}
+          >
             {+t.p}({+t.P}%)
           </Typography>
           <Typography>
