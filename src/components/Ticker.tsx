@@ -74,10 +74,10 @@ export default function Ticker({ symbol }: { symbol: string }) {
             lineHeight={1}
             color={!aggTrade?.m ? '#82ca9d' : '#E04A59'}
           >
-            {String(aggTrade?.p)}
+            {aggTrade?.p ?? '-'}
           </Typography>
           <Typography fontSize={24} lineHeight={1.4} color="#aaa">
-            {String(aggTrade?.q)}
+            {aggTrade?.q ?? '-'}
           </Typography>
         </Box>
         <Typography
@@ -90,8 +90,8 @@ export default function Ticker({ symbol }: { symbol: string }) {
         </Typography>
       </Stack>
       <Stack spacing={2}>
-        <Typography fontSize={20}>High: {String(ticker?.h)}</Typography>
-        <Typography fontSize={20}>Low: {String(ticker?.l)}</Typography>
+        <Typography fontSize={20}>High: {ticker?.h ?? '-'}</Typography>
+        <Typography fontSize={20}>Low: {ticker?.l ?? '-'}</Typography>
       </Stack>
       <Stack spacing={2}>
         <Typography fontSize={20}>
