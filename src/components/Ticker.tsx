@@ -74,10 +74,10 @@ export default function Ticker({ symbol }: { symbol: string }) {
             lineHeight={1}
             color={!aggTrade?.m ? '#82ca9d' : '#E04A59'}
           >
-            {Number(aggTrade?.p)}
+            {String(aggTrade?.p)}
           </Typography>
           <Typography fontSize={24} lineHeight={1.4} color="#aaa">
-            {Number(aggTrade?.q)}
+            {String(aggTrade?.q)}
           </Typography>
         </Box>
         <Typography
@@ -85,22 +85,13 @@ export default function Ticker({ symbol }: { symbol: string }) {
           fontSize={24}
           color={Number(ticker?.p) > 0 ? '#82ca9d' : '#E04A59'}
         >
-          <span>
-            {Number(ticker?.p) > 0
-              ? `+${Number(ticker?.p)}`
-              : Number(ticker?.p)}
-          </span>
-          <span>
-            {Number(ticker?.p) > 0
-              ? `+${Number(ticker?.P)}`
-              : Number(ticker?.P)}
-            %
-          </span>
+          <span>{Number(ticker?.p) > 0 ? `+${ticker?.p}` : ticker?.p}</span>
+          <span>{Number(ticker?.p) > 0 ? `+${ticker?.P}` : ticker?.P}%</span>
         </Typography>
       </Stack>
       <Stack spacing={2}>
-        <Typography fontSize={20}>High: {Number(ticker?.h)}</Typography>
-        <Typography fontSize={20}>Low: {Number(ticker?.l)}</Typography>
+        <Typography fontSize={20}>High: {String(ticker?.h)}</Typography>
+        <Typography fontSize={20}>Low: {String(ticker?.l)}</Typography>
       </Stack>
       <Stack spacing={2}>
         <Typography fontSize={20}>

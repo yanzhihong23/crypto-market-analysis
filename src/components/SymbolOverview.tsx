@@ -1,6 +1,5 @@
 import RatioTrendChart from './RatioTrendChart'
 import { Box, IconButton } from '@mui/material'
-import { useState } from 'react'
 import SymbolSelect from './SymbolSelect'
 import PeriodSelect from './PeriodSelect'
 import KlineChart from './KlineChart'
@@ -10,15 +9,21 @@ import RemoveIcon from '@mui/icons-material/Remove'
 import { v4 as uuid } from 'uuid'
 
 function SymbolOverview({
+  symbol,
+  period,
   mobile,
+  onSymbolChange,
+  onPeriodChange,
   onRemove,
 }: {
+  symbol: string
+  period: string
   mobile?: boolean
+  onSymbolChange: (value: string) => void
+  onPeriodChange: (value: string) => void
   onRemove?: () => void
 }) {
   const syncId = uuid()
-  const [symbol, setSymbol] = useState('BTCUSDT')
-  const [period, setPeriod] = useState('5m')
   return (
     <Box
       sx={{
@@ -31,8 +36,8 @@ function SymbolOverview({
     >
       <Ticker symbol={symbol} />
       <Box sx={{ display: 'flex', gap: '24px' }}>
-        <SymbolSelect value={symbol} onChange={setSymbol} />
-        <PeriodSelect value={period} onChange={setPeriod} />
+        <SymbolSelect value={symbol} onChange={onSymbolChange} />
+        <PeriodSelect value={period} onChange={onPeriodChange} />
         {!mobile && (
           <IconButton size="large" aria-label="delete" onClick={onRemove}>
             <RemoveIcon />
