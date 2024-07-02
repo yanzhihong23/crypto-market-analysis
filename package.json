@@ -23,7 +23,7 @@
     "react-router-dom": "^6.8.2",
     "recharts": "^2.4.3",
     "urlcat": "^3.1.0",
-    "usehooks-ts": "^2.9.1",
+    "usehooks-ts": "^3.1.0",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
