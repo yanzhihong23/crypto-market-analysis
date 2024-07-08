@@ -20,7 +20,7 @@
     "date-fns": "^3.6.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.8.2",
+    "react-router-dom": "^6.24.1",
     "recharts": "^2.4.3",
     "urlcat": "^3.1.0",
     "usehooks-ts": "^3.1.0",
