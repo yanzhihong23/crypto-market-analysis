@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchBinanceOpenInterestHist } from '../apis'
-import format from 'date-fns/format'
+import { format } from 'date-fns/format'
 import BaseAreaChart from './BaseAreaChart'
 import { compactNumberFormatter, getPeriodPattern } from '../utils'
 import { useInterval } from 'usehooks-ts'

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { fetchBinanceKlines } from '../apis'
-import format from 'date-fns/format'
 import BaseAreaChart from './BaseAreaChart'
 import { getPeriodPattern } from '../utils'
 import { useInterval } from 'usehooks-ts'
+import { format } from 'date-fns/format'
 
 export default function RatioTrendChart(props: {
   symbol: string
