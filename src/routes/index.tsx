@@ -8,7 +8,7 @@ const Market = lazy(() => import('../pages/Market'))
 export default function Pages() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <Router basename="/crypto-market-analysis/">
+      <Router>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
