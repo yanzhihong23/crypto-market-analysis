@@ -1,5 +1,6 @@
 import { Autocomplete, TextField, FormControl } from '@mui/material'
 import { useState } from 'react'
+
 import { useBinanceSymbols } from '../hooks/useSymbols'
 
 export default function SymbolSelect(props: {

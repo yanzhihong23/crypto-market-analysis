@@ -51,7 +51,7 @@ export default function BaseAreaChart({
   useEffect(() => {
     if (!data?.length) return
     setIsUp(Number(data[data.length - 1][yKey]) > Number(data[0][yKey]))
-  }, [data])
+  }, [data, yKey])
 
   return (
     <ResponsiveContainer width="99%" height={300}>

@@ -1,12 +1,13 @@
-import RatioTrendChart from './RatioTrendChart'
 import { Box, IconButton } from '@mui/material'
+import RemoveIcon from '@mui/icons-material/Remove'
+import { v4 as uuid } from 'uuid'
+
+import RatioTrendChart from './RatioTrendChart'
 import SymbolSelect from './SymbolSelect'
 import PeriodSelect from './PeriodSelect'
 import KlineChart from './KlineChart'
 import OpenInterestHistChart from './OpenInterestHistChart'
 import Ticker from './Ticker'
-import RemoveIcon from '@mui/icons-material/Remove'
-import { v4 as uuid } from 'uuid'
 
 function SymbolOverview({
   symbol,

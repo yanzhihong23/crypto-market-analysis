@@ -1,5 +1,6 @@
-import { proxyGet } from './util'
 import urlcat from 'urlcat'
+
+import { proxyGet } from './util'
 
 const baseUrl = 'https://www.okx.com'
 
