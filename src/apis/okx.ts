@@ -1,16 +1,12 @@
 import urlcat from 'urlcat'
 
+import { OkxInstrument } from '../types/okx'
+
 import { proxyGet } from './util'
 
 const baseUrl = 'https://www.okx.com'
 
 type OkxRatio = [ts: string, ratio: string]
-
-interface RatioResponse {
-  code: string
-  data: OkxRatio[]
-  msg: string
-}
 
 export const fetchOkxRatio = ({
   coin,
@@ -18,12 +14,18 @@ export const fetchOkxRatio = ({
 }: {
   coin: string
   period: '5m' | '1H' | '1D'
-}): Promise<RatioResponse> => {
+}): Promise<OkxRatio[]> => {
   const url = urlcat(
     baseUrl,
     '/api/v5/rubik/stat/contracts/long-short-account-ratio',
     { ccy: coin.toUpperCase(), period },
   )
+
+  return proxyGet(url)
+}
+
+export const fetchOkxInstruments = (): Promise<OkxInstrument[]> => {
+  const url = urlcat(baseUrl, '/api/v5/public/instruments?instType=SWAP')
 
   return proxyGet(url)
 }

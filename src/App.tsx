@@ -1,11 +1,15 @@
 import './App.css'
+import { ThemeProvider, CssBaseline } from '@mui/material'
+
 import Pages from './routes'
+import theme from './theme'
 
 function App() {
   return (
-    <div className="App">
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
       <Pages />
-    </div>
+    </ThemeProvider>
   )
 }
 
