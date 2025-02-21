@@ -1,6 +1,6 @@
 import urlcat from 'urlcat'
 
-import { OkxInstrument } from '../types/okx'
+import { OkxInstrument, OkxKline, Period } from '../types/okx'
 
 import { proxyGet } from './util'
 
@@ -26,6 +26,22 @@ export const fetchOkxRatio = ({
 
 export const fetchOkxInstruments = (): Promise<OkxInstrument[]> => {
   const url = urlcat(baseUrl, '/api/v5/public/instruments?instType=SWAP')
+
+  return proxyGet(url)
+}
+
+export const fetchOkxKlines = ({
+  instId,
+  period = Period.MINUTE_15,
+}: {
+  instId: string
+  period?: Period
+}): Promise<OkxKline[]> => {
+  const url = urlcat(baseUrl, '/api/v5/market/candles', {
+    instId,
+    bar: period,
+    limit: 96,
+  })
 
   return proxyGet(url)
 }

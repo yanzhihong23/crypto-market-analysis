@@ -48,7 +48,7 @@ export default function TopBar() {
               strokeLinecap="round"
             />
           </svg>
-          <Typography variant="h6" fontWeight={700}>
+          <Typography variant="h6" fontWeight={700} pr={4}>
             Crypto Market
           </Typography>
         </Stack>

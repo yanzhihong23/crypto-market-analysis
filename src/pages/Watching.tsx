@@ -10,35 +10,27 @@ import {
   DialogActions,
   Button,
 } from '@mui/material'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AddIcon from '@mui/icons-material/Add'
 import RemoveIcon from '@mui/icons-material/Remove'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
+import SortIcon from '@mui/icons-material/Sort'
 
 import { compactNumberFormatter } from '../utils'
 import {
   OkxFundingRate,
   OkxOpenInterest,
   OkxTicker,
+  OkxTickerFormatted,
   OpenTime,
+  SortBy,
 } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
 import { useOkxInstruments } from '../hooks/useOkxInstruments'
-import { fetchOkxRatio } from '../apis'
 import OkxTickerCard from '../components/OkxTickerCard'
-
-interface Ticker extends OkxTicker {
-  coin: string
-  logo: string
-  dif: string
-  percent: string
-  vol: string
-  color: string
-  oiCcy: string
-  fundingRate: string
-  ratio: string
-  // openInterest: string
-}
+import useOkxKlineUpdater from '../hooks/useOkxKlineUpdater'
+import useOkxTickerFormat from '../hooks/useOkxTickerFormat'
+import useOkxRatioUpdater from '../hooks/useOkxRatioUpdater'
 
 interface TickerResponse {
   arg: {
@@ -48,39 +40,10 @@ interface TickerResponse {
   data: OkxTicker[] | OkxOpenInterest[] | OkxFundingRate[]
 }
 
-const tickerFormatter = (
-  ticker: OkxTicker,
-  oldTicker: Ticker,
-  openTime: OpenTime,
-) => {
-  const open = Number(ticker[openTime])
-  const coin = ticker.instId.split('-')[0]
-  const change = +ticker.last - open
-  const percent = ((change / open) * 100).toFixed(2)
-  const vol = compactNumberFormatter(+ticker.volCcy24h * +ticker.last)
-  const logo = `https://static.okx.com/cdn/oksupport/asset/currency/icon/${coin.toLowerCase()}.png?x-oss-process=image/format,webp`
-  let dif = new Intl.NumberFormat().format(change)
-  if (change > 0) dif = '+' + dif
-
-  const color = +ticker.last > +open ? 'success' : 'error'
-
-  return {
-    coin,
-    logo,
-    dif,
-    percent,
-    vol,
-    color,
-    oiCcy: oldTicker?.oiCcy,
-    fundingRate: oldTicker?.fundingRate,
-    ratio: oldTicker?.ratio,
-    ...ticker,
-  }
-}
-
 export default function Watching() {
   const [openTime, setOpenTime] = useState<OpenTime>(OpenTime.UTC0)
-  const [tickers, setTickers] = useState<Ticker[]>([])
+  const [sortBy, setSortBy] = useState<SortBy | undefined>(SortBy.VOLUME)
+  const [tickers, setTickers] = useState<OkxTickerFormatted[]>([])
   const [openAddDialog, setOpenAddDialog] = useState(false)
   const [openRemoveDialog, setOpenRemoveDialog] = useState(false)
   const [newInstId, setNewInstId] = useState<string>('')
@@ -88,32 +51,26 @@ export default function Watching() {
   const instIds = useTickerStore((state) => state.instIds)
   const setInstIds = useTickerStore((state) => state.setInstIds)
   const instruments = useOkxInstruments()
+  const { formatTicker } = useOkxTickerFormat()
+  // update kline data
+  useOkxKlineUpdater()
+  // update ratio data
+  useOkxRatioUpdater()
+
   const filteredInstruments = instruments.filter(
     (i) => !instIds.includes(i.instId),
   )
   const filteredRemoveInstruments = instruments.filter((i) =>
     instIds.some((instId) => instId === i.instId),
   )
-
-  const updateRatios = useCallback(async () => {
-    const ratioMap = new Map<string, string>()
-
-    for (const instId of instIds) {
-      const res = await fetchOkxRatio({
-        coin: instId.split('-')[0],
-        period: '5m',
-      })
-
-      ratioMap.set(instId, res[0][1])
-    }
-
-    setTickers((prevTickers) => {
-      return prevTickers.map((t) => ({
-        ...t,
-        ratio: ratioMap.get(t.instId) || '',
-      }))
+  const sortedTickers = useMemo(() => {
+    return tickers.sort((a, b) => {
+      if (sortBy === SortBy.VOLUME) return +b.volCcyQuote - +a.volCcyQuote
+      if (sortBy === SortBy.PERCENT) return +b.percent - +a.percent
+      if (sortBy === SortBy.RATIO) return +b.ratio - +a.ratio
+      return tickers.indexOf(a) - tickers.indexOf(b)
     })
-  }, [instIds])
+  }, [tickers, sortBy])
 
   useEffect(() => {
     setTickers(
@@ -135,32 +92,19 @@ export default function Watching() {
         sodUtc8: '',
         ts: '',
         coin: i.split('-')[0],
-        logo: '',
+        logo: undefined,
         dif: '',
         percent: '',
         vol: '',
         color: '',
+        priceColor: '',
         oiCcy: '',
         fundingRate: '',
         ratio: '-',
+        volCcyQuote: '',
       })),
     )
   }, [instIds])
-
-  useEffect(() => {
-    updateRatios()
-
-    const timer = setInterval(
-      () => {
-        updateRatios()
-      },
-      1000 * 60 * 5,
-    )
-
-    return () => {
-      clearInterval(timer)
-    }
-  }, [instIds, updateRatios])
 
   useEffect(() => {
     if (!instIds.length) return
@@ -203,7 +147,11 @@ export default function Watching() {
           const index = prevTickers.findIndex((i) => i.instId === nt.instId)
           if (index === -1) return prevTickers
 
-          const ticker = tickerFormatter(nt, prevTickers[index], openTime)
+          const ticker = formatTicker({
+            ticker: nt,
+            oldTicker: prevTickers[index],
+            openTime,
+          })
           const arr = Array.from(prevTickers)
           arr[index] = ticker
 
@@ -237,17 +185,17 @@ export default function Watching() {
     return () => {
       ws.close()
     }
-  }, [openTime, instIds])
+  }, [openTime, instIds, formatTicker])
 
   return (
     <Box>
       <Stack direction="row" gap={2} flexWrap="wrap">
-        {tickers.map((t) => (
+        {sortedTickers.map((t) => (
           <OkxTickerCard key={t.instId} t={t} />
         ))}
       </Stack>
       <Stack
-        direction="column"
+        direction="row"
         alignItems="end"
         spacing={2}
         sx={{ position: 'fixed', bottom: 32, right: 32 }}
@@ -289,6 +237,30 @@ export default function Watching() {
         >
           <AccessTimeIcon sx={{ mr: 1 }} />
           UTC+8
+        </Fab>
+        <Fab
+          variant="extended"
+          color={sortBy === SortBy.VOLUME ? 'secondary' : 'default'}
+          onClick={() => setSortBy(SortBy.VOLUME)}
+        >
+          <SortIcon sx={{ mr: 1 }} />
+          VOL
+        </Fab>
+        <Fab
+          variant="extended"
+          color={sortBy === SortBy.PERCENT ? 'secondary' : 'default'}
+          onClick={() => setSortBy(SortBy.PERCENT)}
+        >
+          <SortIcon sx={{ mr: 1 }} />
+          PER
+        </Fab>
+        <Fab
+          variant="extended"
+          color={sortBy === SortBy.RATIO ? 'secondary' : 'default'}
+          onClick={() => setSortBy(SortBy.RATIO)}
+        >
+          <SortIcon sx={{ mr: 1 }} />
+          L/S
         </Fab>
       </Stack>
 

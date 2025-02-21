@@ -36,10 +36,41 @@ export interface OkxTicker {
   ts: string
 }
 
+export interface OkxTickerFormatted extends OkxTicker {
+  coin: string
+  logo?: string
+  dif: string
+  percent: string
+  vol: string
+  color: string
+  priceColor: string
+  oiCcy: string
+  fundingRate: string
+  ratio: string
+  volCcyQuote: string
+}
+
 export enum OpenTime {
   UTC0 = 'sodUtc0',
   UTC8 = 'sodUtc8',
   OPEN24H = 'open24h',
+}
+
+export enum SortBy {
+  RATIO = 'ratio',
+  VOLUME = 'volume',
+  PERCENT = 'percent',
+}
+
+export enum Period {
+  MINUTE_5 = '5m',
+  MINUTE_15 = '15m',
+  MINUTE_30 = '30m',
+  HOUR_1 = '1H',
+  HOUR_4 = '4H',
+  HOUR_6 = '6H',
+  HOUR_12 = '12H',
+  DAY_1 = '1D',
 }
 
 /**
@@ -78,3 +109,27 @@ export interface OkxInstrument {
   baseCcy: string
   quoteCcy: string
 }
+
+/**
+ * @interface OkxKline
+ * @member {string} ts - 数据产生时间，Unix时间戳的毫秒数格式，如 1597026383085
+ * @member {string} o - 开盘价
+ * @member {string} h - 最高价
+ * @member {string} l - 最低价
+ * @member {string} c - 收盘价
+ * @member {string} vol - 成交量，按张为单位
+ * @member {string} volCcy - 成交量，按币为单位
+ * @member {string} volCcyQuote - 成交量，按计价货币为单位，如 USDT/USD
+ * @member {string} confirm - 数据确认状态
+ */
+export type OkxKline = [
+  ts: string,
+  o: string,
+  h: string,
+  l: string,
+  c: string,
+  vol: string,
+  volCcy: string,
+  volCcyQuote: string,
+  confirm: '0' | '1',
+]

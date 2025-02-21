@@ -1,17 +1,11 @@
-import { Typography, Box, Avatar } from '@mui/material'
+import { Box } from '@mui/material'
 import { useEffect, useState } from 'react'
+
 import { FullTicker } from '../types'
-import { compactNumberFormatter } from '../utils'
-import useIcons from '../hooks/useIcons'
+import BinanceTickerCard from '../components/BinanceTickerCard'
 
 export default function Market() {
   const [tickers, setTickers] = useState<FullTicker[]>([])
-  const icons = useIcons()
-
-  const getImgUrl = (symbol: string) => {
-    const name = symbol.replace('1000', '').replace('DOM', '')
-    return icons.get(name)
-  }
 
   useEffect(() => {
     const socket = new WebSocket('wss://fstream.binance.com/ws/!ticker@arr')
@@ -24,14 +18,19 @@ export default function Market() {
       try {
         const data = JSON.parse(event.data)
         if (data.ping) {
+          console.log('ping', data)
+
           socket.send(JSON.stringify({ pong: Date.now() }))
         } else if (data.length) {
           setTickers((prevTickers) => {
             const updatedTickers: FullTicker[] = []
-            const existingTickers = prevTickers.reduce((acc, cur) => {
-              acc[cur.s] = cur
-              return acc
-            }, {} as Record<string, FullTicker>)
+            const existingTickers = prevTickers.reduce(
+              (acc, cur) => {
+                acc[cur.s] = cur
+                return acc
+              },
+              {} as Record<string, FullTicker>,
+            )
             data
               .filter((d: FullTicker) => /USDT$/.test(d.s))
               .forEach((d: FullTicker) => {
@@ -44,12 +43,13 @@ export default function Market() {
                 }
               })
             return [...updatedTickers, ...Object.values(existingTickers)].sort(
-              (a, b) => +b.P - +a.P,
+              (a, b) => +b.q - +a.q,
             )
           })
         }
       } catch (error) {
         // TODO
+        console.log(error)
       }
     }
 
@@ -68,41 +68,7 @@ export default function Market() {
       }}
     >
       {tickers.map((t) => (
-        <Box
-          key={t.s}
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '8px',
-            width: 220,
-            border: 'dashed 1px #ccc',
-            padding: '8px 0',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Avatar
-              src={getImgUrl(t.s)}
-              sx={{ width: 32, height: 32 }}
-              alt={t.s.charAt(0)}
-            >
-              {t.s.charAt(0)}
-            </Avatar>
-            <Typography>{t.s.replace('USDT', '')}</Typography>
-          </Box>
-          <Typography fontSize={24}>{+t.c}</Typography>
-          <Typography
-            fontSize={18}
-            fontWeight="bold"
-            color={+t.p > 0 ? '#82ca9d' : '#E04A59'}
-          >
-            {+t.p}({+t.P}%)
-          </Typography>
-          <Typography>
-            {+t.l} - {+t.w} - {+t.h}
-          </Typography>
-          <Typography color="gray">{compactNumberFormatter(+t.q)}</Typography>
-        </Box>
+        <BinanceTickerCard key={t.s} t={t} />
       ))}
     </Box>
   )

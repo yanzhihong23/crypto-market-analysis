@@ -184,7 +184,7 @@ const theme = createTheme({
     MuiBackdrop: {
       styleOverrides: {
         root: {
-          backdropFilter: 'blur(10px)',
+          backdropFilter: 'blur(2px)',
         },
       },
     },
