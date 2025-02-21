@@ -19,7 +19,13 @@ import { OpenTime, SortBy } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
 import { useOkxInstruments } from '../hooks/useOkxInstruments'
 
-export default function ActionBar() {
+export default function ActionBar({
+  onAdd,
+  onRemove,
+}: {
+  onAdd?: (instId: string) => void
+  onRemove?: (instId: string) => void
+}) {
   const instIds = useTickerStore((state) => state.instIds)
   const setInstIds = useTickerStore((state) => state.setInstIds)
   const openTime = useTickerStore((state) => state.openTime)
@@ -132,6 +138,7 @@ export default function ActionBar() {
           <Button
             onClick={() => {
               setOpenAddDialog(false)
+              onAdd?.(newInstId)
               setInstIds([...instIds, newInstId])
             }}
           >
@@ -163,6 +170,7 @@ export default function ActionBar() {
           <Button
             onClick={() => {
               setOpenRemoveDialog(false)
+              onRemove?.(removeInstId)
               setInstIds(instIds.filter((i) => i !== removeInstId))
             }}
           >
