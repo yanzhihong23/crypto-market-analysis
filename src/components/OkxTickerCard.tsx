@@ -38,7 +38,7 @@ export default function OkxTickerCard({ t }: { t: Ticker }) {
           content: '""',
           position: 'absolute',
           inset: -2,
-          padding: 0.25,
+          padding: 0.375,
           background:
             +t.percent > 0
               ? 'linear-gradient(45deg, #25a750, rgba(37, 167, 80, 0.3), #25a750, rgba(37, 167, 80, 0.3))' // 绿色到透明
