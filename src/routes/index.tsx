@@ -4,8 +4,10 @@ import { Box } from '@mui/material'
 
 import TopBar from '../components/TopBar'
 const Home = lazy(() => import('../pages/Home'))
-const Market = lazy(() => import('../pages/Market'))
-const Watch = lazy(() => import('../pages/Watching'))
+const BinancePerpetualMarket = lazy(
+  () => import('../pages/BinancePerpetualMarket'),
+)
+const OkxPerpetual = lazy(() => import('../pages/OkxPerpetual'))
 
 export default function Pages() {
   return (
@@ -14,8 +16,11 @@ export default function Pages() {
         <TopBar />
         <Box sx={{ flex: 1, padding: 3, mt: 8 }}>
           <Routes>
-            <Route path="/" element={<Watch />} />
-            <Route path="/market" element={<Market />} />
+            <Route path="/" element={<OkxPerpetual />} />
+            <Route
+              path="/binance-perpetual-market"
+              element={<BinancePerpetualMarket />}
+            />
             <Route path="/charts" element={<Home />} />
           </Routes>
         </Box>

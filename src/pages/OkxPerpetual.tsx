@@ -40,7 +40,7 @@ interface TickerResponse {
   data: OkxTicker[] | OkxOpenInterest[] | OkxFundingRate[]
 }
 
-export default function Watching() {
+export default function OkxPerpetual() {
   const openTime = useTickerStore((state) => state.openTime)
   const sortBy = useTickerStore((state) => state.sortBy)
   const setOpenTime = useTickerStore((state) => state.setOpenTime)
