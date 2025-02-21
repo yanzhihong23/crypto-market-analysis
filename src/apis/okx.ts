@@ -1,4 +1,4 @@
-import urlcat from 'urlcat'
+import { pathcat } from 'pathcat'
 
 import { OkxInstrument, OkxKline, Period } from '../types/okx'
 
@@ -15,7 +15,7 @@ export const fetchOkxRatio = ({
   coin: string
   period: '5m' | '1H' | '1D'
 }): Promise<OkxRatio[]> => {
-  const url = urlcat(
+  const url = pathcat(
     baseUrl,
     '/api/v5/rubik/stat/contracts/long-short-account-ratio',
     { ccy: coin.toUpperCase(), period },
@@ -25,7 +25,7 @@ export const fetchOkxRatio = ({
 }
 
 export const fetchOkxInstruments = (): Promise<OkxInstrument[]> => {
-  const url = urlcat(baseUrl, '/api/v5/public/instruments?instType=SWAP')
+  const url = pathcat(baseUrl, '/api/v5/public/instruments?instType=SWAP')
 
   return proxyGet(url)
 }
@@ -37,7 +37,7 @@ export const fetchOkxKlines = ({
   instId: string
   period?: Period
 }): Promise<OkxKline[]> => {
-  const url = urlcat(baseUrl, '/api/v5/market/candles', {
+  const url = pathcat(baseUrl, '/api/v5/market/candles', {
     instId,
     bar: period,
     limit: 96,

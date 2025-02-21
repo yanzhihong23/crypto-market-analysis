@@ -18,11 +18,11 @@
     "@types/uuid": "^10.0.0",
     "axios": "^1.7.9",
     "date-fns": "^4.1.0",
+    "pathcat": "^1.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.2.0",
     "recharts": "^2.15.1",
-    "urlcat": "^3.1.0",
     "usehooks-ts": "^3.1.1",
     "uuid": "^11.1.0",
     "zustand": "^5.0.3"
