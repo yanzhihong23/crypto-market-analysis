@@ -44,6 +44,16 @@ export default function Watching() {
   const [openTime, setOpenTime] = useState<OpenTime>(OpenTime.UTC0)
   const [sortBy, setSortBy] = useState<SortBy | undefined>(SortBy.VOLUME)
   const [tickers, setTickers] = useState<OkxTickerFormatted[]>([])
+  const [rawTickers, setRawTickers] = useState<
+    Record<
+      string,
+      {
+        ticker?: OkxTicker
+        openInterest?: OkxOpenInterest
+        fundingRate?: OkxFundingRate
+      }
+    >
+  >({})
   const [openAddDialog, setOpenAddDialog] = useState(false)
   const [openRemoveDialog, setOpenRemoveDialog] = useState(false)
   const [newInstId, setNewInstId] = useState<string>('')
@@ -136,56 +146,58 @@ export default function Watching() {
       }, 20000)
 
       const res = JSON.parse(data) as TickerResponse
-
       if (!res.data) return
 
-      if (res.arg.channel === 'tickers') {
-        const nt = res.data[0] as OkxTicker
+      setRawTickers((prev) => {
+        const instId = res.arg.instId
+        const newData = { ...prev[instId] }
 
-        // use prevTickers to fix flash
-        setTickers((prevTickers) => {
-          const index = prevTickers.findIndex((i) => i.instId === nt.instId)
-          if (index === -1) return prevTickers
+        if (res.arg.channel === 'tickers') {
+          newData.ticker = res.data[0] as OkxTicker
+        } else if (res.arg.channel === 'open-interest') {
+          newData.openInterest = res.data[0] as OkxOpenInterest
+        } else if (res.arg.channel === 'funding-rate') {
+          newData.fundingRate = res.data[0] as OkxFundingRate
+        }
 
-          const ticker = formatTicker({
-            ticker: nt,
-            oldTicker: prevTickers[index],
-            openTime,
-          })
-          const arr = Array.from(prevTickers)
-          arr[index] = ticker
-
-          return arr
-        })
-      } else if (res.arg.channel === 'open-interest') {
-        setTickers((prevTickers) => {
-          const data = res.data[0] as OkxOpenInterest
-          const index = prevTickers.findIndex((i) => i.instId === data.instId)
-          if (index === -1) return prevTickers
-
-          const arr = prevTickers.slice()
-          arr[index].oiCcy = compactNumberFormatter(Number(data.oiCcy))
-
-          return arr
-        })
-      } else if (res.arg.channel === 'funding-rate') {
-        setTickers((prevTickers) => {
-          const data = res.data[0] as OkxFundingRate
-          const index = prevTickers.findIndex((i) => i.instId === data.instId)
-          if (index === -1) return prevTickers
-
-          const arr = prevTickers.slice()
-          arr[index].fundingRate = (+data.fundingRate * 10000).toFixed(1)
-
-          return arr
-        })
-      }
+        return {
+          ...prev,
+          [instId]: newData,
+        }
+      })
     }
 
     return () => {
       ws.close()
     }
-  }, [openTime, instIds, formatTicker])
+  }, [instIds])
+
+  useEffect(() => {
+    setTickers((prevTickers) => {
+      return prevTickers.map((prevTicker) => {
+        const rawData = rawTickers[prevTicker.instId]
+        if (!rawData?.ticker) return prevTicker
+
+        const formattedTicker = formatTicker({
+          ticker: rawData.ticker,
+          oldTicker: prevTicker,
+          openTime,
+        })
+        if (rawData.openInterest) {
+          formattedTicker.oiCcy = compactNumberFormatter(
+            Number(rawData.openInterest.oiCcy),
+          )
+        }
+        if (rawData.fundingRate) {
+          formattedTicker.fundingRate = (
+            +rawData.fundingRate.fundingRate * 10000
+          ).toFixed(1)
+        }
+
+        return formattedTicker
+      })
+    })
+  }, [rawTickers, openTime, formatTicker])
 
   return (
     <Box>
