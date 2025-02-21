@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-import { OkxKline } from '../types/okx'
+import { OkxKline, OpenTime, SortBy } from '../types/okx'
 
 interface TickerStore {
   instIds: string[]
@@ -12,6 +12,10 @@ interface TickerStore {
   setVolCcyQuote: (instId: string, volCcyQuote: string) => void
   ratio: Record<string, string>
   setRatio: (instId: string, ratio: string) => void
+  openTime: OpenTime
+  setOpenTime: (openTime: OpenTime) => void
+  sortBy: SortBy
+  setSortBy: (sortBy: SortBy) => void
 }
 
 export const useTickerStore = create<TickerStore>()(
@@ -39,6 +43,10 @@ export const useTickerStore = create<TickerStore>()(
         set((state) => ({
           ratio: { ...state.ratio, [instId]: ratio },
         })),
+      openTime: OpenTime.UTC0,
+      setOpenTime: (openTime: OpenTime) => set({ openTime }),
+      sortBy: SortBy.VOLUME,
+      setSortBy: (sortBy: SortBy) => set({ sortBy }),
     }),
     {
       name: 'tickers',

@@ -41,8 +41,10 @@ interface TickerResponse {
 }
 
 export default function Watching() {
-  const [openTime, setOpenTime] = useState<OpenTime>(OpenTime.UTC0)
-  const [sortBy, setSortBy] = useState<SortBy | undefined>(SortBy.VOLUME)
+  const openTime = useTickerStore((state) => state.openTime)
+  const sortBy = useTickerStore((state) => state.sortBy)
+  const setOpenTime = useTickerStore((state) => state.setOpenTime)
+  const setSortBy = useTickerStore((state) => state.setSortBy)
   const [tickers, setTickers] = useState<OkxTickerFormatted[]>([])
   const [rawTickers, setRawTickers] = useState<
     Record<
