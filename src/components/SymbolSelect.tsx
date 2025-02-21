@@ -17,7 +17,6 @@ export default function SymbolSelect(props: {
 
   return (
     <FormControl fullWidth>
-      {/* <InputLabel id="symbol-label">Symbol</InputLabel> */}
       <Autocomplete
         options={symbols}
         value={symbol}
