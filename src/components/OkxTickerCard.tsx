@@ -30,7 +30,7 @@ export default function OkxTickerCard({ t }: { t: Ticker }) {
       alignItems="center"
       gap={1.5}
       key={t.coin}
-      width={236}
+      minWidth={236}
       sx={{
         position: 'relative',
         p: 2.5,

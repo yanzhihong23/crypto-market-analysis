@@ -1,4 +1,4 @@
-import { Stack, Box } from '@mui/material'
+import { Box, Grid2 as Grid } from '@mui/material'
 import { useMemo } from 'react'
 
 import { SortBy } from '../types/okx'
@@ -30,11 +30,16 @@ export default function OkxPerpetual() {
 
   return (
     <Box>
-      <Stack direction="row" gap={2} flexWrap="wrap">
+      <Grid container spacing={2}>
         {sortedTickers.map((t) => (
-          <OkxTickerCard key={t.instId} t={t} />
+          <Grid
+            key={t.instId}
+            size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2, xxl: 1.5, xxxl: 1.2 }}
+          >
+            <OkxTickerCard t={t} />
+          </Grid>
         ))}
-      </Stack>
+      </Grid>
       <ActionBar
         onAdd={(instId) => {
           add(instId)

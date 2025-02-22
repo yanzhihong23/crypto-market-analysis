@@ -1,5 +1,17 @@
 import { createTheme } from '@mui/material'
 
+declare module '@mui/material/styles' {
+  interface BreakpointOverrides {
+    xs: true
+    sm: true
+    md: true
+    lg: true
+    xl: true
+    xxl: true
+    xxxl: true
+  }
+}
+
 const theme = createTheme({
   palette: {
     mode: 'light',
@@ -38,7 +50,9 @@ const theme = createTheme({
       sm: 600,
       md: 900,
       lg: 1168, // 1120 + 24*2(padding left and right)
-      xl: 1344,
+      xl: 1440,
+      xxl: 1920,
+      xxxl: 2560,
     },
   },
   components: {
