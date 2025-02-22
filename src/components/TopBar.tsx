@@ -18,6 +18,7 @@ export default function TopBar() {
         disableGutters
         sx={{
           height: 64,
+          minHeight: 64,
           zIndex: 10,
           px: 3,
           gap: 2,
@@ -53,7 +54,7 @@ export default function TopBar() {
           </Typography>
         </Stack>
 
-        <NavMenu />
+        <NavMenu sx={{ display: { xs: 'none', md: 'block' } }} />
       </Toolbar>
     </AppBar>
   )

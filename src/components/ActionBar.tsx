@@ -13,6 +13,7 @@ import AddIcon from '@mui/icons-material/Add'
 import RemoveIcon from '@mui/icons-material/Remove'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import SortIcon from '@mui/icons-material/Sort'
+import MenuOpenIcon from '@mui/icons-material/MenuOpen'
 import { useState } from 'react'
 
 import { OpenTime, SortBy } from '../types/okx'
@@ -33,6 +34,7 @@ export default function ActionBar({
   const setOpenTime = useTickerStore((state) => state.setOpenTime)
   const setSortBy = useTickerStore((state) => state.setSortBy)
 
+  const [show, setShow] = useState(true)
   const [openAddDialog, setOpenAddDialog] = useState(false)
   const [openRemoveDialog, setOpenRemoveDialog] = useState(false)
   const [newInstId, setNewInstId] = useState<string>('')
@@ -47,23 +49,42 @@ export default function ActionBar({
     instIds.some((instId) => instId === i.instId),
   )
   return (
-    <>
+    <Stack
+      direction={{ xs: 'column', md: 'row' }}
+      alignItems="end"
+      spacing={2}
+      sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 10 }}
+    >
+      <Fab
+        color="primary"
+        aria-label="add"
+        onClick={() => setShow(!show)}
+        sx={{
+          transform: show ? 'rotate(180deg)' : 'rotate(0deg)',
+          transition: 'transform 0.3s ease',
+        }}
+      >
+        <MenuOpenIcon />
+      </Fab>
       <Stack
         direction={{ xs: 'column', md: 'row' }}
         alignItems="end"
         spacing={2}
-        sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 10 }}
+        sx={{
+          display: show ? 'flex' : 'none',
+          transition: 'height 3s ease',
+        }}
       >
         <Stack direction="row" spacing={2}>
           <Fab
-            color="primary"
+            color="success"
             aria-label="add"
             onClick={() => setOpenAddDialog(true)}
           >
             <AddIcon />
           </Fab>
           <Fab
-            color="secondary"
+            color="error"
             aria-label="remove"
             onClick={() => setOpenRemoveDialog(true)}
           >
@@ -186,6 +207,6 @@ export default function ActionBar({
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Stack>
   )
 }
