@@ -8,7 +8,7 @@ export default function OkxKlineChart({ instId }: { instId: string }) {
   const klineData = useTickerStore((state) => state.klineData)
 
   const data = useMemo(() => {
-    const list = klineData[instId]?.reverse()
+    const list = [...klineData[instId]].reverse()
     const result = []
     for (let i = 0; i < list.length; i++) {
       if (i === 0) {
