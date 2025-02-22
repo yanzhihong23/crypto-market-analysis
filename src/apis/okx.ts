@@ -1,6 +1,6 @@
 import { pathcat } from 'pathcat'
 
-import { OkxInstrument, OkxKline, Period } from '../types/okx'
+import { OkxInstrument, OkxKline, OpenTime, Period } from '../types/okx'
 
 import { proxyGet } from './util'
 
@@ -33,13 +33,34 @@ export const fetchOkxInstruments = (): Promise<OkxInstrument[]> => {
 export const fetchOkxKlines = ({
   instId,
   period = Period.MINUTE_15,
+  openTime,
 }: {
   instId: string
   period?: Period
+  openTime?: OpenTime
 }): Promise<OkxKline[]> => {
+  const now = new Date()
+  const currentHour = now.getUTCHours()
+
+  let before =
+    openTime === OpenTime.UTC0
+      ? currentHour >= 0
+        ? now.setUTCHours(0, 0, 0, 0)
+        : new Date(now).setUTCHours(0, 0, 0, 0) - 24 * 60 * 60 * 1000
+      : openTime === OpenTime.UTC8
+        ? currentHour >= 16
+          ? now.setUTCHours(16, 0, 0, 0)
+          : new Date(now).setUTCHours(16, 0, 0, 0) - 24 * 60 * 60 * 1000
+        : undefined
+
+  if (before) {
+    before = before - 1000 // 减去1秒，确保获取到开盘时间的k线
+  }
+
   const url = pathcat(baseUrl, '/api/v5/market/candles', {
     instId,
     bar: period,
+    before,
     limit: 96,
   })
 

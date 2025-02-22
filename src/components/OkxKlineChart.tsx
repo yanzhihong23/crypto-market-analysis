@@ -8,9 +8,19 @@ export default function OkxKlineChart({ instId }: { instId: string }) {
   const klineData = useTickerStore((state) => state.klineData)
 
   const data = useMemo(() => {
-    return (
-      klineData[instId]?.map((i) => ({ c: i[4], ts: i[0] })).reverse() || []
-    )
+    const list = klineData[instId]?.reverse()
+    const result = []
+    for (let i = 0; i < list.length; i++) {
+      if (i === 0) {
+        // 开盘价
+        result.push({ c: list[i][1], ts: list[i][0] })
+      } else {
+        // 收盘价
+        result.push({ c: list[i][4], ts: list[i][0] })
+      }
+    }
+
+    return result
   }, [klineData, instId])
 
   return (

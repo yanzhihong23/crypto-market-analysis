@@ -34,6 +34,7 @@ export default function OkxTickerCard({ t }: { t: Ticker }) {
       sx={{
         position: 'relative',
         p: 2.5,
+        zIndex: 2,
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -50,6 +51,7 @@ export default function OkxTickerCard({ t }: { t: Ticker }) {
             'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
           WebkitMaskComposite: 'xor',
           maskComposite: 'exclude',
+          zIndex: 1,
         },
         '@keyframes gradient': {
           '0%': {
@@ -80,18 +82,18 @@ export default function OkxTickerCard({ t }: { t: Ticker }) {
       <Typography>
         {t.low24h} - {t.high24h}
       </Typography>
-      <Stack direction="row" alignItems="center" gap={1}>
-        <Tooltip title="Volume">
+      <Stack direction="row" alignItems="center" gap={1} sx={{ zIndex: 2 }}>
+        <Tooltip title="Volume" arrow>
           <Chip
             size="small"
             color="primary"
             label={`${compactNumberFormatter(Number(volCcyQuote)) || t.vol}`}
           />
         </Tooltip>
-        <Tooltip title="L/S Ratio">
+        <Tooltip title="L/S Ratio" arrow>
           <Chip size="small" color="secondary" label={`${t.ratio}`} />
         </Tooltip>
-        <Tooltip title="Funding Rate">
+        <Tooltip title="Funding Rate" arrow>
           <Chip
             size="small"
             color={+t.fundingRate > 0 ? 'success' : 'error'}

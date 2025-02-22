@@ -52,7 +52,7 @@ export default function ActionBar({
         direction="row"
         alignItems="end"
         spacing={2}
-        sx={{ position: 'fixed', bottom: 32, right: 32 }}
+        sx={{ position: 'fixed', bottom: 32, right: 32, zIndex: 10 }}
       >
         <Fab
           color="primary"
