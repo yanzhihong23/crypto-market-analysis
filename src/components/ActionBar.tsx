@@ -34,7 +34,7 @@ export default function ActionBar({
   const setOpenTime = useTickerStore((state) => state.setOpenTime)
   const setSortBy = useTickerStore((state) => state.setSortBy)
 
-  const [show, setShow] = useState(true)
+  const [show, setShow] = useState(false)
   const [openAddDialog, setOpenAddDialog] = useState(false)
   const [openRemoveDialog, setOpenRemoveDialog] = useState(false)
   const [newInstId, setNewInstId] = useState<string>('')
