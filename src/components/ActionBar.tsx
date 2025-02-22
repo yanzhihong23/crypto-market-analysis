@@ -49,73 +49,81 @@ export default function ActionBar({
   return (
     <>
       <Stack
-        direction="row"
+        direction={{ xs: 'column', md: 'row' }}
         alignItems="end"
         spacing={2}
-        sx={{ position: 'fixed', bottom: 32, right: 32, zIndex: 10 }}
+        sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 10 }}
       >
-        <Fab
-          color="primary"
-          aria-label="add"
-          onClick={() => setOpenAddDialog(true)}
-        >
-          <AddIcon />
-        </Fab>
-        <Fab
-          color="secondary"
-          aria-label="remove"
-          onClick={() => setOpenRemoveDialog(true)}
-        >
-          <RemoveIcon />
-        </Fab>
-        <Fab
-          variant="extended"
-          color={openTime === OpenTime.OPEN24H ? 'secondary' : 'default'}
-          onClick={() => setOpenTime(OpenTime.OPEN24H)}
-        >
-          <AccessTimeIcon sx={{ mr: 1 }} />
-          24H
-        </Fab>
-        <Fab
-          variant="extended"
-          color={openTime === OpenTime.UTC0 ? 'secondary' : 'default'}
-          onClick={() => setOpenTime(OpenTime.UTC0)}
-        >
-          <AccessTimeIcon sx={{ mr: 1 }} />
-          UTC+0
-        </Fab>
-        <Fab
-          variant="extended"
-          color={openTime === OpenTime.UTC8 ? 'secondary' : 'default'}
-          onClick={() => setOpenTime(OpenTime.UTC8)}
-        >
-          <AccessTimeIcon sx={{ mr: 1 }} />
-          UTC+8
-        </Fab>
-        <Fab
-          variant="extended"
-          color={sortBy === SortBy.VOLUME ? 'secondary' : 'default'}
-          onClick={() => setSortBy(SortBy.VOLUME)}
-        >
-          <SortIcon sx={{ mr: 1 }} />
-          VOL
-        </Fab>
-        <Fab
-          variant="extended"
-          color={sortBy === SortBy.PERCENT ? 'secondary' : 'default'}
-          onClick={() => setSortBy(SortBy.PERCENT)}
-        >
-          <SortIcon sx={{ mr: 1 }} />
-          PER
-        </Fab>
-        <Fab
-          variant="extended"
-          color={sortBy === SortBy.RATIO ? 'secondary' : 'default'}
-          onClick={() => setSortBy(SortBy.RATIO)}
-        >
-          <SortIcon sx={{ mr: 1 }} />
-          L/S
-        </Fab>
+        <Stack direction="row" spacing={2}>
+          <Fab
+            color="primary"
+            aria-label="add"
+            onClick={() => setOpenAddDialog(true)}
+          >
+            <AddIcon />
+          </Fab>
+          <Fab
+            color="secondary"
+            aria-label="remove"
+            onClick={() => setOpenRemoveDialog(true)}
+          >
+            <RemoveIcon />
+          </Fab>
+        </Stack>
+        {/* Open Time */}
+        <Stack direction="row" spacing={2}>
+          <Fab
+            variant="extended"
+            color={openTime === OpenTime.OPEN24H ? 'secondary' : 'default'}
+            onClick={() => setOpenTime(OpenTime.OPEN24H)}
+          >
+            <AccessTimeIcon sx={{ mr: 1 }} />
+            24H
+          </Fab>
+          <Fab
+            variant="extended"
+            color={openTime === OpenTime.UTC0 ? 'secondary' : 'default'}
+            onClick={() => setOpenTime(OpenTime.UTC0)}
+          >
+            <AccessTimeIcon sx={{ mr: 1 }} />
+            UTC+0
+          </Fab>
+          <Fab
+            variant="extended"
+            color={openTime === OpenTime.UTC8 ? 'secondary' : 'default'}
+            onClick={() => setOpenTime(OpenTime.UTC8)}
+          >
+            <AccessTimeIcon sx={{ mr: 1 }} />
+            UTC+8
+          </Fab>
+        </Stack>
+        {/* Sort By */}
+        <Stack direction="row" spacing={2}>
+          <Fab
+            variant="extended"
+            color={sortBy === SortBy.VOLUME ? 'secondary' : 'default'}
+            onClick={() => setSortBy(SortBy.VOLUME)}
+          >
+            <SortIcon sx={{ mr: 1 }} />
+            VOL
+          </Fab>
+          <Fab
+            variant="extended"
+            color={sortBy === SortBy.PERCENT ? 'secondary' : 'default'}
+            onClick={() => setSortBy(SortBy.PERCENT)}
+          >
+            <SortIcon sx={{ mr: 1 }} />
+            PER
+          </Fab>
+          <Fab
+            variant="extended"
+            color={sortBy === SortBy.RATIO ? 'secondary' : 'default'}
+            onClick={() => setSortBy(SortBy.RATIO)}
+          >
+            <SortIcon sx={{ mr: 1 }} />
+            L/S
+          </Fab>
+        </Stack>
       </Stack>
 
       <Dialog open={openAddDialog} onClose={() => setOpenAddDialog(false)}>
