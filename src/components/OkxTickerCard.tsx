@@ -70,7 +70,21 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
           {t.percent}%
         </Typography>
       </Stack>
-      <Typography fontSize={36} fontWeight={600} color={t.priceColor}>
+      <Typography
+        fontSize={36}
+        fontWeight={600}
+        color={t.priceColor}
+        sx={{
+          textShadow: () =>
+            t.priceColor === 'success'
+              ? `0 0 2px rgba(37, 167, 80, 0.3),
+                 1px 1px 2px rgba(37, 167, 80, 0.2),
+                 -1px -1px 2px rgba(255, 255, 255, 0.1)` // 绿色立体效果
+              : `0 0 2px rgba(202, 63, 100, 0.3),
+                 1px 1px 2px rgba(202, 63, 100, 0.2),
+                 -1px -1px 2px rgba(255, 255, 255, 0.1)`, // 红色立体效果
+        }}
+      >
         {t.last}{' '}
         {/* {t.priceColor === 'success' ? <TrendingUp /> : <TrendingDown />} */}
         <Typography
@@ -78,6 +92,7 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
           fontWeight={500}
           component="span"
           color="text.secondary"
+          sx={{ textShadow: 'none' }}
         >
           {t.lastSz}
         </Typography>
