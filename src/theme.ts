@@ -292,6 +292,16 @@ const theme = createTheme({
         },
       },
     },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontWeight: 600,
+        },
+        sizeSmall: {
+          fontSize: 14,
+        },
+      },
+    },
   },
 })
 

@@ -56,12 +56,12 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
     >
       <Stack direction="row" alignItems="center" gap={1}>
         <img src={t.logo} width={32} />
-        <Typography fontSize={20} fontWeight={700}>
+        <Typography fontSize={20} fontWeight={700} fontStyle="italic">
           {t.coin}
         </Typography>
         <Typography
           flex={1}
-          fontSize={20}
+          fontSize={22}
           fontWeight={600}
           color={t.color}
           align="right"
@@ -70,7 +70,7 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
           {t.percent}%
         </Typography>
       </Stack>
-      <Typography fontSize={32} fontWeight={600} color={t.priceColor}>
+      <Typography fontSize={36} fontWeight={600} color={t.priceColor}>
         {t.last}{' '}
         {/* {t.priceColor === 'success' ? <TrendingUp /> : <TrendingDown />} */}
         <Typography
