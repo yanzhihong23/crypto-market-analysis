@@ -1,27 +1,13 @@
 import { Stack, Typography, Chip, Tooltip } from '@mui/material'
 import { TrendingUp, TrendingDown } from '@mui/icons-material'
 
-import { OkxTicker } from '../types/okx'
+import { OkxTickerFormatted } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
 import { compactNumberFormatter } from '../utils'
 
 import OkxKlineChart from './OkxKlineChart'
 
-interface Ticker extends OkxTicker {
-  coin: string
-  logo?: string
-  dif: string
-  percent: string
-  vol: string
-  color: string
-  priceColor: string
-  oiCcy: string
-  fundingRate: string
-  ratio: string
-  // openInterest: string
-}
-
-export default function OkxTickerCard({ t }: { t: Ticker }) {
+export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
   const volCcyQuote = useTickerStore((state) => state.volCcyQuote[t.instId])
 
   return (

@@ -205,23 +205,34 @@ export const useOkxTickers = () => {
         const rawData = rawTickers[prevTicker.instId]
         if (!rawData?.ticker) return prevTicker
 
-        const formattedTicker = formatTicker({
-          ticker: rawData.ticker,
-          oldTicker: prevTicker,
-          openTime,
-        })
-        if (rawData.openInterest) {
-          formattedTicker.oiCcy = compactNumberFormatter(
-            Number(rawData.openInterest.oiCcy),
-          )
-        }
-        if (rawData.fundingRate) {
-          formattedTicker.fundingRate = (
-            +rawData.fundingRate.fundingRate * 10000
-          ).toFixed(1)
+        // 创建基础更新函数
+        const updateExtraData = (ticker: OkxTickerFormatted) => {
+          if (rawData.openInterest) {
+            ticker.oiCcy = compactNumberFormatter(
+              Number(rawData.openInterest.oiCcy),
+            )
+          }
+          if (rawData.fundingRate) {
+            ticker.fundingRate = (
+              +rawData.fundingRate.fundingRate * 10000
+            ).toFixed(1)
+          }
+          return ticker
         }
 
-        return formattedTicker
+        // 如果价格没变，只更新额外数据
+        if (rawData.ticker.last === prevTicker.last) {
+          return updateExtraData({ ...prevTicker })
+        }
+
+        // 价格变化时，进行完整格式化并更新额外数据
+        return updateExtraData(
+          formatTicker({
+            ticker: rawData.ticker,
+            oldTicker: prevTicker,
+            openTime,
+          }),
+        )
       })
     })
   }, [rawTickers, openTime, formatTicker])
