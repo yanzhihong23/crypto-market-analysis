@@ -1,5 +1,4 @@
 import { Stack, Typography, Chip, Tooltip } from '@mui/material'
-import { TrendingUp, TrendingDown } from '@mui/icons-material'
 
 import { OkxTickerFormatted } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
@@ -60,12 +59,20 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
       </Stack>
       <Typography fontSize={32} fontWeight={600} color={t.priceColor}>
         {t.last}{' '}
-        {t.priceColor === 'success' ? <TrendingUp /> : <TrendingDown />}
+        {/* {t.priceColor === 'success' ? <TrendingUp /> : <TrendingDown />} */}
+        <Typography
+          fontSize={16}
+          fontWeight={500}
+          component="span"
+          color="text.secondary"
+        >
+          {t.lastSz}
+        </Typography>
       </Typography>
-      <Typography fontSize={16} fontWeight={600} color={t.color}>
+      <Typography fontSize={20} fontWeight={600} color={t.color}>
         {t.dif} ({t.percent}%)
       </Typography>
-      <Typography>
+      <Typography fontSize={16} fontWeight={500}>
         {t.low24h} - {t.high24h}
       </Typography>
       <Stack direction="row" alignItems="center" gap={1} sx={{ zIndex: 2 }}>

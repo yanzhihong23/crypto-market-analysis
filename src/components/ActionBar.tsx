@@ -18,7 +18,6 @@ import { useState } from 'react'
 
 import { OpenTime, SortBy } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
-import { useOkxInstruments } from '../hooks/useOkxInstruments'
 
 export default function ActionBar({
   onAdd,
@@ -27,6 +26,7 @@ export default function ActionBar({
   onAdd?: (instId: string) => void
   onRemove?: (instId: string) => void
 }) {
+  const instruments = useTickerStore((state) => state.instruments)
   const instIds = useTickerStore((state) => state.instIds)
   const setInstIds = useTickerStore((state) => state.setInstIds)
   const openTime = useTickerStore((state) => state.openTime)
@@ -39,8 +39,6 @@ export default function ActionBar({
   const [openRemoveDialog, setOpenRemoveDialog] = useState(false)
   const [newInstId, setNewInstId] = useState<string>('')
   const [removeInstId, setRemoveInstId] = useState<string>('')
-
-  const instruments = useOkxInstruments()
 
   const filteredInstruments = instruments.filter(
     (i) => !instIds.includes(i.instId),

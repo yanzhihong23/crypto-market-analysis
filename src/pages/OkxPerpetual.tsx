@@ -8,10 +8,13 @@ import useOkxKlinesUpdater from '../hooks/useOkxKlinesUpdater'
 import useOkxRatioUpdater from '../hooks/useOkxRatioUpdater'
 import ActionBar from '../components/ActionBar'
 import { useOkxTickers } from '../hooks/useOkxTickers'
+import useOkxInstrumentsUpdater from '../hooks/useOkxInstrumentsUpdater'
 
 export default function OkxPerpetual() {
   const sortBy = useTickerStore((state) => state.sortBy)
 
+  // update instruments
+  useOkxInstrumentsUpdater()
   // update kline data
   const { updateKlinesByInstId } = useOkxKlinesUpdater()
   // update ratio data

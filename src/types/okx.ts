@@ -103,11 +103,22 @@ export interface OkxFundingRate {
   ts: string
 }
 
+/**
+ * @interface OkxInstrument
+ * @member {string} instType - 产品类型
+ * @member {string} instId - 产品ID
+ * @member {string} baseCcy - 基础币种
+ * @member {string} quoteCcy - 计价币种
+ * @member {string} settleCcy - 结算币种
+ * @member {string} ctVal - 合约面值
+ */
 export interface OkxInstrument {
   instType: string
   instId: string
   baseCcy: string
   quoteCcy: string
+  settleCcy: string
+  ctVal: string
 }
 
 /**

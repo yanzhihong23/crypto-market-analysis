@@ -10,6 +10,23 @@ export function getPeriodPattern(period: string) {
   }
 }
 
+/**
+ * Formats a number to a more readable format.
+ * @param num - The number to format.
+ * @returns The formatted number.
+ */
+export function formatNumber(num: number, digits?: number) {
+  return new Intl.NumberFormat('en-US', {
+    notation: 'standard',
+    maximumFractionDigits: digits ?? 2,
+  }).format(num)
+}
+
+/**
+ * Formats a number to a compact format.
+ * @param val - The number to format.
+ * @returns The formatted number.
+ */
 export function compactNumberFormatter(
   val: number,
   minimumFractionDigits?: number,

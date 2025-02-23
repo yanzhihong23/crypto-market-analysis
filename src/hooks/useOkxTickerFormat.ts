@@ -2,9 +2,10 @@ import { useCallback } from 'react'
 
 import { useTickerStore } from '../store/useTickerStore'
 import { OkxTicker, OkxTickerFormatted, OpenTime } from '../types/okx'
-import { compactNumberFormatter } from '../utils'
+import { compactNumberFormatter, formatNumber } from '../utils'
 
 export default function useOkxTickerFormat() {
+  const instruments = useTickerStore((state) => state.instruments)
   const volCcyQuote = useTickerStore((state) => state.volCcyQuote)
   const ratio = useTickerStore((state) => state.ratio)
 
@@ -18,6 +19,9 @@ export default function useOkxTickerFormat() {
       oldTicker: OkxTickerFormatted
       openTime: OpenTime
     }): OkxTickerFormatted => {
+      const instrument = instruments.find(
+        (instrument) => instrument.instId === ticker.instId,
+      )
       const open = Number(ticker[openTime])
       const coin = ticker.instId.split('-')[0]
       const change = +ticker.last - open
@@ -29,6 +33,7 @@ export default function useOkxTickerFormat() {
 
       const color = +ticker.last > +open ? 'success' : 'error'
       const priceColor = +ticker.last > +oldTicker.last ? 'success' : 'error'
+      const lastSz = formatNumber(+ticker.lastSz * +(instrument?.ctVal || 1), 4)
 
       return {
         coin,
@@ -43,9 +48,10 @@ export default function useOkxTickerFormat() {
         ratio: ratio[ticker.instId],
         volCcyQuote: volCcyQuote[ticker.instId],
         ...ticker,
+        lastSz: lastSz.toString(),
       }
     },
-    [ratio, volCcyQuote],
+    [ratio, volCcyQuote, instruments],
   )
 
   return { formatTicker }

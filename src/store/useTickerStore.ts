@@ -1,9 +1,11 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-import { OkxKline, OpenTime, SortBy } from '../types/okx'
+import { OkxInstrument, OkxKline, OpenTime, SortBy } from '../types/okx'
 
 interface TickerStore {
+  instruments: OkxInstrument[]
+  setInstruments: (instruments: OkxInstrument[]) => void
   instIds: string[]
   setInstIds: (instIds: string[]) => void
   klineData: Record<string, OkxKline[]>
@@ -21,6 +23,8 @@ interface TickerStore {
 export const useTickerStore = create<TickerStore>()(
   persist(
     (set) => ({
+      instruments: [],
+      setInstruments: (instruments: OkxInstrument[]) => set({ instruments }),
       instIds: [
         'BTC-USDT-SWAP',
         'ETH-USDT-SWAP',
