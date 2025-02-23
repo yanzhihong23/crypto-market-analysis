@@ -12,7 +12,6 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
   return (
     <Stack
       direction="column"
-      alignItems="center"
       gap={1.5}
       key={t.coin}
       minWidth={236}
@@ -20,6 +19,10 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
         position: 'relative',
         p: 2.5,
         zIndex: 2,
+        '&:hover': {
+          transform: 'scale(1.02)',
+        },
+        transition: 'transform 0.2s ease-in-out',
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -51,7 +54,7 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
         },
       }}
     >
-      <Stack direction="row" alignItems="center" gap={1} sx={{ width: '100%' }}>
+      <Stack direction="row" alignItems="center" gap={1}>
         <img src={t.logo} width={32} />
         <Typography fontSize={20} fontWeight={700}>
           {t.coin}
@@ -79,12 +82,15 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
           {t.lastSz}
         </Typography>
       </Typography>
-      <Typography fontSize={20} fontWeight={600} color={t.color}>
-        {t.dif}
-      </Typography>
-      <Typography fontSize={16} fontWeight={500}>
-        {t.low24h} - {t.high24h}
-      </Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography fontSize={16} fontWeight={500} color="text.secondary">
+          {t.low24h} - {t.high24h}
+        </Typography>
+        <Typography fontSize={16} fontWeight={600} color={t.color}>
+          {t.dif}
+        </Typography>
+      </Stack>
+
       <Stack direction="row" alignItems="center" gap={1} sx={{ zIndex: 2 }}>
         <Tooltip title="Volume" arrow>
           <Chip

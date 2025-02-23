@@ -26,6 +26,6 @@ export default function OkxKlineChart({ instId }: { instId: string }) {
   }, [klineData, instId])
 
   return (
-    <TinyAreaChart data={data} xKey="ts" yKey="c" width={'100%'} height={80} />
+    <TinyAreaChart data={data} xKey="ts" yKey="c" width={'100%'} height={100} />
   )
 }
