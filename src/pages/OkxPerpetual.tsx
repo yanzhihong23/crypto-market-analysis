@@ -37,7 +37,7 @@ export default function OkxPerpetual() {
         {sortedTickers.map((t) => (
           <Grid
             key={t.instId}
-            size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2, xxl: 1.5, xxxl: 1.333 }}
+            size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2, xxl: 1.5 }}
           >
             <OkxTickerCard t={t} />
           </Grid>
