@@ -50,6 +50,12 @@ export interface OkxTickerFormatted extends OkxTicker {
   volCcyQuote: string
 }
 
+export enum OkxChannel {
+  TICKERS = 'tickers',
+  OPEN_INTEREST = 'open-interest',
+  FUNDING_RATE = 'funding-rate',
+}
+
 export enum OpenTime {
   UTC0 = 'sodUtc0',
   UTC8 = 'sodUtc8',

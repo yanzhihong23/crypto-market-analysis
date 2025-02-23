@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 
-import { OkxFundingRate, OkxTickerFormatted } from '../types/okx'
+import { OkxChannel, OkxFundingRate, OkxTickerFormatted } from '../types/okx'
 import { OkxOpenInterest } from '../types/okx'
 import { OkxTicker } from '../types/okx'
 import { compactNumberFormatter } from '../utils'
@@ -10,7 +10,7 @@ import useOkxTickerFormat from './useOkxTickerFormat'
 
 interface TickerResponse {
   arg: {
-    channel: string
+    channel: OkxChannel
     instId: string
   }
   data: OkxTicker[] | OkxOpenInterest[] | OkxFundingRate[]
@@ -66,6 +66,18 @@ export const useOkxTickers = () => {
   >({})
   const wsRef = useRef<WebSocket | null>(null)
 
+  const generateSubscribeArgsByInstId = (instId: string) => {
+    return [
+      { channel: OkxChannel.TICKERS, instId },
+      { channel: OkxChannel.OPEN_INTEREST, instId },
+      { channel: OkxChannel.FUNDING_RATE, instId },
+    ]
+  }
+
+  const generateSubscribeArgsByInstIds = (instIds: string[]) => {
+    return instIds.map(generateSubscribeArgsByInstId).flat()
+  }
+
   const connect = () => {
     const ws = new WebSocket('wss://ws.okx.com:8443/ws/v5/public')
     wsRef.current = ws
@@ -77,17 +89,7 @@ export const useOkxTickers = () => {
       ws.send(
         JSON.stringify({
           op: 'subscribe',
-          args: [
-            ...initialInstIds.map((i) => ({ channel: 'tickers', instId: i })),
-            ...initialInstIds.map((i) => ({
-              channel: 'open-interest',
-              instId: i,
-            })),
-            ...initialInstIds.map((i) => ({
-              channel: 'funding-rate',
-              instId: i,
-            })),
-          ],
+          args: generateSubscribeArgsByInstIds(initialInstIds),
         }),
       )
     }
@@ -108,11 +110,11 @@ export const useOkxTickers = () => {
         const instId = res.arg.instId
         const newData = { ...prev[instId] }
 
-        if (res.arg.channel === 'tickers') {
+        if (res.arg.channel === OkxChannel.TICKERS) {
           newData.ticker = res.data[0] as OkxTicker
-        } else if (res.arg.channel === 'open-interest') {
+        } else if (res.arg.channel === OkxChannel.OPEN_INTEREST) {
           newData.openInterest = res.data[0] as OkxOpenInterest
-        } else if (res.arg.channel === 'funding-rate') {
+        } else if (res.arg.channel === OkxChannel.FUNDING_RATE) {
           newData.fundingRate = res.data[0] as OkxFundingRate
         }
 
@@ -161,11 +163,7 @@ export const useOkxTickers = () => {
     ws.send(
       JSON.stringify({
         op: 'subscribe',
-        args: [
-          { channel: 'tickers', instId },
-          { channel: 'open-interest', instId },
-          { channel: 'funding-rate', instId },
-        ],
+        args: generateSubscribeArgsByInstId(instId),
       }),
     )
   }
@@ -176,11 +174,7 @@ export const useOkxTickers = () => {
     ws.send(
       JSON.stringify({
         op: 'unsubscribe',
-        args: [
-          { channel: 'tickers', instId },
-          { channel: 'open-interest', instId },
-          { channel: 'funding-rate', instId },
-        ],
+        args: generateSubscribeArgsByInstId(instId),
       }),
     )
   }
