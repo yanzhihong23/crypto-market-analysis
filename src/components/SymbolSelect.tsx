@@ -1,5 +1,6 @@
 import { Autocomplete, TextField, FormControl } from '@mui/material'
 import { useState } from 'react'
+
 import { useBinanceSymbols } from '../hooks/useSymbols'
 
 export default function SymbolSelect(props: {
@@ -8,7 +9,7 @@ export default function SymbolSelect(props: {
 }) {
   const symbols = useBinanceSymbols()
   const [symbol, setSymbol] = useState<string>(props.value)
-  const handleChange = (event: unknown, value: string | null) => {
+  const handleChange = (_: unknown, value: string | null) => {
     if (!value) return
     setSymbol(String(value))
     props.onChange(String(value))
@@ -16,7 +17,6 @@ export default function SymbolSelect(props: {
 
   return (
     <FormControl fullWidth>
-      {/* <InputLabel id="symbol-label">Symbol</InputLabel> */}
       <Autocomplete
         options={symbols}
         value={symbol}

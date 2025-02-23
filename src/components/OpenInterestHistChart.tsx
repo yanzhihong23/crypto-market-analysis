@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
-import { fetchBinanceOpenInterestHist } from '../apis'
+import { useCallback, useEffect, useState } from 'react'
 import { format } from 'date-fns/format'
-import BaseAreaChart from './BaseAreaChart'
-import { compactNumberFormatter, getPeriodPattern } from '../utils'
 import { useInterval } from 'usehooks-ts'
+
+import { fetchBinanceOpenInterestHist } from '../apis'
+import { compactNumberFormatter, getPeriodPattern } from '../utils'
+
+import BaseAreaChart from './BaseAreaChart'
 
 export default function RatioTrendChart(props: {
   symbol: string
@@ -14,7 +16,7 @@ export default function RatioTrendChart(props: {
     [],
   )
 
-  const initData = async () => {
+  const initData = useCallback(async () => {
     if (!props.symbol) return
 
     const res = await fetchBinanceOpenInterestHist({
@@ -30,13 +32,13 @@ export default function RatioTrendChart(props: {
         })),
       )
     }
-  }
+  }, [props])
 
   useInterval(initData, 1000 * 5 * 60)
 
   useEffect(() => {
     initData()
-  }, [props])
+  }, [initData])
 
   return (
     <BaseAreaChart

@@ -1,8 +1,9 @@
 import { Box, Fab } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
+import { useLocalStorage } from 'usehooks-ts'
+
 import SymbolOverview from '../components/SymbolOverview'
 import useMobile from '../hooks/useMobile'
-import { useLocalStorage } from 'usehooks-ts'
 
 function Home() {
   const mobile = useMobile()

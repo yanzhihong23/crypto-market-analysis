@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+
 import { fetchBinanceExchangeInfo } from '../apis'
 
 export function useBinanceSymbols() {

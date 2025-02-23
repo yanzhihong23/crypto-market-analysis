@@ -1,5 +1,6 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
+
 import { FullTicker } from '../types'
 import { compactNumberFormatter } from '../utils'
 
@@ -39,6 +40,7 @@ export default function Ticker({ symbol }: { symbol: string }) {
         }
       } catch (error) {
         // TODO
+        console.error(error)
       }
     }
 

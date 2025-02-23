@@ -16,14 +16,16 @@ export default function BaseAreaChart({
   label,
   syncId,
   yDataFormatter,
+  width = '99%',
+  height = 300,
 }: {
   data: { [key: string]: number | string }[]
   xKey: string
   yKey: string
-  label: string
+  label?: string
   yDataFormatter?: (val: number) => string
-  width?: number
-  height?: number
+  width?: string | number
+  height?: string | number
   syncId?: string
 }) {
   const [isUp, setIsUp] = useState(true)
@@ -51,10 +53,10 @@ export default function BaseAreaChart({
   useEffect(() => {
     if (!data?.length) return
     setIsUp(Number(data[data.length - 1][yKey]) > Number(data[0][yKey]))
-  }, [data])
+  }, [data, yKey])
 
   return (
-    <ResponsiveContainer width="99%" height={300}>
+    <ResponsiveContainer width={width} height={height}>
       <AreaChart
         data={data}
         syncId={syncId}
