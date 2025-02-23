@@ -51,10 +51,20 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
         },
       }}
     >
-      <Stack direction="row" alignItems="center" gap={1}>
+      <Stack direction="row" alignItems="center" gap={1} sx={{ width: '100%' }}>
         <img src={t.logo} width={32} />
         <Typography fontSize={20} fontWeight={700}>
           {t.coin}
+        </Typography>
+        <Typography
+          flex={1}
+          fontSize={20}
+          fontWeight={600}
+          color={t.color}
+          align="right"
+        >
+          {+t.percent > 0 ? '+' : ''}
+          {t.percent}%
         </Typography>
       </Stack>
       <Typography fontSize={32} fontWeight={600} color={t.priceColor}>
@@ -70,7 +80,7 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
         </Typography>
       </Typography>
       <Typography fontSize={20} fontWeight={600} color={t.color}>
-        {t.dif} ({t.percent}%)
+        {t.dif}
       </Typography>
       <Typography fontSize={16} fontWeight={500}>
         {t.low24h} - {t.high24h}
