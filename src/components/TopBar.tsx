@@ -1,8 +1,18 @@
 import { AppBar, Stack, Toolbar, Typography } from '@mui/material'
+import { useEffect, useState } from 'react'
 
 import NavMenu from './NavMenu'
 
 export default function TopBar() {
+  const [time, setTime] = useState('')
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(new Date().toTimeString().split(' ')[0])
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <AppBar
       position="static"
@@ -55,6 +65,10 @@ export default function TopBar() {
         </Stack>
 
         <NavMenu sx={{ display: { xs: 'none', md: 'block' } }} />
+
+        <Typography fontSize={18} fontWeight={700} sx={{ ml: 'auto' }}>
+          {time}
+        </Typography>
       </Toolbar>
     </AppBar>
   )
