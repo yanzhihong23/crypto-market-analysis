@@ -4,6 +4,22 @@ import { useEffect, useState } from 'react'
 import { FullTicker } from '../types'
 import { compactNumberFormatter } from '../utils'
 
+const Description = ({ label, value }: { label: string; value: string }) => {
+  return (
+    <Typography fontSize={20} color="text.secondary">
+      {label}:{' '}
+      <Typography
+        fontSize={20}
+        fontWeight={500}
+        component="span"
+        color="text.primary"
+      >
+        {value}
+      </Typography>
+    </Typography>
+  )
+}
+
 export default function Ticker({ symbol }: { symbol: string }) {
   const [aggTrade, setAggTrade] = useState<{
     e: string // event type
@@ -74,34 +90,43 @@ export default function Ticker({ symbol }: { symbol: string }) {
           <Typography
             fontSize={48}
             lineHeight={1}
-            color={!aggTrade?.m ? '#82ca9d' : '#E04A59'}
+            fontWeight={600}
+            color={!aggTrade?.m ? 'success' : 'error'}
           >
             {aggTrade?.p ?? '-'}
           </Typography>
-          <Typography fontSize={24} lineHeight={1.4} color="#aaa">
+          <Typography
+            fontSize={20}
+            fontWeight={500}
+            lineHeight={1.4}
+            color="text.secondary"
+          >
             {aggTrade?.q ?? '-'}
           </Typography>
         </Box>
         <Typography
           sx={{ display: 'flex', gap: '16px' }}
-          fontSize={24}
-          color={Number(ticker?.p) > 0 ? '#82ca9d' : '#E04A59'}
+          fontSize={22}
+          fontWeight={600}
+          color={Number(ticker?.p) > 0 ? 'success' : 'error'}
         >
           <span>{Number(ticker?.p) > 0 ? `+${ticker?.p}` : ticker?.p}</span>
           <span>{Number(ticker?.p) > 0 ? `+${ticker?.P}` : ticker?.P}%</span>
         </Typography>
       </Stack>
       <Stack spacing={2}>
-        <Typography fontSize={20}>High: {ticker?.h ?? '-'}</Typography>
-        <Typography fontSize={20}>Low: {ticker?.l ?? '-'}</Typography>
+        <Description label="24h High" value={ticker?.h ?? '-'} />
+        <Description label="24h Low" value={ticker?.l ?? '-'} />
       </Stack>
       <Stack spacing={2}>
-        <Typography fontSize={20}>
-          Volume: {compactNumberFormatter(Number(ticker?.v))}
-        </Typography>
-        <Typography fontSize={20}>
-          Quote: {compactNumberFormatter(Number(ticker?.q))}
-        </Typography>
+        <Description
+          label={`Volume(${aggTrade?.s.split('USDT')[0]})`}
+          value={compactNumberFormatter(Number(ticker?.v))}
+        />
+        <Description
+          label="Volume(USDT)"
+          value={compactNumberFormatter(Number(ticker?.q))}
+        />
       </Stack>
     </Box>
   )

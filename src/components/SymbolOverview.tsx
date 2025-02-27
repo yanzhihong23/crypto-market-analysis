@@ -32,7 +32,6 @@ function SymbolOverview({
         flexDirection: 'column',
         gap: '48px',
         flex: 1,
-        // maxWidth: 660,
       }}
     >
       <Ticker symbol={symbol} />
