@@ -3,47 +3,11 @@ import { Avatar, Chip, Stack, Tooltip, Typography } from '@mui/material'
 import { FullTicker } from '../types'
 import { compactNumberFormatter } from '../utils'
 
+import TickerContainer from './TickerContainer'
+
 export default function BinanceTickerCard({ t }: { t: FullTicker }) {
   return (
-    <Stack
-      direction="column"
-      spacing={2}
-      key={t.s}
-      width={300}
-      sx={{
-        position: 'relative',
-        p: 2.5,
-        zIndex: 2,
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          inset: -2,
-          padding: 0.25,
-          background:
-            +t.p > 0
-              ? 'linear-gradient(45deg, #25a750, #40e575, #25a750, #40e575)' // 更亮的绿色对比
-              : 'linear-gradient(45deg, #ca3f64, #ff5c84, #ca3f64, #ff5c84)', // 更亮的红色对比
-          backgroundSize: '200% 200%',
-          animation: 'gradient 2s ease infinite',
-          borderRadius: 1,
-          WebkitMask:
-            'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-          WebkitMaskComposite: 'xor',
-          maskComposite: 'exclude',
-        },
-        '@keyframes gradient': {
-          '0%': {
-            backgroundPosition: '0% 50%',
-          },
-          '50%': {
-            backgroundPosition: '100% 50%',
-          },
-          '100%': {
-            backgroundPosition: '0% 50%',
-          },
-        },
-      }}
-    >
+    <TickerContainer up={+t.p > 0} width={300} borderWidth={2}>
       <Stack direction="row" alignItems="center" gap={1}>
         <Avatar
           src={`/logos/${t.s}.png`}
@@ -79,7 +43,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
             color="text.secondary"
             component="span"
           >
-            {t.Q}
+            {compactNumberFormatter(+t.Q)}
           </Typography>
         </Typography>
       </Stack>
@@ -112,6 +76,6 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
           {+t.p > 0 ? `+${+t.p}` : +t.p}
         </Typography>
       </Stack>
-    </Stack>
+    </TickerContainer>
   )
 }
