@@ -6,10 +6,15 @@ import BinanceTickerCard from '../components/BinanceTickerCard'
 import BinanceTickerActionBar from '../components/BinanceTickerActionBar'
 import { useBinanceTickerStore } from '../store/useBinanceTickerStore'
 import { SortBy } from '../types/binance'
+import useBinanceSymbolUpdater from '../hooks/useBinanceSymbolUpdater'
+import useBinanceRatioUpdater from '../hooks/useBinanceRatioUpdater'
 
 export default function Market() {
   const [tickers, setTickers] = useState<FullTicker[]>([])
   const sortBy = useBinanceTickerStore((state) => state.sortBy)
+
+  useBinanceSymbolUpdater()
+  useBinanceRatioUpdater()
 
   useEffect(() => {
     const socket = new WebSocket('wss://fstream.binance.com/ws/!ticker@arr')

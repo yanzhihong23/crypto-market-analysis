@@ -1,11 +1,14 @@
 import { Avatar, Chip, Stack, Tooltip, Typography } from '@mui/material'
 
 import { FullTicker } from '../types'
-import { compactNumberFormatter } from '../utils'
+import { compactNumberFormatter, formatNumber } from '../utils'
+import { useBinanceTickerStore } from '../store/useBinanceTickerStore'
 
 import TickerContainer from './TickerContainer'
 
 export default function BinanceTickerCard({ t }: { t: FullTicker }) {
+  const ratio = useBinanceTickerStore((state) => state.ratio[t.s])
+
   return (
     <TickerContainer up={+t.p > 0} width={300} borderWidth={2}>
       <Stack direction="row" alignItems="center" gap={1}>
@@ -61,13 +64,25 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
         justifyContent="space-between"
         sx={{ zIndex: 2 }}
       >
-        <Tooltip title="Quote Volume" arrow>
-          <Chip
-            size="small"
-            color="primary"
-            label={compactNumberFormatter(+t.q)}
-          />
-        </Tooltip>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Tooltip title="Quote Volume" arrow>
+            <Chip
+              size="small"
+              color="primary"
+              label={compactNumberFormatter(+t.q)}
+            />
+          </Tooltip>
+          {!!ratio && (
+            <Tooltip title="Long/Short Ratio" arrow>
+              <Chip
+                size="small"
+                color="secondary"
+                label={formatNumber(Number(ratio), 2)}
+              />
+            </Tooltip>
+          )}
+        </Stack>
+
         <Typography
           fontSize={18}
           fontWeight="bold"
