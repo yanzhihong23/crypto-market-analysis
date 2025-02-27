@@ -27,12 +27,12 @@ export default function NavMenu({ sx }: { sx?: SxProps }) {
         role="navigation"
         className="nav-tabs"
       >
-        <StyledTab label="Home" value="/" component={Link} to="/" />
+        <StyledTab label="OKX" value="/" component={Link} to="/" />
         <StyledTab
-          label="Market"
-          value="/binance-perpetual-market"
+          label="Binance"
+          value="/binance"
           component={Link}
-          to="/binance-perpetual-market"
+          to="/binance"
         />
         <StyledTab
           label="Charts"

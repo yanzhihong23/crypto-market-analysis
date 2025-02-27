@@ -5,7 +5,7 @@ import { useLocalStorage } from 'usehooks-ts'
 import SymbolOverview from '../components/SymbolOverview'
 import useMobile from '../hooks/useMobile'
 
-function Home() {
+export default function Charts() {
   const mobile = useMobile()
   const [overviews, setOverviews] = useLocalStorage<
     { symbol: string; period: string }[]
@@ -81,5 +81,3 @@ function Home() {
     </Box>
   )
 }
-
-export default Home

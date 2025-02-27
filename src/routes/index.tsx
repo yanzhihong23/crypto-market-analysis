@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Box } from '@mui/material'
 
 import TopBar from '../components/TopBar'
-const Home = lazy(() => import('../pages/Home'))
+const Charts = lazy(() => import('../pages/Charts'))
 const BinancePerpetualMarket = lazy(
   () => import('../pages/BinancePerpetualMarket'),
 )
@@ -17,11 +17,8 @@ export default function Pages() {
         <Box sx={{ flex: 1, padding: 3, mt: 8 }}>
           <Routes>
             <Route path="/" element={<OkxPerpetual />} />
-            <Route
-              path="/binance-perpetual-market"
-              element={<BinancePerpetualMarket />}
-            />
-            <Route path="/charts" element={<Home />} />
+            <Route path="/binance" element={<BinancePerpetualMarket />} />
+            <Route path="/charts" element={<Charts />} />
           </Routes>
         </Box>
       </Router>

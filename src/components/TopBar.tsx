@@ -60,7 +60,7 @@ export default function TopBar() {
             />
           </svg>
           <Typography variant="h6" fontWeight={700} pr={4}>
-            Crypto Market
+            Perpetual Market
           </Typography>
         </Stack>
 
