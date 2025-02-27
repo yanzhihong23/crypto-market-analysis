@@ -1,4 +1,4 @@
-import { Avatar, Stack, Typography } from '@mui/material'
+import { Avatar, Chip, Stack, Tooltip, Typography } from '@mui/material'
 
 import { FullTicker } from '../types'
 import { compactNumberFormatter } from '../utils'
@@ -7,14 +7,13 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
   return (
     <Stack
       direction="column"
-      alignItems="center"
-      gap={1}
+      spacing={2}
       key={t.s}
-      width={240}
+      width={300}
       sx={{
         position: 'relative',
-        px: 1,
-        py: 2.5,
+        p: 2.5,
+        zIndex: 2,
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -56,23 +55,63 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
         <Typography fontSize={20} fontWeight={500}>
           {t.s.replace('USDT', '')}
         </Typography>
+        <Typography
+          flex={1}
+          fontSize={22}
+          fontWeight={600}
+          color={+t.p > 0 ? 'success' : 'error'}
+          align="right"
+        >
+          {+t.P > 0 ? `+${+t.P}` : +t.P}%
+        </Typography>
       </Stack>
-      <Typography fontSize={24}>{+t.c}</Typography>
-      <Typography
-        fontSize={18}
-        fontWeight="bold"
-        color={+t.p > 0 ? 'success' : 'error'}
-      >
-        {+t.p > 0 ? `+${+t.p}` : +t.p}({+t.P > 0 ? `+${+t.P}` : +t.P}%)
-      </Typography>
+      <Stack direction="row" alignItems="end" justifyContent="space-between">
+        <Typography
+          fontSize={36}
+          fontWeight={600}
+          lineHeight={1}
+          color={+t.p > 0 ? 'success' : 'error'}
+        >
+          {+t.c}{' '}
+          <Typography
+            fontSize={16}
+            fontWeight={500}
+            color="text.secondary"
+            component="span"
+          >
+            {t.Q}
+          </Typography>
+        </Typography>
+      </Stack>
+
       <Typography>
         {+t.l} -{' '}
-        <Typography color="orange" component="span">
+        <Typography color="secondary" fontWeight={600} component="span">
           {+t.w}
         </Typography>{' '}
         - {+t.h}
       </Typography>
-      <Typography color="gray">{compactNumberFormatter(+t.q)}</Typography>
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ zIndex: 2 }}
+      >
+        <Tooltip title="Quote Volume" arrow>
+          <Chip
+            size="small"
+            color="primary"
+            label={compactNumberFormatter(+t.q)}
+          />
+        </Tooltip>
+        <Typography
+          fontSize={18}
+          fontWeight="bold"
+          color={+t.p > 0 ? 'success' : 'error'}
+        >
+          {+t.p > 0 ? `+${+t.p}` : +t.p}
+        </Typography>
+      </Stack>
     </Stack>
   )
 }

@@ -3,9 +3,13 @@ import { useEffect, useState } from 'react'
 
 import { FullTicker } from '../types'
 import BinanceTickerCard from '../components/BinanceTickerCard'
+import BinanceTickerActionBar from '../components/BinanceTickerActionBar'
+import { useBinanceTickerStore } from '../store/useBinanceTickerStore'
+import { SortBy } from '../types/binance'
 
 export default function Market() {
   const [tickers, setTickers] = useState<FullTicker[]>([])
+  const sortBy = useBinanceTickerStore((state) => state.sortBy)
 
   useEffect(() => {
     const socket = new WebSocket('wss://fstream.binance.com/ws/!ticker@arr')
@@ -43,7 +47,13 @@ export default function Market() {
                 }
               })
             return [...updatedTickers, ...Object.values(existingTickers)].sort(
-              (a, b) => +b.q - +a.q,
+              (a, b) => {
+                if (sortBy === SortBy.PERCENT) {
+                  return +b.P - +a.P
+                }
+
+                return +b.q - +a.q
+              },
             )
           })
         }
@@ -56,13 +66,13 @@ export default function Market() {
     return () => {
       socket.close()
     }
-  }, [])
+  }, [sortBy])
 
   return (
     <Box
       sx={{
         display: 'flex',
-        gap: '24px',
+        gap: '16px',
         flexWrap: 'wrap',
         justifyContent: 'space-evenly',
       }}
@@ -70,6 +80,8 @@ export default function Market() {
       {tickers.map((t) => (
         <BinanceTickerCard key={t.s} t={t} />
       ))}
+
+      <BinanceTickerActionBar />
     </Box>
   )
 }

@@ -107,7 +107,7 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
       </Stack>
 
       <Stack direction="row" alignItems="center" gap={1} sx={{ zIndex: 2 }}>
-        <Tooltip title="Volume" arrow>
+        <Tooltip title="Quote Volume" arrow>
           <Chip
             size="small"
             color="primary"
