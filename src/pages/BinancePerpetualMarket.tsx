@@ -1,4 +1,4 @@
-import { Box, Divider } from '@mui/material'
+import { Box, CircularProgress, Stack } from '@mui/material'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useIntersectionObserver } from 'usehooks-ts'
 
@@ -11,7 +11,7 @@ import useBinanceSymbolUpdater from '../hooks/useBinanceSymbolUpdater'
 import useBinanceRatioUpdater from '../hooks/useBinanceRatioUpdater'
 
 export default function Market() {
-  const [count, setCount] = useState(10)
+  const [count, setCount] = useState(20)
   const [tickers, setTickers] = useState<FullTicker[]>([])
   const sortBy = useBinanceTickerStore((state) => state.sortBy)
   const showTickers = useMemo(() => {
@@ -35,7 +35,7 @@ export default function Market() {
 
   const loadMore = useCallback(() => {
     console.log('load more')
-    setCount((prevCount) => prevCount + 10)
+    setCount((prevCount) => prevCount + 20)
   }, [])
 
   useEffect(() => {
@@ -116,9 +116,14 @@ export default function Market() {
       ))}
 
       {showTickers.length < tickers.length && (
-        <Divider sx={{ width: '100%', background: 'none' }} ref={ref}>
-          loading
-        </Divider>
+        <Stack
+          sx={{ width: '100%', p: 2 }}
+          direction="row"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <CircularProgress size="24px" ref={ref} />
+        </Stack>
       )}
 
       <BinanceTickerActionBar />
