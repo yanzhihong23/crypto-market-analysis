@@ -8,7 +8,13 @@ interface TickerStore {
   setSymbols: (symbols: string[]) => void
   sortBy: SortBy
   setSortBy: (sortBy: SortBy) => void
-  ratio: Record<string, string>
+  ratio: Record<
+    string,
+    {
+      value: string
+      updatedAt: number
+    }
+  >
   setRatio: (symbol: string, ratio: string) => void
 }
 
@@ -21,7 +27,12 @@ export const useBinanceTickerStore = create<TickerStore>()(
       setSortBy: (sortBy: SortBy) => set({ sortBy }),
       ratio: {},
       setRatio: (symbol: string, ratio: string) =>
-        set((state) => ({ ratio: { ...state.ratio, [symbol]: ratio } })),
+        set((state) => ({
+          ratio: {
+            ...state.ratio,
+            [symbol]: { value: ratio, updatedAt: Date.now() },
+          },
+        })),
     }),
     {
       name: 'binance-tickers',

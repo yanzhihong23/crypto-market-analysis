@@ -45,7 +45,7 @@ export default function useOkxTickerFormat() {
         priceColor,
         oiCcy: oldTicker?.oiCcy,
         fundingRate: oldTicker?.fundingRate,
-        ratio: ratio[ticker.instId],
+        ratio: ratio[ticker.instId]?.value,
         volCcyQuote: volCcyQuote[ticker.instId],
         ...ticker,
         lastSz: lastSz.toString(),

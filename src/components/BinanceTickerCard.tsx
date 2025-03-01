@@ -7,7 +7,7 @@ import { useBinanceTickerStore } from '../store/useBinanceTickerStore'
 import TickerContainer from './TickerContainer'
 
 export default function BinanceTickerCard({ t }: { t: FullTicker }) {
-  const ratio = useBinanceTickerStore((state) => state.ratio[t.s])
+  const ratio = useBinanceTickerStore((state) => state.ratio[t.s]?.value)
 
   return (
     <TickerContainer up={+t.p > 0} width={300} borderWidth={2}>

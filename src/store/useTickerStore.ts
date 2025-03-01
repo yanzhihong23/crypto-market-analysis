@@ -12,7 +12,7 @@ interface TickerStore {
   setKlineData: (instId: string, klineData: OkxKline[]) => void
   volCcyQuote: Record<string, string>
   setVolCcyQuote: (instId: string, volCcyQuote: string) => void
-  ratio: Record<string, string>
+  ratio: Record<string, { value: string; updatedAt: number }>
   setRatio: (instId: string, ratio: string) => void
   openTime: OpenTime
   setOpenTime: (openTime: OpenTime) => void
@@ -45,7 +45,10 @@ export const useTickerStore = create<TickerStore>()(
       ratio: {},
       setRatio: (instId: string, ratio: string) =>
         set((state) => ({
-          ratio: { ...state.ratio, [instId]: ratio },
+          ratio: {
+            ...state.ratio,
+            [instId]: { value: ratio, updatedAt: Date.now() },
+          },
         })),
       openTime: OpenTime.UTC0,
       setOpenTime: (openTime: OpenTime) => set({ openTime }),

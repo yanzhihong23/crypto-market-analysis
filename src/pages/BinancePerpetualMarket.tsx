@@ -1,5 +1,6 @@
-import { Box } from '@mui/material'
-import { useEffect, useState } from 'react'
+import { Box, Divider } from '@mui/material'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useIntersectionObserver } from 'usehooks-ts'
 
 import { FullTicker } from '../types'
 import BinanceTickerCard from '../components/BinanceTickerCard'
@@ -10,11 +11,47 @@ import useBinanceSymbolUpdater from '../hooks/useBinanceSymbolUpdater'
 import useBinanceRatioUpdater from '../hooks/useBinanceRatioUpdater'
 
 export default function Market() {
+  const [count, setCount] = useState(10)
   const [tickers, setTickers] = useState<FullTicker[]>([])
   const sortBy = useBinanceTickerStore((state) => state.sortBy)
+  const showTickers = useMemo(() => {
+    return tickers
+      .sort((a, b) => {
+        if (sortBy === SortBy.PERCENT) {
+          return +b.P - +a.P
+        }
+
+        return +b.q - +a.q
+      })
+      .slice(0, count)
+  }, [tickers, count, sortBy])
+
+  const { isIntersecting, ref } = useIntersectionObserver({
+    threshold: 0.5,
+  })
 
   useBinanceSymbolUpdater()
   useBinanceRatioUpdater()
+
+  const loadMore = useCallback(() => {
+    console.log('load more')
+    setCount((prevCount) => prevCount + 10)
+  }, [])
+
+  useEffect(() => {
+    console.log('isIntersecting', isIntersecting)
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
+    if (isIntersecting) {
+      loadMore()
+      timeoutId = setTimeout(loadMore, 1000)
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+    }
+  }, [isIntersecting, loadMore])
 
   useEffect(() => {
     const socket = new WebSocket('wss://fstream.binance.com/ws/!ticker@arr')
@@ -51,15 +88,7 @@ export default function Market() {
                   updatedTickers.push(d)
                 }
               })
-            return [...updatedTickers, ...Object.values(existingTickers)].sort(
-              (a, b) => {
-                if (sortBy === SortBy.PERCENT) {
-                  return +b.P - +a.P
-                }
-
-                return +b.q - +a.q
-              },
-            )
+            return [...updatedTickers, ...Object.values(existingTickers)]
           })
         }
       } catch (error) {
@@ -71,7 +100,7 @@ export default function Market() {
     return () => {
       socket.close()
     }
-  }, [sortBy])
+  }, [])
 
   return (
     <Box
@@ -82,9 +111,15 @@ export default function Market() {
         justifyContent: 'space-evenly',
       }}
     >
-      {tickers.map((t) => (
+      {showTickers.map((t) => (
         <BinanceTickerCard key={t.s} t={t} />
       ))}
+
+      {showTickers.length < tickers.length && (
+        <Divider sx={{ width: '100%', background: 'none' }} ref={ref}>
+          loading
+        </Divider>
+      )}
 
       <BinanceTickerActionBar />
     </Box>
