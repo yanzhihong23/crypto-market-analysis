@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { ResponsiveContainer, AreaChart, Area, YAxis, XAxis } from 'recharts'
 
-export default function BaseAreaChart({
+function BaseAreaChart({
   data,
   xKey,
   yKey,
@@ -48,3 +48,5 @@ export default function BaseAreaChart({
     </ResponsiveContainer>
   )
 }
+
+export default memo(BaseAreaChart)
