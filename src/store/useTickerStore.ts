@@ -14,6 +14,8 @@ interface TickerStore {
   setVolCcyQuote: (instId: string, volCcyQuote: string) => void
   ratio: Record<string, { value: string; updatedAt: number }>
   setRatio: (instId: string, ratio: string) => void
+  fundingRate: Record<string, string>
+  setFundingRate: (instId: string, fundingRate: string) => void
   openTime: OpenTime
   setOpenTime: (openTime: OpenTime) => void
   sortBy: SortBy
@@ -49,6 +51,11 @@ export const useTickerStore = create<TickerStore>()(
             ...state.ratio,
             [instId]: { value: ratio, updatedAt: Date.now() },
           },
+        })),
+      fundingRate: {},
+      setFundingRate: (instId: string, fundingRate: string) =>
+        set((state) => ({
+          fundingRate: { ...state.fundingRate, [instId]: fundingRate },
         })),
       openTime: OpenTime.UTC0,
       setOpenTime: (openTime: OpenTime) => set({ openTime }),

@@ -1,5 +1,10 @@
 import { Suspense, lazy } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom'
 import { Box } from '@mui/material'
 
 import TopBar from '../components/TopBar'
@@ -19,6 +24,7 @@ export default function Pages() {
             <Route path="/" element={<OkxPerpetual />} />
             <Route path="/binance" element={<BinancePerpetualMarket />} />
             <Route path="/charts" element={<Charts />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Box>
       </Router>

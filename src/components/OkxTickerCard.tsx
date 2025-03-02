@@ -1,14 +1,18 @@
 import { Stack, Typography, Chip, Tooltip } from '@mui/material'
+import { memo } from 'react'
 
-import { OkxTickerFormatted } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
 import { compactNumberFormatter } from '../utils'
+import { useOkxRealtimeTickerStore } from '../store/useOkxRealtimeTickerStore'
 
 import OkxKlineChart from './OkxKlineChart'
 import TickerContainer from './TickerContainer'
 
-export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
-  const volCcyQuote = useTickerStore((state) => state.volCcyQuote[t.instId])
+function OkxTickerCard({ instId }: { instId: string }) {
+  const volCcyQuote = useTickerStore((state) => state.volCcyQuote[instId])
+  const ratio = useTickerStore((state) => state.ratio[instId])
+  const fundingRate = useTickerStore((state) => state.fundingRate[instId])
+  const t = useOkxRealtimeTickerStore((state) => state.tickers[instId] || {})
 
   return (
     <TickerContainer up={+t.percent > 0} minWidth={236} borderWidth={3}>
@@ -31,10 +35,10 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
       <Typography
         fontSize={36}
         fontWeight={600}
-        color={t.priceColor}
+        color={t.isUp ? 'success' : 'error'}
         sx={{
           textShadow: () =>
-            t.priceColor === 'success'
+            t.isUp
               ? `0 0 2px rgba(37, 167, 80, 0.3),
                  1px 1px 2px rgba(37, 167, 80, 0.2),
                  -1px -1px 2px rgba(255, 255, 255, 0.1)` // 绿色立体效果
@@ -72,13 +76,13 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
           />
         </Tooltip>
         <Tooltip title="L/S Ratio" arrow>
-          <Chip size="small" color="secondary" label={`${t.ratio}`} />
+          <Chip size="small" color="secondary" label={ratio?.value} />
         </Tooltip>
         <Tooltip title="Funding Rate" arrow>
           <Chip
             size="small"
-            color={+t.fundingRate > 0 ? 'success' : 'error'}
-            label={`${t.fundingRate}‱`}
+            color={+fundingRate > 0 ? 'success' : 'error'}
+            label={`${fundingRate}‱`}
           />
         </Tooltip>
       </Stack>
@@ -86,3 +90,5 @@ export default function OkxTickerCard({ t }: { t: OkxTickerFormatted }) {
     </TickerContainer>
   )
 }
+
+export default memo(OkxTickerCard)

@@ -9,9 +9,14 @@ import useOkxRatioUpdater from '../hooks/useOkxRatioUpdater'
 import ActionBar from '../components/ActionBar'
 import { useOkxTickers } from '../hooks/useOkxTickers'
 import useOkxInstrumentsUpdater from '../hooks/useOkxInstrumentsUpdater'
+// import { useOkxRealtimeTickerStore } from '../store/useOkxRealtimeTickerStore'
 
 export default function OkxPerpetual() {
   const sortBy = useTickerStore((state) => state.sortBy)
+  const instIds = useTickerStore((state) => state.instIds)
+  const volCcyQuote = useTickerStore((state) => state.volCcyQuote)
+  const ratio = useTickerStore((state) => state.ratio)
+  // const percent = useOkxRealtimeTickerStore((state) => state.percent)
 
   // update instruments
   useOkxInstrumentsUpdater()
@@ -20,26 +25,26 @@ export default function OkxPerpetual() {
   // update ratio data
   const { updateRatioByInstId } = useOkxRatioUpdater()
 
-  const { tickers, add, remove } = useOkxTickers()
+  const { add, remove } = useOkxTickers()
 
-  const sortedTickers = useMemo(() => {
-    return tickers.sort((a, b) => {
-      if (sortBy === SortBy.VOLUME) return +b.volCcyQuote - +a.volCcyQuote
-      if (sortBy === SortBy.PERCENT) return +b.percent - +a.percent
-      if (sortBy === SortBy.RATIO) return +b.ratio - +a.ratio
-      return tickers.indexOf(a) - tickers.indexOf(b)
+  const sortedInstIds = useMemo(() => {
+    return instIds.sort((a, b) => {
+      if (sortBy === SortBy.VOLUME) return +volCcyQuote[b] - +volCcyQuote[a]
+      // if (sortBy === SortBy.PERCENT) return +percent[b] - +percent[a]
+      if (sortBy === SortBy.RATIO) return +ratio[b] - +ratio[a]
+      return instIds.indexOf(a) - instIds.indexOf(b)
     })
-  }, [tickers, sortBy])
+  }, [instIds, ratio, sortBy, volCcyQuote])
 
   return (
     <Box>
       <Grid container spacing={2}>
-        {sortedTickers.map((t) => (
+        {sortedInstIds.map((instId) => (
           <Grid
-            key={t.instId}
+            key={instId}
             size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2, xxl: 1.5 }}
           >
-            <OkxTickerCard t={t} />
+            <OkxTickerCard instId={instId} />
           </Grid>
         ))}
       </Grid>

@@ -43,11 +43,7 @@ export interface OkxTickerFormatted extends OkxTicker {
   percent: string
   vol: string
   color: string
-  priceColor: string
-  oiCcy: string
-  fundingRate: string
-  ratio: string
-  volCcyQuote: string
+  isUp?: boolean
 }
 
 export enum OkxChannel {

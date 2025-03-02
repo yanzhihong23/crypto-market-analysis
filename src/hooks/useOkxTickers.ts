@@ -3,8 +3,8 @@ import { useEffect, useState, useRef } from 'react'
 import { OkxChannel, OkxFundingRate, OkxTickerFormatted } from '../types/okx'
 import { OkxOpenInterest } from '../types/okx'
 import { OkxTicker } from '../types/okx'
-import { compactNumberFormatter } from '../utils'
 import { useTickerStore } from '../store/useTickerStore'
+import { useOkxRealtimeTickerStore } from '../store/useOkxRealtimeTickerStore'
 
 import useOkxTickerFormat from './useOkxTickerFormat'
 
@@ -40,30 +40,16 @@ const getEmptyTicker = (instId: string): OkxTickerFormatted => {
     percent: '',
     vol: '',
     color: '',
-    priceColor: '',
-    oiCcy: '',
-    fundingRate: '',
-    ratio: '-',
-    volCcyQuote: '',
   }
 }
 
 export const useOkxTickers = () => {
   const initialInstIds = useTickerStore.getState().instIds // read once
-  const openTime = useTickerStore((state) => state.openTime)
+  const setFundingRate = useTickerStore((state) => state.setFundingRate)
+  const updateTicker = useOkxRealtimeTickerStore((state) => state.updateTicker)
+  const setPercent = useOkxRealtimeTickerStore((state) => state.setPercent)
   const { formatTicker } = useOkxTickerFormat()
   const [connectCount, setConnectCount] = useState(0)
-  const [tickers, setTickers] = useState<OkxTickerFormatted[]>([])
-  const [rawTickers, setRawTickers] = useState<
-    Record<
-      string,
-      {
-        ticker?: OkxTicker
-        openInterest?: OkxOpenInterest
-        fundingRate?: OkxFundingRate
-      }
-    >
-  >({})
   const wsRef = useRef<WebSocket | null>(null)
 
   const generateSubscribeArgsByInstId = (instId: string) => {
@@ -106,23 +92,23 @@ export const useOkxTickers = () => {
       const res = JSON.parse(data) as TickerResponse
       if (!res.data) return
 
-      setRawTickers((prev) => {
-        const instId = res.arg.instId
-        const newData = { ...prev[instId] }
+      const instId = res.arg.instId
 
-        if (res.arg.channel === OkxChannel.TICKERS) {
-          newData.ticker = res.data[0] as OkxTicker
-        } else if (res.arg.channel === OkxChannel.OPEN_INTEREST) {
-          newData.openInterest = res.data[0] as OkxOpenInterest
-        } else if (res.arg.channel === OkxChannel.FUNDING_RATE) {
-          newData.fundingRate = res.data[0] as OkxFundingRate
-        }
+      if (res.arg.channel === OkxChannel.TICKERS) {
+        const data = res.data[0] as OkxTicker
 
-        return {
-          ...prev,
-          [instId]: newData,
-        }
-      })
+        updateTicker(
+          instId,
+          formatTicker({
+            ticker: data,
+          }),
+        )
+      } else if (res.arg.channel === OkxChannel.OPEN_INTEREST) {
+        // do nothing
+      } else if (res.arg.channel === OkxChannel.FUNDING_RATE) {
+        const { fundingRate } = res.data[0] as OkxFundingRate
+        setFundingRate(instId, (Number(fundingRate) * 10000).toFixed(1))
+      }
     }
 
     ws.onerror = (error) => {
@@ -158,7 +144,6 @@ export const useOkxTickers = () => {
   }
 
   const add = async (instId: string) => {
-    setTickers((prev) => [...prev, getEmptyTicker(instId)])
     const ws = await ensureWebSocket()
     ws.send(
       JSON.stringify({
@@ -169,7 +154,6 @@ export const useOkxTickers = () => {
   }
 
   const remove = async (instId: string) => {
-    setTickers((prev) => prev.filter((t) => t.instId !== instId))
     const ws = await ensureWebSocket()
     ws.send(
       JSON.stringify({
@@ -180,8 +164,11 @@ export const useOkxTickers = () => {
   }
 
   useEffect(() => {
-    setTickers(initialInstIds.map(getEmptyTicker))
-  }, [initialInstIds])
+    initialInstIds.forEach((instId) => {
+      updateTicker(instId, getEmptyTicker(instId))
+      setPercent(instId, 0)
+    })
+  }, [initialInstIds, updateTicker, setPercent])
 
   useEffect(() => {
     if (!initialInstIds.length) return
@@ -194,49 +181,10 @@ export const useOkxTickers = () => {
   }, [])
 
   useEffect(() => {
-    setTickers((prevTickers) => {
-      return prevTickers.map((prevTicker) => {
-        const rawData = rawTickers[prevTicker.instId]
-        if (!rawData?.ticker) return prevTicker
-
-        // 创建基础更新函数
-        const updateExtraData = (ticker: OkxTickerFormatted) => {
-          if (rawData.openInterest) {
-            ticker.oiCcy = compactNumberFormatter(
-              Number(rawData.openInterest.oiCcy),
-            )
-          }
-          if (rawData.fundingRate) {
-            ticker.fundingRate = (
-              +rawData.fundingRate.fundingRate * 10000
-            ).toFixed(1)
-          }
-          return ticker
-        }
-
-        // 如果价格没变，只更新额外数据
-        if (rawData.ticker.last === prevTicker.last) {
-          return updateExtraData({ ...prevTicker })
-        }
-
-        // 价格变化时，进行完整格式化并更新额外数据
-        return updateExtraData(
-          formatTicker({
-            ticker: rawData.ticker,
-            oldTicker: prevTicker,
-            openTime,
-          }),
-        )
-      })
-    })
-  }, [rawTickers, openTime, formatTicker])
-
-  useEffect(() => {
     console.log('connectCount', connectCount)
   }, [connectCount])
 
   return {
-    tickers,
     connectCount,
     add,
     remove,
