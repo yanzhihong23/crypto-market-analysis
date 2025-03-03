@@ -51,6 +51,7 @@ export const useOkxTickers = () => {
   const { formatTicker } = useOkxTickerFormat()
   const [connectCount, setConnectCount] = useState(0)
   const wsRef = useRef<WebSocket | null>(null)
+  const [newTicker, setNewTicker] = useState<OkxTicker | null>(null)
 
   const generateSubscribeArgsByInstId = (instId: string) => {
     return [
@@ -96,13 +97,8 @@ export const useOkxTickers = () => {
 
       if (res.arg.channel === OkxChannel.TICKERS) {
         const data = res.data[0] as OkxTicker
-
-        updateTicker(
-          instId,
-          formatTicker({
-            ticker: data,
-          }),
-        )
+        // Formatting the ticker here would cause a closure issue, openTime is not updated
+        setNewTicker(data)
       } else if (res.arg.channel === OkxChannel.OPEN_INTEREST) {
         // do nothing
       } else if (res.arg.channel === OkxChannel.FUNDING_RATE) {
@@ -183,6 +179,12 @@ export const useOkxTickers = () => {
   useEffect(() => {
     console.log('connectCount', connectCount)
   }, [connectCount])
+
+  useEffect(() => {
+    if (!newTicker) return
+
+    updateTicker(newTicker.instId, formatTicker({ ticker: newTicker }))
+  }, [newTicker, updateTicker, formatTicker])
 
   return {
     connectCount,
