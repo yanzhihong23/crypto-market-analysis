@@ -32,7 +32,7 @@ export default function OkxPerpetual() {
       if (sortBy === SortBy.VOLUME) return +volCcyQuote[b] - +volCcyQuote[a]
       if (sortBy === SortBy.PERCENT)
         return +(percent.get(b) || 0) - +(percent.get(a) || 0)
-      if (sortBy === SortBy.RATIO) return +ratio[b] - +ratio[a]
+      if (sortBy === SortBy.RATIO) return +ratio[b].value - +ratio[a].value
       return instIds.indexOf(a) - instIds.indexOf(b)
     })
   }, [instIds, percent, ratio, sortBy, volCcyQuote])
