@@ -9,14 +9,14 @@ import useOkxRatioUpdater from '../hooks/useOkxRatioUpdater'
 import ActionBar from '../components/ActionBar'
 import { useOkxTickers } from '../hooks/useOkxTickers'
 import useOkxInstrumentsUpdater from '../hooks/useOkxInstrumentsUpdater'
-// import { useOkxRealtimeTickerStore } from '../store/useOkxRealtimeTickerStore'
+import { useOkxRealtimeTickerStore } from '../store/useOkxRealtimeTickerStore'
 
 export default function OkxPerpetual() {
   const sortBy = useTickerStore((state) => state.sortBy)
   const instIds = useTickerStore((state) => state.instIds)
   const volCcyQuote = useTickerStore((state) => state.volCcyQuote)
   const ratio = useTickerStore((state) => state.ratio)
-  // const percent = useOkxRealtimeTickerStore((state) => state.percent)
+  const percent = useOkxRealtimeTickerStore((state) => state.percent)
 
   // update instruments
   useOkxInstrumentsUpdater()
@@ -30,11 +30,12 @@ export default function OkxPerpetual() {
   const sortedInstIds = useMemo(() => {
     return instIds.sort((a, b) => {
       if (sortBy === SortBy.VOLUME) return +volCcyQuote[b] - +volCcyQuote[a]
-      // if (sortBy === SortBy.PERCENT) return +percent[b] - +percent[a]
+      if (sortBy === SortBy.PERCENT)
+        return +(percent.get(b) || 0) - +(percent.get(a) || 0)
       if (sortBy === SortBy.RATIO) return +ratio[b] - +ratio[a]
       return instIds.indexOf(a) - instIds.indexOf(b)
     })
-  }, [instIds, ratio, sortBy, volCcyQuote])
+  }, [instIds, percent, ratio, sortBy, volCcyQuote])
 
   return (
     <Box>

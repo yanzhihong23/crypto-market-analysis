@@ -1,42 +1,41 @@
 import { create } from 'zustand'
+import { throttle } from 'lodash'
 
 import { OkxTickerFormatted } from '../types/okx'
 
 interface OkxRealtimeTickerStore {
-  tickers: Record<string, OkxTickerFormatted>
+  tickers: Map<string, OkxTickerFormatted>
+  percent: Map<string, number>
   updateTicker: (instId: string, ticker: OkxTickerFormatted) => void
-  percent: Record<string, number | string>
-  setPercent: (instId: string, percent: number) => void
+  setPercent: (instId: string, value: number) => void
 }
 
 export const useOkxRealtimeTickerStore = create<OkxRealtimeTickerStore>(
-  (set) => ({
-    tickers: {},
-    updateTicker: (instId: string, ticker: OkxTickerFormatted) =>
-      set((state) => {
-        const last = state.tickers[instId]
-        // same price, different amount
-        const isUp =
-          +ticker.last === +last?.last ? last?.isUp : +ticker.last > +last?.last
+  (set, get) => {
+    const throttledPercentUpdate = throttle((instId: string, value: number) => {
+      get().percent.set(instId, value)
+      set({ percent: get().percent })
+    }, 3000)
 
-        return {
-          tickers: {
-            ...state.tickers,
-            [instId]: { ...ticker, isUp },
-          },
-          percent: {
-            ...state.percent,
-            [instId]: ticker.percent,
-          },
-        }
-      }),
-    percent: {},
-    setPercent: (instId: string, percent: number) =>
-      set((state) => ({
-        percent: {
-          ...state.percent,
-          [instId]: percent,
-        },
-      })),
-  }),
+    return {
+      tickers: new Map(),
+      percent: new Map(),
+      updateTicker: (instId, ticker) => {
+        const lastTicker = get().tickers.get(instId)
+        ticker.isUp = !lastTicker
+          ? true
+          : +ticker.last === +lastTicker?.last
+            ? lastTicker?.isUp
+            : +ticker.last > +lastTicker?.last
+
+        get().tickers.set(instId, ticker)
+        requestAnimationFrame(() => set({ tickers: get().tickers }))
+        throttledPercentUpdate(instId, Number(ticker.percent))
+      },
+      setPercent: (instId, value) => {
+        get().percent.set(instId, value)
+        set({ percent: get().percent })
+      },
+    }
+  },
 )
