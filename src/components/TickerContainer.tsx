@@ -1,4 +1,4 @@
-import { Stack } from '@mui/material'
+import { Stack, SxProps } from '@mui/material'
 
 export default function TickerContainer({
   up,
@@ -6,12 +6,14 @@ export default function TickerContainer({
   width,
   borderWidth = 2,
   children,
+  sx,
 }: {
   up?: boolean
   minWidth?: number
   width?: number
   borderWidth?: number
   children: React.ReactNode
+  sx?: SxProps
 }) {
   return (
     <Stack
@@ -55,6 +57,7 @@ export default function TickerContainer({
             backgroundPosition: '0% 50%',
           },
         },
+        ...sx,
       }}
     >
       {children}

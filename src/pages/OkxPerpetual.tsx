@@ -14,6 +14,7 @@ import { useOkxRealtimeTickerStore } from '../store/useOkxRealtimeTickerStore'
 export default function OkxPerpetual() {
   const sortBy = useTickerStore((state) => state.sortBy)
   const instIds = useTickerStore((state) => state.instIds)
+  const setInstIds = useTickerStore((state) => state.setInstIds)
   const volCcyQuote = useTickerStore((state) => state.volCcyQuote)
   const ratio = useTickerStore((state) => state.ratio)
   const percent = useOkxRealtimeTickerStore((state) => state.percent)
@@ -45,7 +46,13 @@ export default function OkxPerpetual() {
             key={instId}
             size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2, xxl: 1.5 }}
           >
-            <OkxTickerCard instId={instId} />
+            <OkxTickerCard
+              instId={instId}
+              onRemove={() => {
+                remove(instId)
+                setInstIds(instIds.filter((i) => i !== instId))
+              }}
+            />
           </Grid>
         ))}
       </Grid>
