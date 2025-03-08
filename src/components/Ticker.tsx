@@ -1,4 +1,4 @@
-import { Box, Stack, Typography } from '@mui/material'
+import { Stack, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
 
 import { FullTicker } from '../types'
@@ -69,24 +69,15 @@ export default function Ticker({ symbol }: { symbol: string }) {
   }, [symbol])
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '24px',
-      }}
+    <Stack
+      direction="row"
+      alignItems="center"
+      justifyContent="space-between"
+      flexWrap="wrap"
+      spacing={3}
     >
-      <Stack spacing={1}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-            gap: '12px',
-          }}
-        >
+      <Stack spacing={1} sx={{ flex: 1 }}>
+        <Stack direction="row" alignItems="flex-end" spacing={1.5}>
           <Typography
             fontSize={48}
             lineHeight={1}
@@ -103,7 +94,7 @@ export default function Ticker({ symbol }: { symbol: string }) {
           >
             {aggTrade?.q ?? '-'}
           </Typography>
-        </Box>
+        </Stack>
         <Typography
           sx={{ display: 'flex', gap: '16px' }}
           fontSize={22}
@@ -114,7 +105,7 @@ export default function Ticker({ symbol }: { symbol: string }) {
           <span>{Number(ticker?.p) > 0 ? `+${ticker?.P}` : ticker?.P}%</span>
         </Typography>
       </Stack>
-      <Stack spacing={2}>
+      <Stack spacing={2} sx={{}}>
         <Description label="24h High" value={ticker?.h ?? '-'} />
         <Description label="24h Low" value={ticker?.l ?? '-'} />
       </Stack>
@@ -128,6 +119,6 @@ export default function Ticker({ symbol }: { symbol: string }) {
           value={compactNumberFormatter(Number(ticker?.q))}
         />
       </Stack>
-    </Box>
+    </Stack>
   )
 }
