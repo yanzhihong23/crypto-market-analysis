@@ -24,6 +24,7 @@ function OkxTickerCard({
   return (
     <TickerContainer
       up={+t.percent > 0}
+      changePercent={+t.percent}
       minWidth={236}
       borderWidth={3}
       sx={{
@@ -32,7 +33,7 @@ function OkxTickerCard({
         },
       }}
     >
-      <Stack direction="row" alignItems="center" gap={1}>
+      <Stack direction="row" alignItems="center" gap={1} zIndex={2}>
         <img src={t.logo} width={32} />
         <Typography fontSize={20} fontWeight={700}>
           {t.coin}
