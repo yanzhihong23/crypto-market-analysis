@@ -10,8 +10,13 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
   const ratio = useBinanceTickerStore((state) => state.ratio[t.s]?.value)
 
   return (
-    <TickerContainer up={+t.p > 0} width={300} borderWidth={2}>
-      <Stack direction="row" alignItems="center" gap={1}>
+    <TickerContainer
+      up={+t.p > 0}
+      changePercent={+t.P}
+      width={300}
+      borderWidth={2}
+    >
+      <Stack direction="row" alignItems="center" gap={1} sx={{ zIndex: 2 }}>
         <Avatar
           src={`/logos/${t.s}.png`}
           sx={{ width: 32, height: 32 }}
