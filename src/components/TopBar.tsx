@@ -1,5 +1,6 @@
 import { AppBar, Stack, Toolbar, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
+import { format } from 'date-fns'
 
 import Logo from '../assets/logo.svg?react'
 
@@ -10,7 +11,7 @@ export default function TopBar() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTime(new Date().toTimeString().split(' ')[0])
+      setTime(format(new Date(), 'HH:mm:ss'))
     }, 1000)
     return () => clearInterval(interval)
   }, [])

@@ -17,9 +17,8 @@ function OkxTickerCard({
   instId: string
   onRemove: (instId: string) => void
 }) {
-  const t = useOkxRealtimeTickerStore(
-    (state) => state.tickers.get(instId) || ({} as OkxTickerFormatted),
-  )
+  const tickers = useOkxRealtimeTickerStore((state) => state.tickers)
+  const t = tickers.get(instId) || ({} as OkxTickerFormatted)
 
   return (
     <TickerContainer
