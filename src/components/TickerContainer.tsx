@@ -1,6 +1,7 @@
 import { Box, Stack, SxProps } from '@mui/material'
+import { memo } from 'react'
 
-export default function TickerContainer({
+function TickerContainer({
   up,
   changePercent = 0,
   minWidth = 236,
@@ -29,6 +30,9 @@ export default function TickerContainer({
         zIndex: 2,
         '&:hover': {
           transform: 'scale(1.02)',
+          '& .actionBar': {
+            display: 'flex',
+          },
         },
         transition: 'transform 0.2s ease-in-out',
         '&::before': {
@@ -79,3 +83,5 @@ export default function TickerContainer({
     </Stack>
   )
 }
+
+export default memo(TickerContainer)

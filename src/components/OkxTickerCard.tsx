@@ -1,5 +1,5 @@
 import { IconButton, Stack, Typography } from '@mui/material'
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import BookmarkRemoveIcon from '@mui/icons-material/BookmarkRemove'
 
 import { useOkxRealtimeTickerStore } from '../store/useOkxRealtimeTickerStore'
@@ -21,17 +21,15 @@ function OkxTickerCard({
     (state) => state.tickers.get(instId) || ({} as OkxTickerFormatted),
   )
 
+  const up = useMemo(() => +t.percent > 0, [t.percent])
+  const changePercent = useMemo(() => +(+t.percent).toFixed(2), [t.percent])
+
   return (
     <TickerContainer
-      up={+t.percent > 0}
-      changePercent={+t.percent}
+      up={up}
+      changePercent={changePercent}
       minWidth={236}
       borderWidth={3}
-      sx={{
-        '&:hover .actionBar': {
-          display: 'flex',
-        },
-      }}
     >
       <Stack direction="row" alignItems="center" gap={1} zIndex={2}>
         <img src={t.logo} width={32} />
