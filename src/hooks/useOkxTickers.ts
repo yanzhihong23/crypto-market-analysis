@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 
 import { OkxChannel, OkxFundingRate, OkxTickerFormatted } from '../types/okx'
 import { OkxOpenInterest } from '../types/okx'
@@ -123,7 +123,7 @@ export const useOkxTickers = () => {
     return ws
   }
 
-  const ensureWebSocket = () => {
+  const ensureWebSocket = useCallback(() => {
     return new Promise<WebSocket>((resolve) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         resolve(wsRef.current)
@@ -137,27 +137,33 @@ export const useOkxTickers = () => {
         }
       }, 100)
     })
-  }
+  }, [])
 
-  const add = async (instId: string) => {
-    const ws = await ensureWebSocket()
-    ws.send(
-      JSON.stringify({
-        op: 'subscribe',
-        args: generateSubscribeArgsByInstId(instId),
-      }),
-    )
-  }
+  const add = useCallback(
+    async (instId: string) => {
+      const ws = await ensureWebSocket()
+      ws.send(
+        JSON.stringify({
+          op: 'subscribe',
+          args: generateSubscribeArgsByInstId(instId),
+        }),
+      )
+    },
+    [ensureWebSocket],
+  )
 
-  const remove = async (instId: string) => {
-    const ws = await ensureWebSocket()
-    ws.send(
-      JSON.stringify({
-        op: 'unsubscribe',
-        args: generateSubscribeArgsByInstId(instId),
-      }),
-    )
-  }
+  const remove = useCallback(
+    async (instId: string) => {
+      const ws = await ensureWebSocket()
+      ws.send(
+        JSON.stringify({
+          op: 'unsubscribe',
+          args: generateSubscribeArgsByInstId(instId),
+        }),
+      )
+    },
+    [ensureWebSocket],
+  )
 
   useEffect(() => {
     initialInstIds.forEach((instId) => {

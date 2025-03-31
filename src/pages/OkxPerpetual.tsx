@@ -1,5 +1,5 @@
 import { Box, Grid2 as Grid } from '@mui/material'
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 
 import { SortBy } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
@@ -38,6 +38,23 @@ export default function OkxPerpetual() {
     })
   }, [instIds, percent, ratio, sortBy, volCcyQuote])
 
+  const handleAdd = useCallback(
+    (instId: string) => {
+      add(instId)
+      updateKlinesByInstId(instId)
+      updateRatioByInstId(instId)
+    },
+    [add, updateKlinesByInstId, updateRatioByInstId],
+  )
+
+  const handleRemove = useCallback(
+    (instId: string) => {
+      remove(instId)
+      setInstIds(instIds.filter((i) => i !== instId))
+    },
+    [instIds, remove, setInstIds],
+  )
+
   return (
     <Box>
       <Grid container spacing={2}>
@@ -46,24 +63,11 @@ export default function OkxPerpetual() {
             key={instId}
             size={{ xs: 12, sm: 6, md: 4, lg: 3, xl: 2, xxl: 1.5 }}
           >
-            <OkxTickerCard
-              instId={instId}
-              onRemove={() => {
-                remove(instId)
-                setInstIds(instIds.filter((i) => i !== instId))
-              }}
-            />
+            <OkxTickerCard instId={instId} onRemove={handleRemove} />
           </Grid>
         ))}
       </Grid>
-      <ActionBar
-        onAdd={(instId) => {
-          add(instId)
-          updateKlinesByInstId(instId)
-          updateRatioByInstId(instId)
-        }}
-        onRemove={remove}
-      />
+      <ActionBar onAdd={handleAdd} onRemove={remove} />
     </Box>
   )
 }
