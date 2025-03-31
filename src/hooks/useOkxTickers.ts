@@ -90,6 +90,7 @@ export const useOkxTickers = () => {
         ws.send('ping')
       }, 20000)
 
+      if (data === 'pong') return
       const res = JSON.parse(data) as TickerResponse
       if (!res.data) return
 
