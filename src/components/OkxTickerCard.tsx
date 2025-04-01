@@ -9,6 +9,7 @@ import OkxKlineChart from './OkxKlineChart'
 import TickerContainer from './TickerContainer'
 import LastPrice from './LastPrice'
 import OkxMarketMetrics from './OkxMarketMetrics'
+import OkxLogoSymbol from './OkxLogoSymbol'
 
 function OkxTickerCard({
   instId,
@@ -31,13 +32,15 @@ function OkxTickerCard({
       minWidth={236}
       borderWidth={3}
     >
-      <Stack direction="row" alignItems="center" gap={1} zIndex={2}>
-        <img src={t.logo} width={32} />
-        <Typography fontSize={20} fontWeight={700}>
-          {t.coin}
-        </Typography>
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        zIndex={2}
+      >
+        <OkxLogoSymbol instId={instId} />
+
         <Typography
-          flex={1}
           fontSize={22}
           fontWeight={600}
           color={t.color}

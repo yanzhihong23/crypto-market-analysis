@@ -37,8 +37,6 @@ export interface OkxTicker {
 }
 
 export interface OkxTickerFormatted extends OkxTicker {
-  coin: string
-  logo?: string
   dif: string
   percent: string
   vol: string

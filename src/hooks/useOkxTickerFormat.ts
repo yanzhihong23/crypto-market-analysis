@@ -14,11 +14,9 @@ export default function useOkxTickerFormat() {
         (instrument) => instrument.instId === ticker.instId,
       )
       const open = Number(ticker[openTime])
-      const coin = ticker.instId.split('-')[0]
       const change = +ticker.last - open
       const percent = ((change / open) * 100).toFixed(2)
       const vol = compactNumberFormatter(+ticker.volCcy24h * +ticker.last)
-      const logo = `https://static.okx.com/cdn/oksupport/asset/currency/icon/${coin.toLowerCase()}.png?x-oss-process=image/format,webp`
       let dif = new Intl.NumberFormat().format(change)
       if (change > 0) dif = '+' + dif
 
@@ -26,8 +24,6 @@ export default function useOkxTickerFormat() {
       const lastSz = formatNumber(+ticker.lastSz * +(instrument?.ctVal || 1), 4)
 
       return {
-        coin,
-        logo,
         dif,
         percent,
         vol,
