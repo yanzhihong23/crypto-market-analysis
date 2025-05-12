@@ -34,8 +34,6 @@ const getEmptyTicker = (instId: string): OkxTickerFormatted => {
     sodUtc0: '',
     sodUtc8: '',
     ts: '',
-    coin: instId.split('-')[0],
-    logo: undefined,
     dif: '',
     percent: '',
     vol: '',
