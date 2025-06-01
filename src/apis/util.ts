@@ -1,5 +1,5 @@
 export const proxyGet = async (url: string) => {
-  const res = await fetch(`https://openask.me/proxy?${url}`)
+  const res = await fetch(`https://verio-api.vercel.app/api/proxy?${url}`)
   const data = await res.json()
   return data
 }
