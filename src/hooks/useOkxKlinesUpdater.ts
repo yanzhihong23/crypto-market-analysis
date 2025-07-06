@@ -22,7 +22,7 @@ export default function useOkxKlinesUpdater() {
 
   const updateAllKlines = useCallback(async () => {
     if (!instIds.length) return
-    timerRef.current = setTimeout(updateAllKlines, 1000 * 30) // 30 seconds
+    timerRef.current = setTimeout(updateAllKlines, 1000 * 60) // 1 minute
 
     try {
       for (const instId of instIds) {
