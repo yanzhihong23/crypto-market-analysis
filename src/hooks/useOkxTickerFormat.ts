@@ -17,7 +17,9 @@ export default function useOkxTickerFormat() {
       const change = +ticker.last - open
       const percent = ((change / open) * 100).toFixed(2)
       const vol = compactNumberFormatter(+ticker.volCcy24h * +ticker.last)
-      let dif = new Intl.NumberFormat().format(change)
+      let dif = new Intl.NumberFormat('en-US', {
+        maximumFractionDigits: 6,
+      }).format(change)
       if (change > 0) dif = '+' + dif
 
       const color = +ticker.last > +open ? 'success' : 'error'
