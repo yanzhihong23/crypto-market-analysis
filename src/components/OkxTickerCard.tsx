@@ -1,5 +1,5 @@
 import { IconButton, Stack, Typography } from '@mui/material'
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useCallback } from 'react'
 import BookmarkRemoveIcon from '@mui/icons-material/BookmarkRemove'
 
 import { useOkxRealtimeTickerStore } from '../store/useOkxRealtimeTickerStore'
@@ -24,6 +24,28 @@ function OkxTickerCard({
 
   const up = useMemo(() => +t.percent > 0, [t.percent])
   const changePercent = useMemo(() => +(+t.percent).toFixed(2), [t.percent])
+
+  // memoized style object
+  const actionBarSx = useMemo(
+    () => ({
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      p: 2,
+      zIndex: 3,
+      display: 'none',
+      height: 60,
+      width: '100%',
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      backdropFilter: 'blur(2px)',
+      borderBottomLeftRadius: 16,
+      borderBottomRightRadius: 16,
+    }),
+    [],
+  )
+
+  // memoized callback function
+  const handleRemove = useCallback(() => onRemove(instId), [instId, onRemove])
 
   return (
     <TickerContainer
@@ -69,22 +91,9 @@ function OkxTickerCard({
         justifyContent="end"
         gap={1}
         className="actionBar"
-        sx={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          p: 2,
-          zIndex: 3,
-          display: 'none',
-          height: 60,
-          width: '100%',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(2px)',
-          borderBottomLeftRadius: 16,
-          borderBottomRightRadius: 16,
-        }}
+        sx={actionBarSx}
       >
-        <IconButton color="error" size="small" onClick={() => onRemove(instId)}>
+        <IconButton color="error" size="small" onClick={handleRemove}>
           <BookmarkRemoveIcon />
         </IconButton>
       </Stack>
