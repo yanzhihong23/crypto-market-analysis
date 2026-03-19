@@ -15,11 +15,26 @@ if (!fs.existsSync(logoDirectory)) {
 const binanceUrl =
   'https://www.binance.com/bapi/composite/v1/public/marketing/symbol/list'
 
+// Use Clash Verge local proxy so Node uses the same path as Chrome (default port 7897)
+const requestConfig = {
+  timeout: 30000,
+  proxy: { protocol: 'http', host: '127.0.0.1', port: 7897 },
+}
+
 // 获取币对信息并下载logo
 async function fetchAndDownloadLogos() {
   try {
-    // 发出GET请求以获取币对信息
-    const response = await axios.get(binanceUrl)
+    // 发出GET请求以获取币对信息（失败时自动重试 2 次）
+    let response
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        response = await axios.get(binanceUrl, requestConfig)
+        break
+      } catch (err) {
+        if (attempt === 3) throw err
+        console.warn(`第 ${attempt} 次请求超时，重试中...`)
+      }
+    }
     const data = response.data
 
     // 检查响应结构是否正确
@@ -41,6 +56,7 @@ async function fetchAndDownloadLogos() {
             url: logoUrl,
             method: 'GET',
             responseType: 'stream',
+            ...requestConfig,
           })
 
           logoResponse.data.pipe(writer)
