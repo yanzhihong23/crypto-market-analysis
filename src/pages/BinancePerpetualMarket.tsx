@@ -54,7 +54,9 @@ export default function Market() {
   }, [isIntersecting, loadMore])
 
   useEffect(() => {
-    const socket = new WebSocket('wss://fstream.binance.com/ws/!ticker@arr')
+    const socket = new WebSocket(
+      'wss://fstream.binance.com/market/ws/!ticker@arr',
+    )
 
     socket.onopen = () => {
       console.log('socket open')

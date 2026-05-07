@@ -33,7 +33,7 @@ export default function Ticker({ symbol }: { symbol: string }) {
 
   useEffect(() => {
     const socket = new WebSocket(
-      `wss://fstream.binance.com/ws/${symbol.toLowerCase()}@aggTrade`,
+      `wss://fstream.binance.com/market/ws/${symbol.toLowerCase()}@aggTrade`,
     )
     socket.onopen = () => {
       socket.send(
