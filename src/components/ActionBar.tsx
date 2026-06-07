@@ -18,14 +18,10 @@ import { useState } from 'react'
 
 import { OpenTime, SortBy } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
+import { removeOkxTicker } from '../store/okxRealtimeTicker'
+import { okxTickerActions } from '../okx/okxTickerActions'
 
-export default function ActionBar({
-  onAdd,
-  onRemove,
-}: {
-  onAdd?: (instId: string) => void
-  onRemove?: (instId: string) => void
-}) {
+export default function ActionBar() {
   const instruments = useTickerStore((state) => state.instruments)
   const instIds = useTickerStore((state) => state.instIds)
   const setInstIds = useTickerStore((state) => state.setInstIds)
@@ -165,7 +161,7 @@ export default function ActionBar({
           <Button
             onClick={() => {
               setOpenAddDialog(false)
-              onAdd?.(newInstId)
+              void okxTickerActions.add(newInstId)
               setInstIds([...instIds, newInstId])
             }}
           >
@@ -197,7 +193,8 @@ export default function ActionBar({
           <Button
             onClick={() => {
               setOpenRemoveDialog(false)
-              onRemove?.(removeInstId)
+              void okxTickerActions.remove(removeInstId)
+              removeOkxTicker(removeInstId)
               setInstIds(instIds.filter((i) => i !== removeInstId))
             }}
           >

@@ -21,26 +21,47 @@ export default function useOkxKlinesUpdater() {
   )
 
   const updateAllKlines = useCallback(async () => {
-    if (!instIds.length) return
+    const currentInstIds = useTickerStore.getState().instIds
+    if (!currentInstIds.length) return
     timerRef.current = setTimeout(updateAllKlines, 1000 * 60) // 1 minute
 
     try {
-      for (const instId of instIds) {
+      for (const instId of currentInstIds) {
         await updateKlinesByInstId(instId)
       }
     } catch (error) {
       console.error('Failed to fetch klines:', error)
     }
-  }, [instIds, updateKlinesByInstId])
+  }, [updateKlinesByInstId])
+
+  const prevInstIdsRef = useRef<string[]>([])
 
   useEffect(() => {
+    const prevInstIds = prevInstIdsRef.current
+    const addedInstIds = instIds.filter((id) => !prevInstIds.includes(id))
+    prevInstIdsRef.current = instIds
+
+    if (!instIds.length) return
+
+    if (prevInstIds.length === 0) {
+      updateAllKlines()
+      return
+    }
+
+    if (addedInstIds.length > 0) {
+      void Promise.all(addedInstIds.map((id) => updateKlinesByInstId(id)))
+    }
+  }, [instIds, updateAllKlines, updateKlinesByInstId])
+
+  useEffect(() => {
+    if (!useTickerStore.getState().instIds.length) return
     updateAllKlines()
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current)
       }
     }
-  }, [instIds, openTime, updateAllKlines])
+  }, [openTime, updateAllKlines])
 
   return { updateKlinesByInstId }
 }

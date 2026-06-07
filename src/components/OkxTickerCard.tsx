@@ -2,8 +2,10 @@ import { IconButton, Stack, Typography } from '@mui/material'
 import { memo, useMemo, useCallback } from 'react'
 import BookmarkRemoveIcon from '@mui/icons-material/BookmarkRemove'
 
-import { useOkxRealtimeTickerStore } from '../store/useOkxRealtimeTickerStore'
-import { OkxTickerFormatted } from '../types/okx'
+import useOkxTicker from '../hooks/useOkxTicker'
+import { useTickerStore } from '../store/useTickerStore'
+import { removeOkxTicker } from '../store/okxRealtimeTicker'
+import { okxTickerActions } from '../okx/okxTickerActions'
 
 import OkxKlineChart from './OkxKlineChart'
 import TickerContainer from './TickerContainer'
@@ -11,18 +13,8 @@ import LastPrice from './LastPrice'
 import OkxMarketMetrics from './OkxMarketMetrics'
 import OkxLogoSymbol from './OkxLogoSymbol'
 
-const EMPTY_TICKER = {} as OkxTickerFormatted
-
-function OkxTickerCard({
-  instId,
-  onRemove,
-}: {
-  instId: string
-  onRemove: (instId: string) => void
-}) {
-  const t = useOkxRealtimeTickerStore(
-    (state) => state.tickers.get(instId) ?? EMPTY_TICKER,
-  )
+function OkxTickerCard({ instId }: { instId: string }) {
+  const t = useOkxTicker(instId)
 
   const up = useMemo(() => +t.percent > 0, [t.percent])
   const changePercent = useMemo(() => +(+t.percent).toFixed(2), [t.percent])
@@ -46,8 +38,12 @@ function OkxTickerCard({
     [],
   )
 
-  // memoized callback function
-  const handleRemove = useCallback(() => onRemove(instId), [instId, onRemove])
+  const handleRemove = useCallback(() => {
+    void okxTickerActions.remove(instId)
+    removeOkxTicker(instId)
+    const { instIds, setInstIds } = useTickerStore.getState()
+    setInstIds(instIds.filter((i) => i !== instId))
+  }, [instId])
 
   return (
     <TickerContainer
@@ -84,8 +80,8 @@ function OkxTickerCard({
         </Typography>
       </Stack>
 
-      <OkxMarketMetrics instId={t.instId} />
-      <OkxKlineChart instId={t.instId} />
+      <OkxMarketMetrics instId={instId} />
+      <OkxKlineChart instId={instId} />
 
       <Stack
         direction="row"

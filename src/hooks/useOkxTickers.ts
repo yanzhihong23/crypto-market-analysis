@@ -1,10 +1,14 @@
 import { useEffect, useRef, useCallback } from 'react'
 
-import { OkxChannel, OkxFundingRate, OkxTickerFormatted } from '../types/okx'
+import { OkxChannel, OkxFundingRate } from '../types/okx'
 import { OkxOpenInterest } from '../types/okx'
 import { OkxTicker } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
-import { useOkxRealtimeTickerStore } from '../store/useOkxRealtimeTickerStore'
+import {
+  getEmptyTicker,
+  setOkxPercent,
+  updateOkxTicker,
+} from '../store/okxRealtimeTicker'
 
 import useOkxTickerFormat from './useOkxTickerFormat'
 
@@ -16,47 +20,18 @@ interface TickerResponse {
   data: OkxTicker[] | OkxOpenInterest[] | OkxFundingRate[]
 }
 
-const getEmptyTicker = (instId: string): OkxTickerFormatted => {
-  return {
-    instType: 'SWAP',
-    instId,
-    last: '',
-    lastSz: '',
-    askPx: '',
-    askSz: '',
-    bidPx: '',
-    bidSz: '',
-    open24h: '',
-    high24h: '',
-    low24h: '',
-    volCcy24h: '',
-    vol24h: '',
-    sodUtc0: '',
-    sodUtc8: '',
-    ts: '',
-    dif: '',
-    percent: '',
-    vol: '',
-    color: '',
-  }
-}
-
 export const useOkxTickers = () => {
   const initialInstIds = useTickerStore.getState().instIds // read once
   const setFundingRate = useTickerStore((state) => state.setFundingRate)
-  const updateTicker = useOkxRealtimeTickerStore((state) => state.updateTicker)
-  const setPercent = useOkxRealtimeTickerStore((state) => state.setPercent)
   const { formatTicker } = useOkxTickerFormat()
   const wsRef = useRef<WebSocket | null>(null)
   const mountedRef = useRef(true)
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const formatTickerRef = useRef(formatTicker)
-  const updateTickerRef = useRef(updateTicker)
   const setFundingRateRef = useRef(setFundingRate)
 
   formatTickerRef.current = formatTicker
-  updateTickerRef.current = updateTicker
   setFundingRateRef.current = setFundingRate
 
   const generateSubscribeArgsByInstId = (instId: string) => {
@@ -125,10 +100,7 @@ export const useOkxTickers = () => {
 
       if (res.arg.channel === OkxChannel.TICKERS) {
         const ticker = res.data[0] as OkxTicker
-        updateTickerRef.current(
-          ticker.instId,
-          formatTickerRef.current({ ticker }),
-        )
+        updateOkxTicker(ticker.instId, formatTickerRef.current({ ticker }))
       } else if (res.arg.channel === OkxChannel.OPEN_INTEREST) {
         // do nothing
       } else if (res.arg.channel === OkxChannel.FUNDING_RATE) {
@@ -210,10 +182,10 @@ export const useOkxTickers = () => {
 
   useEffect(() => {
     initialInstIds.forEach((instId) => {
-      updateTicker(instId, getEmptyTicker(instId))
-      setPercent(instId, 0)
+      updateOkxTicker(instId, getEmptyTicker(instId))
+      setOkxPercent(instId, 0)
     })
-  }, [initialInstIds, updateTicker, setPercent])
+  }, [initialInstIds])
 
   useEffect(() => {
     mountedRef.current = true
@@ -228,7 +200,7 @@ export const useOkxTickers = () => {
       wsRef.current?.close()
       wsRef.current = null
     }
-  }, [])
+  }, [initialInstIds.length])
 
   return {
     add,

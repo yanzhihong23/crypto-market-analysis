@@ -13,7 +13,7 @@ export default function useOkxInstrumentsUpdater() {
         instruments.filter((instrument) => instrument.settleCcy === 'USDT'),
       )
     })
-  }, [])
+  }, [setInstruments])
 
   return instruments
 }

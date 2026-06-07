@@ -1,13 +1,17 @@
 import { Chip, Stack, Tooltip } from '@mui/material'
 import { memo } from 'react'
 
+import {
+  useFundingRate,
+  useRatio,
+  useVolCcyQuote,
+} from '../hooks/useTickerField'
 import { compactNumberFormatter } from '../utils'
-import { useTickerStore } from '../store/useTickerStore'
 
 function OkxMarketMetrics({ instId }: { instId: string }) {
-  const volCcyQuote = useTickerStore((state) => state.volCcyQuote[instId])
-  const ratio = useTickerStore((state) => state.ratio[instId])
-  const fundingRate = useTickerStore((state) => state.fundingRate[instId])
+  const volCcyQuote = useVolCcyQuote(instId)
+  const ratio = useRatio(instId)
+  const fundingRate = useFundingRate(instId)
 
   return (
     <Stack direction="row" alignItems="center" gap={1} sx={{ zIndex: 2 }}>

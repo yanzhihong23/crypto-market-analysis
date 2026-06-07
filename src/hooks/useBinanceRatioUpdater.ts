@@ -9,6 +9,7 @@ export default function useBinanceRatioUpdater() {
   const symbols = useBinanceTickerStore((state) => state.symbols)
 
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
+  const updateAllRatioRef = useRef<() => Promise<void>>(async () => {})
 
   const updateRatioBySymbol = useCallback(
     async (symbol: string) => {
@@ -50,11 +51,18 @@ export default function useBinanceRatioUpdater() {
       clearTimeout(timerRef.current)
     }
 
-    timerRef.current = setTimeout(updateAllRatio, 1000 * 60 * 5) // 5 minutes
+    timerRef.current = setTimeout(
+      () => {
+        void updateAllRatioRef.current()
+      },
+      1000 * 60 * 5,
+    ) // 5 minutes
   }, [batchProcess, symbols])
 
+  updateAllRatioRef.current = updateAllRatio
+
   useEffect(() => {
-    updateAllRatio()
+    void updateAllRatioRef.current()
 
     return () => {
       if (timerRef.current) {

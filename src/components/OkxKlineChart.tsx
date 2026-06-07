@@ -1,11 +1,11 @@
 import { memo, useMemo } from 'react'
 
-import { useTickerStore } from '../store/useTickerStore'
+import { useKlineData } from '../hooks/useTickerField'
 
 import TinyAreaChart from './TinyAreaChart'
 
 function OkxKlineChart({ instId }: { instId: string }) {
-  const instKlineData = useTickerStore((state) => state.klineData[instId])
+  const instKlineData = useKlineData(instId)
 
   const data = useMemo(() => {
     if (!instKlineData) return []

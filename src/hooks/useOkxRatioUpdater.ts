@@ -4,14 +4,15 @@ import { fetchOkxRatio } from '../apis'
 import { useTickerStore } from '../store/useTickerStore'
 
 export default function useOkxRatioUpdater() {
-  const ratio = useTickerStore((state) => state.ratio)
   const setRatio = useTickerStore((state) => state.setRatio)
   const instIds = useTickerStore((state) => state.instIds)
 
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
+  const updateAllRatioRef = useRef<() => Promise<void>>(async () => {})
 
   const updateRatioByInstId = useCallback(
     async (instId: string) => {
+      const ratio = useTickerStore.getState().ratio
       if (
         ratio[instId]?.updatedAt &&
         ratio[instId]?.updatedAt > Date.now() - 1000 * 60 * 5 // 5 minutes
@@ -24,7 +25,7 @@ export default function useOkxRatioUpdater() {
       })
       setRatio(instId, res[0][1])
     },
-    [setRatio, ratio],
+    [setRatio],
   )
 
   const updateAllRatio = useCallback(async () => {
@@ -40,11 +41,18 @@ export default function useOkxRatioUpdater() {
       clearTimeout(timerRef.current)
     }
 
-    timerRef.current = setTimeout(updateAllRatio, 1000 * 60 * 5) // 5 minutes
+    timerRef.current = setTimeout(
+      () => {
+        void updateAllRatioRef.current()
+      },
+      1000 * 60 * 5,
+    ) // 5 minutes
   }, [instIds, updateRatioByInstId])
 
+  updateAllRatioRef.current = updateAllRatio
+
   useEffect(() => {
-    updateAllRatio()
+    void updateAllRatioRef.current()
 
     return () => {
       if (timerRef.current) {
