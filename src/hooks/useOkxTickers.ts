@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 
 import { OkxChannel, OkxFundingRate, OkxTickerFormatted } from '../types/okx'
 import { OkxOpenInterest } from '../types/okx'
@@ -47,9 +47,17 @@ export const useOkxTickers = () => {
   const updateTicker = useOkxRealtimeTickerStore((state) => state.updateTicker)
   const setPercent = useOkxRealtimeTickerStore((state) => state.setPercent)
   const { formatTicker } = useOkxTickerFormat()
-  const [connectCount, setConnectCount] = useState(0)
   const wsRef = useRef<WebSocket | null>(null)
-  const [newTicker, setNewTicker] = useState<OkxTicker | null>(null)
+  const mountedRef = useRef(true)
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const formatTickerRef = useRef(formatTicker)
+  const updateTickerRef = useRef(updateTicker)
+  const setFundingRateRef = useRef(setFundingRate)
+
+  formatTickerRef.current = formatTicker
+  updateTickerRef.current = updateTicker
+  setFundingRateRef.current = setFundingRate
 
   const generateSubscribeArgsByInstId = (instId: string) => {
     return [
@@ -63,14 +71,36 @@ export const useOkxTickers = () => {
     return instIds.map(generateSubscribeArgsByInstId).flat()
   }
 
-  const connect = () => {
+  const clearReconnectTimer = () => {
+    if (reconnectTimerRef.current) {
+      clearTimeout(reconnectTimerRef.current)
+      reconnectTimerRef.current = null
+    }
+  }
+
+  const clearPingTimer = () => {
+    if (pingTimerRef.current) {
+      clearTimeout(pingTimerRef.current)
+      pingTimerRef.current = null
+    }
+  }
+
+  const connectRef = useRef<() => void>(() => {})
+
+  connectRef.current = () => {
+    if (!mountedRef.current) return
+
+    wsRef.current?.close()
+    clearPingTimer()
+
     const ws = new WebSocket('wss://ws.okx.com:8443/ws/v5/public')
     wsRef.current = ws
-    let timer: ReturnType<typeof setTimeout>
 
     ws.onopen = () => {
-      console.log('connected')
-      setConnectCount((prev) => prev + 1)
+      if (!mountedRef.current) {
+        ws.close()
+        return
+      }
       ws.send(
         JSON.stringify({
           op: 'subscribe',
@@ -80,12 +110,11 @@ export const useOkxTickers = () => {
     }
 
     ws.onmessage = ({ data }: { data: string }) => {
-      if (timer) {
-        clearTimeout(timer)
-      }
-
-      timer = setTimeout(() => {
-        ws.send('ping')
+      clearPingTimer()
+      pingTimerRef.current = setTimeout(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send('ping')
+        }
       }, 20000)
 
       if (data === 'pong') return
@@ -95,43 +124,58 @@ export const useOkxTickers = () => {
       const instId = res.arg.instId
 
       if (res.arg.channel === OkxChannel.TICKERS) {
-        const data = res.data[0] as OkxTicker
-        // Formatting the ticker here would cause a closure issue, openTime is not updated
-        setNewTicker(data)
+        const ticker = res.data[0] as OkxTicker
+        updateTickerRef.current(
+          ticker.instId,
+          formatTickerRef.current({ ticker }),
+        )
       } else if (res.arg.channel === OkxChannel.OPEN_INTEREST) {
         // do nothing
       } else if (res.arg.channel === OkxChannel.FUNDING_RATE) {
         const { fundingRate } = res.data[0] as OkxFundingRate
-        setFundingRate(instId, (Number(fundingRate) * 10000).toFixed(1))
+        setFundingRateRef.current(
+          instId,
+          (Number(fundingRate) * 10000).toFixed(1),
+        )
       }
     }
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error)
-      clearTimeout(timer)
+      clearPingTimer()
       ws.close()
-      setTimeout(connect, 3000)
     }
 
     ws.onclose = () => {
-      console.log('WebSocket closed, attempting to reconnect...')
-      clearTimeout(timer)
-      setTimeout(connect, 3000)
+      clearPingTimer()
+      if (wsRef.current === ws) {
+        wsRef.current = null
+      }
+      if (mountedRef.current) {
+        clearReconnectTimer()
+        reconnectTimerRef.current = setTimeout(() => {
+          reconnectTimerRef.current = null
+          connectRef.current()
+        }, 3000)
+      }
     }
-
-    return ws
   }
 
   const ensureWebSocket = useCallback(() => {
-    return new Promise<WebSocket>((resolve) => {
+    return new Promise<WebSocket>((resolve, reject) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         resolve(wsRef.current)
         return
       }
 
-      const checkAndResolve = setInterval(() => {
+      const interval = setInterval(() => {
+        if (!mountedRef.current) {
+          clearInterval(interval)
+          reject(new Error('Component unmounted'))
+          return
+        }
         if (wsRef.current?.readyState === WebSocket.OPEN) {
-          clearInterval(checkAndResolve)
+          clearInterval(interval)
           resolve(wsRef.current)
         }
       }, 100)
@@ -172,27 +216,21 @@ export const useOkxTickers = () => {
   }, [initialInstIds, updateTicker, setPercent])
 
   useEffect(() => {
+    mountedRef.current = true
     if (!initialInstIds.length) return
 
-    connect()
+    connectRef.current()
 
     return () => {
+      mountedRef.current = false
+      clearReconnectTimer()
+      clearPingTimer()
       wsRef.current?.close()
+      wsRef.current = null
     }
   }, [])
 
-  useEffect(() => {
-    console.log('connectCount', connectCount)
-  }, [connectCount])
-
-  useEffect(() => {
-    if (!newTicker) return
-
-    updateTicker(newTicker.instId, formatTicker({ ticker: newTicker }))
-  }, [newTicker, updateTicker, formatTicker])
-
   return {
-    connectCount,
     add,
     remove,
   }

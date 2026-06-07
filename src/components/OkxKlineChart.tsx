@@ -5,12 +5,12 @@ import { useTickerStore } from '../store/useTickerStore'
 import TinyAreaChart from './TinyAreaChart'
 
 function OkxKlineChart({ instId }: { instId: string }) {
-  const klineData = useTickerStore((state) => state.klineData)
+  const instKlineData = useTickerStore((state) => state.klineData[instId])
 
   const data = useMemo(() => {
-    if (!klineData[instId]) return []
+    if (!instKlineData) return []
 
-    const list = [...klineData[instId]].reverse()
+    const list = [...instKlineData].reverse()
     const result = []
     for (let i = 0; i < list.length; i++) {
       if (i === 0) {
@@ -23,7 +23,7 @@ function OkxKlineChart({ instId }: { instId: string }) {
     }
 
     return result
-  }, [klineData, instId])
+  }, [instKlineData])
 
   return (
     <TinyAreaChart data={data} xKey="ts" yKey="c" width={'100%'} height={100} />

@@ -1,5 +1,6 @@
 import { Box, Grid2 as Grid } from '@mui/material'
 import { useCallback, useMemo } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 
 import { SortBy } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
@@ -17,7 +18,13 @@ export default function OkxPerpetual() {
   const setInstIds = useTickerStore((state) => state.setInstIds)
   const volCcyQuote = useTickerStore((state) => state.volCcyQuote)
   const ratio = useTickerStore((state) => state.ratio)
-  const percent = useOkxRealtimeTickerStore((state) => state.percent)
+  const percentValues = useOkxRealtimeTickerStore(
+    useShallow((state) =>
+      sortBy === SortBy.PERCENT
+        ? instIds.map((id) => state.percent.get(id) ?? 0)
+        : null,
+    ),
+  )
 
   // update instruments
   useOkxInstrumentsUpdater()
@@ -29,14 +36,17 @@ export default function OkxPerpetual() {
   const { add, remove } = useOkxTickers()
 
   const sortedInstIds = useMemo(() => {
-    return instIds.sort((a, b) => {
+    return [...instIds].sort((a, b) => {
       if (sortBy === SortBy.VOLUME) return +volCcyQuote[b] - +volCcyQuote[a]
-      if (sortBy === SortBy.PERCENT)
-        return +(percent.get(b) || 0) - +(percent.get(a) || 0)
+      if (sortBy === SortBy.PERCENT) {
+        const indexA = instIds.indexOf(a)
+        const indexB = instIds.indexOf(b)
+        return (percentValues?.[indexB] ?? 0) - (percentValues?.[indexA] ?? 0)
+      }
       if (sortBy === SortBy.RATIO) return +ratio[b].value - +ratio[a].value
       return instIds.indexOf(a) - instIds.indexOf(b)
     })
-  }, [instIds, percent, ratio, sortBy, volCcyQuote])
+  }, [instIds, percentValues, ratio, sortBy, volCcyQuote])
 
   const handleAdd = useCallback(
     (instId: string) => {

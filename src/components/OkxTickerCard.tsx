@@ -11,6 +11,8 @@ import LastPrice from './LastPrice'
 import OkxMarketMetrics from './OkxMarketMetrics'
 import OkxLogoSymbol from './OkxLogoSymbol'
 
+const EMPTY_TICKER = {} as OkxTickerFormatted
+
 function OkxTickerCard({
   instId,
   onRemove,
@@ -19,7 +21,7 @@ function OkxTickerCard({
   onRemove: (instId: string) => void
 }) {
   const t = useOkxRealtimeTickerStore(
-    (state) => state.tickers.get(instId) || ({} as OkxTickerFormatted),
+    (state) => state.tickers.get(instId) ?? EMPTY_TICKER,
   )
 
   const up = useMemo(() => +t.percent > 0, [t.percent])
