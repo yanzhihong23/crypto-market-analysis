@@ -1,24 +1,37 @@
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useRef } from 'react'
 
 import { useKlineData } from '../hooks/useTickerField'
+import type { OkxKline } from '../types/okx'
 
 import TinyAreaChart from './TinyAreaChart'
 
 function OkxKlineChart({ instId }: { instId: string }) {
   const instKlineData = useKlineData(instId)
+  const lastGoodKlinesRef = useRef<OkxKline[]>([])
 
   const data = useMemo(() => {
-    if (!instKlineData) return []
+    if (Array.isArray(instKlineData)) {
+      lastGoodKlinesRef.current = instKlineData
+    }
 
-    const list = [...instKlineData].reverse()
-    const result = []
+    const source = Array.isArray(instKlineData)
+      ? instKlineData
+      : lastGoodKlinesRef.current
+
+    if (!source.length) return []
+
+    const list = source.slice().reverse()
+    const result: Array<{ c: string; ts: string }> = []
     for (let i = 0; i < list.length; i++) {
+      const row = list[i]
+      if (!Array.isArray(row) || row.length < 5) continue
+
       if (i === 0) {
         // 开盘价
-        result.push({ c: list[i][1], ts: list[i][0] })
+        result.push({ c: row[1], ts: row[0] })
       } else {
         // 收盘价
-        result.push({ c: list[i][4], ts: list[i][0] })
+        result.push({ c: row[4], ts: row[0] })
       }
     }
 
