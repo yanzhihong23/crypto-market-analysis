@@ -105,17 +105,22 @@ export default function Market() {
   }, [])
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        gap: '16px',
-        flexWrap: 'wrap',
-        justifyContent: 'space-evenly',
-      }}
-    >
-      {showTickers.map((t) => (
-        <BinanceTickerCard key={t.s} t={t} />
-      ))}
+    <Box>
+      <BinanceTickerActionBar />
+
+      <Box
+        sx={{
+          display: 'grid',
+          // space-evenly on a wrapping flex row left ragged gaps between fixed
+          // width cards; the grid distributes the leftover width instead.
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: 2,
+        }}
+      >
+        {showTickers.map((t) => (
+          <BinanceTickerCard key={t.s} t={t} />
+        ))}
+      </Box>
 
       {showTickers.length < tickers.length && (
         <Stack
@@ -127,8 +132,6 @@ export default function Market() {
           <CircularProgress size="24px" ref={ref} />
         </Stack>
       )}
-
-      <BinanceTickerActionBar />
     </Box>
   )
 }

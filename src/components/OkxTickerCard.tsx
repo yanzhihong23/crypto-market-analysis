@@ -11,6 +11,7 @@ import { numericFont } from '../fonts'
 import OkxKlineChart from './OkxKlineChart'
 import TickerContainer from './TickerContainer'
 import LastPrice from './LastPrice'
+import PriceRange from './PriceRange'
 import OkxMarketMetrics from './OkxMarketMetrics'
 import OkxLogoSymbol from './OkxLogoSymbol'
 
@@ -61,26 +62,29 @@ function OkxTickerCard({ instId }: { instId: string }) {
       >
         <OkxLogoSymbol instId={instId} />
 
-        <Typography
-          fontSize={20}
-          fontWeight={600}
-          color={t.color}
-          align="right"
-          sx={numericFont}
-        >
-          {+t.percent > 0 ? '+' : ''}
-          {t.percent}%
-        </Typography>
+        {/* Both readings of the same 24h change, so they sit together. */}
+        <Stack alignItems="end">
+          <Typography
+            fontSize={20}
+            fontWeight={600}
+            color={t.color}
+            sx={numericFont}
+          >
+            {+t.percent > 0 ? '+' : ''}
+            {t.percent}%
+          </Typography>
+          <Typography
+            fontSize={12}
+            color={t.color}
+            lineHeight={1.2}
+            sx={numericFont}
+          >
+            {t.dif}
+          </Typography>
+        </Stack>
       </Stack>
       <LastPrice last={t.last} lastSz={t.lastSz} up={up} />
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography fontSize={13} color="text.secondary" sx={numericFont}>
-          {t.low24h} - {t.high24h}
-        </Typography>
-        <Typography fontSize={13} color={t.color} sx={numericFont}>
-          {t.dif}
-        </Typography>
-      </Stack>
+      <PriceRange low={t.low24h} high={t.high24h} last={t.last} up={up} />
 
       <OkxMarketMetrics instId={instId} />
       <OkxKlineChart instId={instId} />

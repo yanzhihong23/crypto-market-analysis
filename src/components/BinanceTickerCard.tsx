@@ -6,6 +6,7 @@ import { useBinanceTickerStore } from '../store/useBinanceTickerStore'
 import { numericFont } from '../fonts'
 
 import TickerContainer from './TickerContainer'
+import PriceRange from './PriceRange'
 
 // Same colour budget as the OKX card: red and green mean price direction only.
 const chipSx = {
@@ -20,7 +21,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
   const priceColor = up ? 'market.up' : 'market.down'
 
   return (
-    <TickerContainer up={up} changePercent={+t.P} width={300} borderWidth={3}>
+    <TickerContainer up={up} changePercent={+t.P} borderWidth={3}>
       <Stack direction="row" alignItems="center" gap={1} sx={{ zIndex: 2 }}>
         <Avatar
           src={`/logos/${t.s}.png`}
@@ -64,13 +65,13 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
         </Typography>
       </Stack>
 
-      <Typography fontSize={13} color="text.secondary" sx={numericFont}>
-        {+t.l} -{' '}
-        <Typography fontSize={13} color="text.primary" component="span">
-          {+t.w}
-        </Typography>{' '}
-        - {+t.h}
-      </Typography>
+      <PriceRange
+        low={String(+t.l)}
+        high={String(+t.h)}
+        last={t.c}
+        reference={String(+t.w)}
+        up={up}
+      />
       <Stack
         direction="row"
         alignItems="center"

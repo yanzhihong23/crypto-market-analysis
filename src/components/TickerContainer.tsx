@@ -32,6 +32,9 @@ function TickerContainer({
     () => ({
       position: 'relative',
       overflow: 'hidden',
+      // Fills its grid cell so a row of cards shares one baseline instead of
+      // ending wherever its own content happens to stop.
+      height: '100%',
       p: 2.5,
       zIndex: 2,
       borderRadius: 1,

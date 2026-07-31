@@ -7,27 +7,25 @@ import { useTickerStore } from '../store/useTickerStore'
 import OkxTickerCard from '../components/OkxTickerCard'
 import ActionBar from '../components/ActionBar'
 import OkxDataSync from '../components/OkxDataSync'
-import useGridColumns from '../hooks/useGridColumns'
+import OkxMarketToolbar from '../components/OkxMarketToolbar'
 import useOkxTickerPercents from '../hooks/useOkxTickerPercents'
 
 const OkxTickerGridItem = memo(function OkxTickerGridItem({
   instId,
   sortIndex,
-  cols,
 }: {
   instId: string
   sortIndex: number
-  cols: number
 }) {
-  const col = sortIndex % cols
-  const row = Math.floor(sortIndex / cols)
-
   return (
     <Box
       sx={{
-        gridColumn: col + 1,
-        gridRow: row + 1,
+        // Grid auto-placement follows order-modified document order, so the
+        // cards can be re-sorted visually while their DOM order stays fixed
+        // and the subscribed cards are never torn down and remounted.
+        order: sortIndex,
         minWidth: 0,
+        height: '100%',
         contain: 'layout',
       }}
     >
@@ -37,7 +35,6 @@ const OkxTickerGridItem = memo(function OkxTickerGridItem({
 })
 
 const OkxTickerGrid = memo(function OkxTickerGrid() {
-  const cols = useGridColumns()
   const sortBy = useTickerStore((state) => state.sortBy)
   const instIds = useTickerStore((state) => state.instIds)
   const sortValues = useTickerStore(
@@ -86,7 +83,9 @@ const OkxTickerGrid = memo(function OkxTickerGrid() {
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: `repeat(${cols}, minmax(236px, 1fr))`,
+        // Column count follows the available width instead of six hardcoded
+        // breakpoints, which used to stretch cards past 400px on wide screens.
+        gridTemplateColumns: 'repeat(auto-fill, minmax(236px, 1fr))',
         gap: 2,
       }}
     >
@@ -95,7 +94,6 @@ const OkxTickerGrid = memo(function OkxTickerGrid() {
           key={instId}
           instId={instId}
           sortIndex={sortIndexByInstId.get(instId) ?? 0}
-          cols={cols}
         />
       ))}
     </Box>
@@ -106,6 +104,7 @@ export default function OkxPerpetual() {
   return (
     <Box>
       <OkxDataSync />
+      <OkxMarketToolbar />
       <OkxTickerGrid />
       <ActionBar />
     </Box>
