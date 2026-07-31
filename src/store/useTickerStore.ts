@@ -27,12 +27,7 @@ export const useTickerStore = create<TickerStore>()(
     (set) => ({
       instruments: [],
       setInstruments: (instruments: OkxInstrument[]) => set({ instruments }),
-      instIds: [
-        'BTC-USDT-SWAP',
-        'ETH-USDT-SWAP',
-        'SUI-USDT-SWAP',
-        'IP-USDT-SWAP',
-      ],
+      instIds: ['BTC-USDT-SWAP', 'ETH-USDT-SWAP', 'SUI-USDT-SWAP'],
       setInstIds: (instIds: string[]) => set({ instIds }),
       klineData: {},
       setKlineData: (instId: string, klineData: OkxKline[]) =>
