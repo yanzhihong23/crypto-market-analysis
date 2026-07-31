@@ -1,5 +1,5 @@
 import { Box, Stack, Tooltip, Typography } from '@mui/material'
-import { memo, useCallback } from 'react'
+import { memo, useCallback, type CSSProperties } from 'react'
 
 import { numericFont } from '../fonts'
 
@@ -49,8 +49,15 @@ function PriceRange({
 
   // Nudged back by its own width at the far end so a marker stays inside the
   // track when the price is sitting on the high.
+  //
+  // This rides in on a custom property set through the plain `style` attribute
+  // rather than through `sx`: the price changes on every ticker message, and
+  // emotion mints a class per distinct value, so an `sx` offset would grow the
+  // document a stylesheet at a time for as long as the board stays open.
   const offset = (ratio: number) =>
-    `calc(${ratio * 100}% - ${ratio * MARKER_WIDTH}px)`
+    ({
+      '--marker-left': `calc(${ratio * 100}% - ${ratio * MARKER_WIDTH}px)`,
+    }) as CSSProperties
 
   return (
     <Stack gap={0.75}>
@@ -78,10 +85,11 @@ function PriceRange({
         {referencePosition !== null && (
           <Tooltip title={`Weighted average ${reference}`} arrow>
             <Box
+              style={offset(referencePosition)}
               sx={{
                 position: 'absolute',
                 top: -1,
-                left: offset(referencePosition),
+                left: 'var(--marker-left)',
                 width: MARKER_WIDTH,
                 height: 5,
                 borderRadius: 1,
@@ -92,10 +100,11 @@ function PriceRange({
         )}
         {position !== null && (
           <Box
+            style={offset(position)}
             sx={{
               position: 'absolute',
               top: -2,
-              left: offset(position),
+              left: 'var(--marker-left)',
               width: MARKER_WIDTH,
               height: 7,
               borderRadius: 1,

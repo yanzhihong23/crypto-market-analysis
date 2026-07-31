@@ -1,5 +1,5 @@
 import { Box, Stack, SxProps, Theme } from '@mui/material'
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useMemo, type CSSProperties } from 'react'
 
 /** Above this 24h move a card earns the stronger border and fill. */
 const STRONG_MOVE_PERCENT = 5
@@ -20,8 +20,7 @@ const MIN_AMPLITUDE_PX = CORNER_RADIUS + 8
  * The rail is quantised to whole percent, so the stroke only redraws when it
  * moves a visible amount. Live prices nudge the 24h change every message, and
  * at full precision each of those was a sub-pixel step that still restarted the
- * clip-path transition, minted a fresh emotion class, and left the browser
- * chaining unfinished interpolations.
+ * width transition and left the browser chaining unfinished interpolations.
  */
 function amplitudePercent(changePercent: number) {
   const capped = Math.min(Math.abs(changePercent), AMPLITUDE_CEILING_PERCENT)
@@ -112,19 +111,33 @@ function TickerContainer({
   // pieces, the left arm sat in the border box and the bottom arm in the
   // padding box, and the radius clipped the gap between them open.
   const amplitude = amplitudePercent(changePercent)
+
+  // The width is the 24h amplitude: the further the stroke runs past the
+  // corner, the bigger the move. It used to be cut out of a full-card overlay
+  // with clip-path, and that clip rect was the height of the card, so its
+  // animated right edge swept a repaint boundary straight down the front of the
+  // content. Sizing the element keeps it, and everything it invalidates, inside
+  // the left gutter.
+  //
+  // It travels as a custom property on the plain `style` attribute rather than
+  // through `sx`, for the same reason the price marker does: emotion caches a
+  // class per distinct value, and a board of live cards works its way through
+  // the whole quantised range and leaves a stylesheet behind for each step.
+  const directionStrokeStyle = useMemo(
+    () =>
+      ({
+        '--direction-stroke-width': `max(${MIN_AMPLITUDE_PX}px, ${amplitude}%)`,
+      }) as CSSProperties,
+    [amplitude],
+  )
+
   const directionStrokeSx = useMemo<SxProps<Theme>>(
     () => ({
       position: 'absolute',
       top: 0,
       bottom: 0,
       left: 0,
-      // The width is the 24h amplitude: the further the stroke runs past the
-      // corner, the bigger the move. It used to be cut out of a full-card
-      // overlay with clip-path, and that clip rect was the height of the card,
-      // so its animated right edge swept a repaint boundary straight down the
-      // front of the content. Sizing the element keeps it, and everything it
-      // invalidates, inside the left gutter.
-      width: `max(${MIN_AMPLITUDE_PX}px, ${amplitude}%)`,
+      width: 'var(--direction-stroke-width)',
       borderRadius: 'inherit',
       // The bottom arm has to end square where it stops, so only the two corners
       // it actually turns keep the card's radius.
@@ -137,7 +150,7 @@ function TickerContainer({
       zIndex: 3,
       transition: 'width 0.3s ease-in-out',
     }),
-    [amplitude, directionColor, borderWidth],
+    [directionColor, borderWidth],
   )
 
   return (
@@ -149,7 +162,7 @@ function TickerContainer({
       sx={containerSx}
     >
       {children}
-      <Box sx={directionStrokeSx} />
+      <Box style={directionStrokeStyle} sx={directionStrokeSx} />
     </Stack>
   )
 }
