@@ -16,6 +16,18 @@ const CORNER_RADIUS = 16
  */
 const MIN_AMPLITUDE_PX = CORNER_RADIUS + 8
 
+/**
+ * The rail is quantised to whole percent, so the stroke only redraws when it
+ * moves a visible amount. Live prices nudge the 24h change every message, and
+ * at full precision each of those was a sub-pixel step that still restarted the
+ * clip-path transition, minted a fresh emotion class, and left the browser
+ * chaining unfinished interpolations.
+ */
+function amplitudePercent(changePercent: number) {
+  const capped = Math.min(Math.abs(changePercent), AMPLITUDE_CEILING_PERCENT)
+  return Math.round(capped * (100 / AMPLITUDE_CEILING_PERCENT))
+}
+
 function TickerContainer({
   up,
   changePercent = 0,
@@ -99,25 +111,33 @@ function TickerContainer({
   // Drawing both arms on a single element is what closes the corner: as two
   // pieces, the left arm sat in the border box and the bottom arm in the
   // padding box, and the radius clipped the gap between them open.
+  const amplitude = amplitudePercent(changePercent)
   const directionStrokeSx = useMemo<SxProps<Theme>>(
     () => ({
       position: 'absolute',
-      inset: 0,
+      top: 0,
+      bottom: 0,
+      left: 0,
+      // The width is the 24h amplitude: the further the stroke runs past the
+      // corner, the bigger the move. It used to be cut out of a full-card
+      // overlay with clip-path, and that clip rect was the height of the card,
+      // so its animated right edge swept a repaint boundary straight down the
+      // front of the content. Sizing the element keeps it, and everything it
+      // invalidates, inside the left gutter.
+      width: `max(${MIN_AMPLITUDE_PX}px, ${amplitude}%)`,
       borderRadius: 'inherit',
+      // The bottom arm has to end square where it stops, so only the two corners
+      // it actually turns keep the card's radius.
+      borderTopRightRadius: 0,
+      borderBottomRightRadius: 0,
       borderLeft: `${borderWidth}px solid`,
       borderBottom: `${borderWidth}px solid`,
       borderColor: directionColor,
-      // The bottom arm is what carries the 24h amplitude: the further the
-      // stroke runs past the corner, the bigger the move.
-      clipPath: `inset(0 calc(100% - max(${MIN_AMPLITUDE_PX}px, ${
-        Math.min(Math.abs(changePercent), AMPLITUDE_CEILING_PERCENT) *
-        (100 / AMPLITUDE_CEILING_PERCENT)
-      }%)) 0 0)`,
       pointerEvents: 'none',
       zIndex: 3,
-      transition: 'clip-path 0.3s ease-in-out',
+      transition: 'width 0.3s ease-in-out',
     }),
-    [changePercent, directionColor, borderWidth],
+    [amplitude, directionColor, borderWidth],
   )
 
   return (
