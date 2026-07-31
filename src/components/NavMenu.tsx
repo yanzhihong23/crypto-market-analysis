@@ -3,11 +3,9 @@ import { Link, useLocation } from 'react-router-dom'
 
 const StyledTab = styled(Tab)<{ component?: React.ElementType; to?: string }>(
   ({ theme }) => ({
-    fontSize: 16,
-    fontWeight: 500,
-    color: theme.palette.grey[600],
+    color: theme.palette.text.secondary,
     '&.Mui-selected': {
-      color: theme.palette.grey[900],
+      color: theme.palette.text.primary,
       fontWeight: 600,
     },
   }),

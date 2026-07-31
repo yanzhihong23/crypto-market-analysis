@@ -40,9 +40,14 @@ export default function TopBar() {
           gap: 2,
         }}
       >
-        <Stack direction="row" alignItems="center" gap={1}>
-          <Box component={Logo} sx={{ color: 'primary.main' }} />
-          <Typography variant="h6" fontWeight={700} pr={4}>
+        <Stack direction="row" alignItems="center" gap={1} pr={3}>
+          <Box
+            component={Logo}
+            sx={{ color: 'primary.main', width: 24, height: 24 }}
+          />
+          {/* Sized down from 20px/700: the wordmark was the heaviest text on
+              a page whose whole job is to make prices the heaviest text. */}
+          <Typography fontSize={16} fontWeight={600} letterSpacing={-0.1}>
             Perpetual Market
           </Typography>
         </Stack>

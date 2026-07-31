@@ -59,8 +59,12 @@ export interface SurfacePalette {
   border: string
   /** A mark that has to stay visible on `subtle` */
   marker: string
+  /** Sits on top of `subtle` and must read as lifted off it, in both schemes */
+  raised: string
   /** Card elevation on hover */
   shadow: string
+  /** Lift on the selected segment of a toggle group */
+  segmentShadow: string
 }
 
 const lightMarket: MarketPalette = {
@@ -91,14 +95,20 @@ const lightSurface: SurfacePalette = {
   subtle: '#EEF2F6',
   border: '#E3E8EF',
   marker: '#CDD5DF',
+  raised: '#fff',
   shadow: '0 4px 12px -2px rgba(16, 24, 40, 0.10)',
+  segmentShadow: '0 1px 2px rgba(16, 24, 40, 0.10)',
 }
 
 const darkSurface: SurfacePalette = {
   subtle: '#1E2635',
   border: '#28313F',
   marker: '#46536A',
+  // Lighter than `subtle`, not darker: in a dark scheme, lifted means lighter,
+  // so background.paper would have read as a dent rather than a raised chip.
+  raised: '#2E3849',
   shadow: '0 4px 12px -2px rgba(0, 0, 0, 0.55)',
+  segmentShadow: '0 1px 2px rgba(0, 0, 0, 0.45)',
 }
 
 const grey = {
@@ -212,34 +222,63 @@ const theme = createTheme({
         },
       },
     },
+    // One track, one radius. Inheriting shape.borderRadius gave the end
+    // segments a 16px half-pill and the middle ones square corners, so a
+    // selected segment changed shape depending on where it sat in the group.
     MuiToggleButtonGroup: {
       styleOverrides: {
-        grouped: ({ theme }) => ({
-          borderColor: theme.vars.palette.divider,
+        root: ({ theme }) => ({
+          backgroundColor: theme.vars.palette.surface.subtle,
+          borderRadius: 10,
+          padding: 3,
+          gap: 2,
         }),
+        grouped: {
+          border: 0,
+          borderRadius: 7,
+          marginLeft: 0,
+        },
+        firstButton: { borderRadius: 7 },
+        middleButton: { borderRadius: 7 },
+        lastButton: { borderRadius: 7 },
       },
     },
     MuiToggleButton: {
       styleOverrides: {
         root: ({ theme }) => ({
           textTransform: 'none',
-          fontWeight: 600,
+          fontWeight: 500,
           color: theme.vars.palette.text.secondary,
           '&:hover': {
-            backgroundColor: theme.vars.palette.surface.subtle,
+            backgroundColor: 'transparent',
+            color: theme.vars.palette.text.primary,
           },
+          // Raised rather than filled: a saturated block for a sort setting
+          // outshouted the prices it was there to order.
           '&.Mui-selected': {
-            backgroundColor: theme.vars.palette.primary.main,
-            color: theme.vars.palette.primary.contrastText,
+            backgroundColor: theme.vars.palette.surface.raised,
+            color: theme.vars.palette.text.primary,
+            fontWeight: 600,
+            boxShadow: theme.vars.palette.surface.segmentShadow,
             '&:hover': {
-              backgroundColor: theme.vars.palette.primary.dark,
+              backgroundColor: theme.vars.palette.surface.raised,
             },
           },
         }),
         sizeSmall: {
           fontSize: 13,
-          height: 32,
+          height: 28,
           padding: '0 12px',
+        },
+      },
+    },
+    MuiTabs: {
+      styleOverrides: {
+        root: {
+          minHeight: 40,
+        },
+        indicator: {
+          height: 2,
         },
       },
     },
@@ -247,8 +286,13 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: 'none',
-          fontSize: '16px',
+          fontSize: '14px',
           fontWeight: 500,
+          // MUI reserves 90px per tab and pads it 12x16, which spread three
+          // short labels across a third of the bar.
+          minWidth: 'auto',
+          minHeight: 40,
+          padding: '0 12px',
         },
       },
     },
