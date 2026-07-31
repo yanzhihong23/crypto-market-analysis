@@ -35,7 +35,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
         <Typography
           flex={1}
           fontSize={20}
-          fontWeight={500}
+          fontWeight={600}
           color={priceColor}
           align="right"
           sx={numericFont}
@@ -46,7 +46,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
       <Stack direction="row" alignItems="end" justifyContent="space-between">
         <Typography
           fontSize={34}
-          fontWeight={500}
+          fontWeight={600}
           lineHeight={1.15}
           color={priceColor}
           sx={numericFont}

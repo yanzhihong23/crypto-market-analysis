@@ -30,7 +30,7 @@ function LastPrice({
   return (
     <Typography
       fontSize={priceFontSize(last)}
-      fontWeight={500}
+      fontWeight={600}
       lineHeight={1.15}
       color={up ? 'market.up' : 'market.down'}
       sx={numericFont}

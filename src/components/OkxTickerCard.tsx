@@ -63,7 +63,7 @@ function OkxTickerCard({ instId }: { instId: string }) {
 
         <Typography
           fontSize={20}
-          fontWeight={500}
+          fontWeight={600}
           color={t.color}
           align="right"
           sx={numericFont}
