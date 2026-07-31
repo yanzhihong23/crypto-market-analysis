@@ -15,6 +15,8 @@ import {
   setFeedStatus,
 } from '../store/useConnectionStore'
 
+const RECONNECT_DELAY_MS = 3000
+
 export default function Market() {
   const [count, setCount] = useState(20)
   const [tickers, setTickers] = useState<FullTicker[]>([])
@@ -59,28 +61,46 @@ export default function Market() {
   }, [isIntersecting, loadMore])
 
   useEffect(() => {
-    const socket = new WebSocket(
-      'wss://fstream.binance.com/market/ws/!ticker@arr',
-    )
+    let socket: WebSocket | null = null
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+    let disposed = false
 
-    setFeedStatus('connecting')
+    const connect = () => {
+      if (disposed) return
 
-    socket.onopen = () => {
-      setFeedStatus('live')
+      const ws = new WebSocket(
+        'wss://fstream.binance.com/market/ws/!ticker@arr',
+      )
+      socket = ws
+
+      // A replaced socket keeps emitting events; acting on them would let a
+      // dead connection schedule a reconnect over the live one.
+      const isCurrent = () => socket === ws
+
+      ws.onopen = () => {
+        if (!isCurrent()) {
+          ws.close()
+          return
+        }
+        setFeedStatus('live')
+      }
+
+      ws.onclose = () => {
+        if (!isCurrent() || disposed) return
+        socket = null
+        setFeedStatus('reconnecting')
+        reconnectTimer = setTimeout(connect, RECONNECT_DELAY_MS)
+      }
+
+      ws.onmessage = handleMessage
     }
 
-    socket.onclose = () => {
-      setFeedStatus('reconnecting')
-    }
-
-    socket.onmessage = (event: MessageEvent) => {
+    const handleMessage = (event: MessageEvent) => {
       markFeedMessage()
       try {
         const data = JSON.parse(event.data)
         if (data.ping) {
-          console.log('ping', data)
-
-          socket.send(JSON.stringify({ pong: Date.now() }))
+          socket?.send(JSON.stringify({ pong: Date.now() }))
         } else if (data.length) {
           setTickers((prevTickers) => {
             const updatedTickers: FullTicker[] = []
@@ -111,11 +131,17 @@ export default function Market() {
       }
     }
 
+    setFeedStatus('connecting')
+    connect()
+
     return () => {
-      // Cleared first so the close handler does not report a reconnect that
-      // is never going to be attempted.
-      socket.onclose = null
-      socket.close()
+      disposed = true
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+      // Detached before closing, so the outgoing socket fails its own identity
+      // check and does not report a reconnect that will never be attempted.
+      const ws = socket
+      socket = null
+      ws?.close()
       resetFeed()
     }
   }, [])

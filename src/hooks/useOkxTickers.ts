@@ -18,6 +18,8 @@ import {
 
 import useOkxTickerFormat from './useOkxTickerFormat'
 
+const RECONNECT_DELAY_MS = 3000
+
 interface TickerResponse {
   arg: {
     channel: OkxChannel
@@ -71,7 +73,11 @@ export const useOkxTickers = () => {
   connectRef.current = () => {
     if (!mountedRef.current) return
 
-    wsRef.current?.close()
+    // Detached before closing, so the outgoing socket already fails the
+    // identity check by the time its close event arrives.
+    const previous = wsRef.current
+    wsRef.current = null
+    previous?.close()
     clearPingTimer()
 
     setFeedStatus(
@@ -83,8 +89,16 @@ export const useOkxTickers = () => {
     const ws = new WebSocket('wss://ws.okx.com:8443/ws/v5/public')
     wsRef.current = ws
 
+    /**
+     * A socket that has already been replaced must not touch shared state. Its
+     * events keep arriving after the swap, and acting on them meant a dead
+     * socket's close scheduled a reconnect that then tore down the healthy
+     * socket which had replaced it, forever, every three seconds.
+     */
+    const isCurrent = () => wsRef.current === ws
+
     ws.onopen = () => {
-      if (!mountedRef.current) {
+      if (!mountedRef.current || !isCurrent()) {
         ws.close()
         return
       }
@@ -98,6 +112,7 @@ export const useOkxTickers = () => {
     }
 
     ws.onmessage = ({ data }: { data: string }) => {
+      if (!isCurrent()) return
       markFeedMessage()
       clearPingTimer()
       pingTimerRef.current = setTimeout(() => {
@@ -128,23 +143,24 @@ export const useOkxTickers = () => {
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error)
+      if (!isCurrent()) return
       clearPingTimer()
       ws.close()
     }
 
     ws.onclose = () => {
+      if (!isCurrent()) return
+      wsRef.current = null
       clearPingTimer()
-      if (wsRef.current === ws) {
-        wsRef.current = null
-      }
-      if (mountedRef.current) {
-        setFeedStatus('reconnecting')
-        clearReconnectTimer()
-        reconnectTimerRef.current = setTimeout(() => {
-          reconnectTimerRef.current = null
-          connectRef.current()
-        }, 3000)
-      }
+
+      if (!mountedRef.current) return
+
+      setFeedStatus('reconnecting')
+      clearReconnectTimer()
+      reconnectTimerRef.current = setTimeout(() => {
+        reconnectTimerRef.current = null
+        connectRef.current()
+      }, RECONNECT_DELAY_MS)
     }
   }
 
@@ -212,8 +228,9 @@ export const useOkxTickers = () => {
       mountedRef.current = false
       clearReconnectTimer()
       clearPingTimer()
-      wsRef.current?.close()
+      const ws = wsRef.current
       wsRef.current = null
+      ws?.close()
       resetFeed()
     }
   }, [initialInstIds.length])
