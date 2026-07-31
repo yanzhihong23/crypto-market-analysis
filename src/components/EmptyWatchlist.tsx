@@ -25,8 +25,7 @@ export default function EmptyWatchlist() {
         No tickers yet
       </Typography>
       <Typography fontSize={14} color="text.secondary">
-        Add one with the button in the bottom right corner to start streaming
-        prices.
+        Use Add ticker in the bottom right corner to start streaming prices.
       </Typography>
     </Stack>
   )

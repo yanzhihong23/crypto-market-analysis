@@ -5,7 +5,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { SortBy } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
 import OkxTickerCard from '../components/OkxTickerCard'
-import ActionBar from '../components/ActionBar'
+import AddTickerButton from '../components/AddTickerButton'
 import OkxDataSync from '../components/OkxDataSync'
 import OkxMarketToolbar from '../components/OkxMarketToolbar'
 import EmptyWatchlist from '../components/EmptyWatchlist'
@@ -111,7 +111,7 @@ export default function OkxPerpetual() {
       <OkxDataSync />
       <OkxMarketToolbar />
       <OkxTickerGrid />
-      <ActionBar />
+      <AddTickerButton />
     </Box>
   )
 }

@@ -1,3 +1,13 @@
+/**
+ * OKX serves one icon per base currency, so the instId has to be reduced to its
+ * first segment. Shared with the picker so a symbol looks the same before it is
+ * on the watchlist as it does on the card afterwards.
+ */
+export function okxLogoUrl(instId: string) {
+  const symbol = instId.split('-')[0].toLowerCase()
+  return `https://static.okx.com/cdn/oksupport/asset/currency/icon/${symbol}.png?x-oss-process=image/format,webp`
+}
+
 export function getPeriodPattern(period: string) {
   switch (period) {
     case '5m':
