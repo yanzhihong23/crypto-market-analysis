@@ -22,7 +22,7 @@ export default function useOkxTickerFormat() {
       }).format(change)
       if (change > 0) dif = '+' + dif
 
-      const color = +ticker.last > +open ? 'success' : 'error'
+      const color = +ticker.last > +open ? 'market.up' : 'market.down'
       const lastSz = formatNumber(+ticker.lastSz * +(instrument?.ctVal || 1), 4)
 
       return {

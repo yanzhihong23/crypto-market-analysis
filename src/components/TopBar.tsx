@@ -1,8 +1,9 @@
-import { AppBar, Stack, Toolbar, Typography } from '@mui/material'
+import { AppBar, Box, Stack, Toolbar, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 
 import Logo from '../assets/logo.svg?react'
+import { numericFont } from '../fonts'
 
 import NavMenu from './NavMenu'
 
@@ -38,7 +39,7 @@ export default function TopBar() {
         }}
       >
         <Stack direction="row" alignItems="center" gap={1}>
-          <Logo />
+          <Box component={Logo} sx={{ color: 'primary.main' }} />
           <Typography variant="h6" fontWeight={700} pr={4}>
             Perpetual Market
           </Typography>
@@ -46,7 +47,12 @@ export default function TopBar() {
 
         <NavMenu sx={{ display: { xs: 'none', md: 'block' } }} />
 
-        <Typography fontSize={18} fontWeight={700} sx={{ ml: 'auto' }}>
+        <Typography
+          fontSize={16}
+          fontWeight={500}
+          color="text.secondary"
+          sx={{ ml: 'auto', ...numericFont }}
+        >
           {time}
         </Typography>
       </Toolbar>

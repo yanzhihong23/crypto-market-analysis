@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
+import { useTheme } from '@mui/material/styles'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -29,6 +30,13 @@ export default function BaseAreaChart({
   syncId?: string
 }) {
   const [isUp, setIsUp] = useState(true)
+  const theme = useTheme()
+  // Unique per instance: a fixed id makes every chart on the page resolve to
+  // the first one's <defs>.
+  const gradientId = `area-${useId().replace(/:/g, '')}`
+  const color = isUp
+    ? theme.palette.market.upChart
+    : theme.palette.market.downChart
 
   const renderLabel = ({
     index,
@@ -43,7 +51,7 @@ export default function BaseAreaChart({
   }) => {
     if (index === data.length - 1) {
       return (
-        <text x={x} y={y} dx={-66} dy={-10} fill={isUp ? '#82ca9d' : '#E04A59'}>
+        <text x={x} y={y} dx={-66} dy={-10} fill={color}>
           {yDataFormatter ? yDataFormatter(value) : value}
         </text>
       )
@@ -63,13 +71,9 @@ export default function BaseAreaChart({
         margin={{ top: 10, right: 10, left: 5, bottom: 30 }}
       >
         <defs>
-          <linearGradient id="colorUp" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
-          </linearGradient>
-          <linearGradient id="colorDown" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#E04A59" stopOpacity={0.4} />
-            <stop offset="100%" stopColor="#E04A59" stopOpacity={0.1} />
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={color} stopOpacity={0.35} />
+            <stop offset="95%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
         <XAxis dataKey={xKey}>
@@ -90,9 +94,9 @@ export default function BaseAreaChart({
         <Area
           type="monotone"
           dataKey={yKey}
-          stroke={isUp ? '#82ca9d' : '#E04A59'}
+          stroke={color}
           fillOpacity={1}
-          fill={isUp ? 'url(#colorUp)' : 'url(#colorDown)'}
+          fill={`url(#${gradientId})`}
           label={renderLabel}
         />
       </AreaChart>

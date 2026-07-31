@@ -5,9 +5,10 @@ const StyledTab = styled(Tab)<{ component?: React.ElementType; to?: string }>(
   ({ theme }) => ({
     fontSize: 16,
     fontWeight: 500,
-    color: theme.palette.primary.contrastText,
+    color: theme.palette.grey[600],
     '&.Mui-selected': {
-      color: theme.palette.primary.contrastText,
+      color: theme.palette.grey[900],
+      fontWeight: 600,
     },
   }),
 )

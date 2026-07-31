@@ -12,8 +12,8 @@ function OkxLogoSymbol({ instId }: { instId: string }) {
 
   return (
     <Stack direction="row" alignItems="center" gap={1} zIndex={2}>
-      <img src={logo} width={32} />
-      <Typography fontSize={20} fontWeight={700}>
+      <img src={logo} width={24} height={24} alt="" loading="lazy" />
+      <Typography fontSize={17} fontWeight={600} letterSpacing={0.2}>
         {symbol}
       </Typography>
     </Stack>

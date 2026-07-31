@@ -1,42 +1,47 @@
 import { Typography } from '@mui/material'
-import { memo, useMemo } from 'react'
+import { memo } from 'react'
+
+import { numericFont } from '../fonts'
+
+/**
+ * Monospace figures have a fixed advance width, so a long price would overflow
+ * a 236px card at a single fixed size. Step the size down by length instead.
+ */
+function priceFontSize(last: string) {
+  if (last.length <= 7) return 34
+  if (last.length <= 9) return 28
+  return 24
+}
 
 function LastPrice({
   last,
   lastSz,
-  isUp,
+  up,
 }: {
   last: string
   lastSz: string
-  isUp?: boolean
+  /**
+   * 24h direction, matching the change percent and the card border. This used
+   * to be the last tick's direction, so a coin down 1.48% on the day rendered
+   * its price in green.
+   */
+  up?: boolean
 }) {
-  const shadowStyle = useMemo(
-    () => ({
-      textShadow: isUp
-        ? `0 0 2px rgba(37, 167, 80, 0.3),
-       1px 1px 2px rgba(37, 167, 80, 0.2),
-       -1px -1px 2px rgba(255, 255, 255, 0.1)`
-        : `0 0 2px rgba(202, 63, 100, 0.3),
-       1px 1px 2px rgba(202, 63, 100, 0.2),
-       -1px -1px 2px rgba(255, 255, 255, 0.1)`,
-    }),
-    [isUp],
-  )
-
   return (
     <Typography
-      fontSize={36}
-      fontWeight={600}
-      color={isUp ? 'success' : 'error'}
-      sx={shadowStyle}
+      fontSize={priceFontSize(last)}
+      fontWeight={500}
+      lineHeight={1.15}
+      color={up ? 'market.up' : 'market.down'}
+      sx={numericFont}
     >
       {last}{' '}
       <Typography
-        fontSize={16}
-        fontWeight={500}
+        fontSize={14}
+        fontWeight={400}
         component="span"
         color="text.secondary"
-        sx={{ textShadow: 'none' }}
+        sx={numericFont}
       >
         {lastSz}
       </Typography>

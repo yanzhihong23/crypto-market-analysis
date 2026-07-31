@@ -6,6 +6,7 @@ import useOkxTicker from '../hooks/useOkxTicker'
 import { useTickerStore } from '../store/useTickerStore'
 import { removeOkxTicker } from '../store/okxRealtimeTicker'
 import { okxTickerActions } from '../okx/okxTickerActions'
+import { numericFont } from '../fonts'
 
 import OkxKlineChart from './OkxKlineChart'
 import TickerContainer from './TickerContainer'
@@ -61,21 +62,22 @@ function OkxTickerCard({ instId }: { instId: string }) {
         <OkxLogoSymbol instId={instId} />
 
         <Typography
-          fontSize={22}
-          fontWeight={600}
+          fontSize={20}
+          fontWeight={500}
           color={t.color}
           align="right"
+          sx={numericFont}
         >
           {+t.percent > 0 ? '+' : ''}
           {t.percent}%
         </Typography>
       </Stack>
-      <LastPrice last={t.last} lastSz={t.lastSz} isUp={t.isUp} />
+      <LastPrice last={t.last} lastSz={t.lastSz} up={up} />
       <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography fontSize={16} fontWeight={500} color="text.secondary">
+        <Typography fontSize={13} color="text.secondary" sx={numericFont}>
           {t.low24h} - {t.high24h}
         </Typography>
-        <Typography fontSize={16} fontWeight={600} color={t.color}>
+        <Typography fontSize={13} color={t.color} sx={numericFont}>
           {t.dif}
         </Typography>
       </Stack>

@@ -1,4 +1,5 @@
-import { memo, useEffect, useState } from 'react'
+import { memo, useId } from 'react'
+import { useTheme } from '@mui/material/styles'
 import { ResponsiveContainer, AreaChart, Area, YAxis, XAxis } from 'recharts'
 
 function BaseAreaChart({
@@ -15,24 +16,28 @@ function BaseAreaChart({
   width?: string | number
   height?: string | number
 }) {
-  const [isUp, setIsUp] = useState(true)
+  const theme = useTheme()
+  // Unique per instance: with a fixed id, every chart on the page resolves to
+  // the first one's <defs>. Colons are stripped for the url() reference.
+  const gradientId = `area-${useId().replace(/:/g, '')}`
 
-  useEffect(() => {
-    if (!data?.length) return
-    setIsUp(Number(data[data.length - 1][yKey]) > Number(data[0][yKey]))
-  }, [data, yKey])
+  // Derived during render. Holding this in state meant the first paint of every
+  // chart was green regardless of direction, until the effect caught up.
+  const isUp =
+    !data?.length ||
+    Number(data[data.length - 1][yKey]) >= Number(data[0][yKey])
+
+  const color = isUp
+    ? theme.palette.market.upChart
+    : theme.palette.market.downChart
 
   return (
     <ResponsiveContainer width={width} height={height}>
       <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
         <defs>
-          <linearGradient id="colorUp" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
-          </linearGradient>
-          <linearGradient id="colorDown" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#E04A59" stopOpacity={0.4} />
-            <stop offset="100%" stopColor="#E04A59" stopOpacity={0.1} />
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={color} stopOpacity={0.35} />
+            <stop offset="95%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
         <XAxis dataKey={xKey} hide />
@@ -40,9 +45,10 @@ function BaseAreaChart({
         <Area
           type="monotone"
           dataKey={yKey}
-          stroke={isUp ? '#82ca9d' : '#E04A59'}
+          stroke={color}
+          strokeWidth={1.5}
           fillOpacity={1}
-          fill={isUp ? 'url(#colorUp)' : 'url(#colorDown)'}
+          fill={`url(#${gradientId})`}
         />
       </AreaChart>
     </ResponsiveContainer>

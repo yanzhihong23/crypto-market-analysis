@@ -1,5 +1,7 @@
 import { createTheme } from '@mui/material'
 
+import { SANS_STACK } from './fonts'
+
 declare module '@mui/material/styles' {
   interface BreakpointOverrides {
     xs: true
@@ -10,6 +12,42 @@ declare module '@mui/material/styles' {
     xxl: true
     xxxl: true
   }
+
+  interface Palette {
+    market: MarketPalette
+  }
+  interface PaletteOptions {
+    market?: MarketPalette
+  }
+}
+
+/**
+ * Colour budget: red and green are reserved for price direction and nothing
+ * else. Everything that is not directional reads from `grey`. Keeping every
+ * up/down tone in one place is also what makes a dark theme tractable later.
+ */
+export interface MarketPalette {
+  up: string
+  down: string
+  /** Card fill, strong enough to scan across the grid, weak enough to read on */
+  upSurface: string
+  downSurface: string
+  upBorder: string
+  downBorder: string
+  /** Chart stroke and gradient, same hues as the price text */
+  upChart: string
+  downChart: string
+}
+
+const market: MarketPalette = {
+  up: '#25a750',
+  down: '#ca3f64',
+  upSurface: 'rgba(37, 167, 80, 0.05)',
+  downSurface: 'rgba(202, 63, 100, 0.05)',
+  upBorder: 'rgba(37, 167, 80, 0.35)',
+  downBorder: 'rgba(202, 63, 100, 0.35)',
+  upChart: '#25a750',
+  downChart: '#ca3f64',
 }
 
 const theme = createTheme({
@@ -30,6 +68,8 @@ const theme = createTheme({
       main: '#ca3f64',
     },
     grey: {
+      50: '#F8FAFC',
+      100: '#EEF2F6',
       200: '#E3E8EF',
       300: '#CDD5DF',
       500: '#697586',
@@ -37,12 +77,13 @@ const theme = createTheme({
       700: '#364152',
       900: '#121926',
     },
+    market,
   },
   shape: {
     borderRadius: 16,
   },
   typography: {
-    fontFamily: 'DM Sans 24pt',
+    fontFamily: SANS_STACK,
   },
   breakpoints: {
     values: {
@@ -57,6 +98,21 @@ const theme = createTheme({
   },
   components: {
     MuiContainer: {},
+    MuiAppBar: {
+      defaultProps: {
+        elevation: 0,
+        color: 'transparent',
+      },
+      styleOverrides: {
+        root: {
+          // The bar carries a logo, three links and a clock. It gets a neutral
+          // surface so the only saturated colour on screen is price direction.
+          backgroundColor: '#fff',
+          color: '#121926',
+          borderBottom: '1px solid #E3E8EF',
+        },
+      },
+    },
     MuiToolbar: {
       styleOverrides: {
         root: {
@@ -295,10 +351,11 @@ const theme = createTheme({
     MuiChip: {
       styleOverrides: {
         root: {
-          fontWeight: 600,
+          fontWeight: 500,
         },
         sizeSmall: {
-          fontSize: 14,
+          fontSize: 12,
+          height: 22,
         },
       },
     },

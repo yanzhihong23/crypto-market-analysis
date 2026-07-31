@@ -3,62 +3,70 @@ import { Avatar, Chip, Stack, Tooltip, Typography } from '@mui/material'
 import { FullTicker } from '../types'
 import { compactNumberFormatter, formatNumber } from '../utils'
 import { useBinanceTickerStore } from '../store/useBinanceTickerStore'
+import { numericFont } from '../fonts'
 
 import TickerContainer from './TickerContainer'
 
+// Same colour budget as the OKX card: red and green mean price direction only.
+const chipSx = {
+  ...numericFont,
+  backgroundColor: 'grey.100',
+  color: 'grey.600',
+}
+
 export default function BinanceTickerCard({ t }: { t: FullTicker }) {
   const ratio = useBinanceTickerStore((state) => state.ratio[t.s]?.value)
+  const up = +t.p > 0
+  const priceColor = up ? 'market.up' : 'market.down'
 
   return (
-    <TickerContainer
-      up={+t.p > 0}
-      changePercent={+t.P}
-      width={300}
-      borderWidth={2}
-    >
+    <TickerContainer up={up} changePercent={+t.P} width={300} borderWidth={3}>
       <Stack direction="row" alignItems="center" gap={1} sx={{ zIndex: 2 }}>
         <Avatar
           src={`/logos/${t.s}.png`}
-          sx={{ width: 32, height: 32 }}
-          alt={t.s.charAt(0)}
+          sx={{ width: 24, height: 24, fontSize: 12 }}
+          alt=""
         >
           {t.s.charAt(0)}
         </Avatar>
-        <Typography fontSize={20} fontWeight={500}>
+        <Typography fontSize={17} fontWeight={600} letterSpacing={0.2}>
           {t.s.replace('USDT', '')}
         </Typography>
         <Typography
           flex={1}
-          fontSize={22}
-          fontWeight={600}
-          color={+t.p > 0 ? 'success' : 'error'}
+          fontSize={20}
+          fontWeight={500}
+          color={priceColor}
           align="right"
+          sx={numericFont}
         >
           {+t.P > 0 ? `+${+t.P}` : +t.P}%
         </Typography>
       </Stack>
       <Stack direction="row" alignItems="end" justifyContent="space-between">
         <Typography
-          fontSize={36}
-          fontWeight={600}
-          lineHeight={1}
-          color={+t.p > 0 ? 'success' : 'error'}
+          fontSize={34}
+          fontWeight={500}
+          lineHeight={1.15}
+          color={priceColor}
+          sx={numericFont}
         >
           {+t.c}{' '}
           <Typography
-            fontSize={16}
-            fontWeight={500}
+            fontSize={14}
+            fontWeight={400}
             color="text.secondary"
             component="span"
+            sx={numericFont}
           >
             {compactNumberFormatter(+t.Q)}
           </Typography>
         </Typography>
       </Stack>
 
-      <Typography>
+      <Typography fontSize={13} color="text.secondary" sx={numericFont}>
         {+t.l} -{' '}
-        <Typography color="secondary" fontWeight={600} component="span">
+        <Typography fontSize={13} color="text.primary" component="span">
           {+t.w}
         </Typography>{' '}
         - {+t.h}
@@ -69,11 +77,12 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
         justifyContent="space-between"
         sx={{ zIndex: 2 }}
       >
-        <Stack direction="row" alignItems="center" spacing={1}>
+        <Stack direction="row" alignItems="center" gap={0.75}>
           <Tooltip title="Quote Volume" arrow>
             <Chip
               size="small"
-              color="primary"
+              aria-label="Quote volume"
+              sx={chipSx}
               label={compactNumberFormatter(+t.q)}
             />
           </Tooltip>
@@ -81,18 +90,15 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
             <Tooltip title="Long/Short Ratio" arrow>
               <Chip
                 size="small"
-                color="secondary"
+                aria-label="Long/short ratio"
+                sx={chipSx}
                 label={formatNumber(Number(ratio), 2)}
               />
             </Tooltip>
           )}
         </Stack>
 
-        <Typography
-          fontSize={18}
-          fontWeight="bold"
-          color={+t.p > 0 ? 'success' : 'error'}
-        >
+        <Typography fontSize={13} color={priceColor} sx={numericFont}>
           {+t.p > 0 ? `+${+t.p}` : +t.p}
         </Typography>
       </Stack>
