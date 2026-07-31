@@ -7,13 +7,7 @@ import { numericFont } from '../fonts'
 
 import TickerContainer from './TickerContainer'
 import PriceRange from './PriceRange'
-
-// Same colour budget as the OKX card: red and green mean price direction only.
-const chipSx = {
-  ...numericFont,
-  backgroundColor: 'grey.100',
-  color: 'grey.600',
-}
+import { metricChipSx } from './metricChipSx'
 
 export default function BinanceTickerCard({ t }: { t: FullTicker }) {
   const ratio = useBinanceTickerStore((state) => state.ratio[t.s]?.value)
@@ -83,7 +77,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
             <Chip
               size="small"
               aria-label="Quote volume"
-              sx={chipSx}
+              sx={metricChipSx}
               label={compactNumberFormatter(+t.q)}
             />
           </Tooltip>
@@ -92,7 +86,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
               <Chip
                 size="small"
                 aria-label="Long/short ratio"
-                sx={chipSx}
+                sx={metricChipSx}
                 label={formatNumber(Number(ratio), 2)}
               />
             </Tooltip>

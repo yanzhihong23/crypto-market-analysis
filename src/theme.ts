@@ -3,6 +3,12 @@ import { createTheme } from '@mui/material'
 import { SANS_STACK } from './fonts'
 
 declare module '@mui/material/styles' {
+  // Tells the Theme type that CSS variables are on, which is what puts
+  // `theme.vars` within reach of component style callbacks.
+  interface CssThemeVariables {
+    enabled: true
+  }
+
   interface BreakpointOverrides {
     xs: true
     sm: true
@@ -15,16 +21,18 @@ declare module '@mui/material/styles' {
 
   interface Palette {
     market: MarketPalette
+    surface: SurfacePalette
   }
   interface PaletteOptions {
     market?: MarketPalette
+    surface?: SurfacePalette
   }
 }
 
 /**
  * Colour budget: red and green are reserved for price direction and nothing
- * else. Everything that is not directional reads from `grey`. Keeping every
- * up/down tone in one place is also what makes a dark theme tractable later.
+ * else. Keeping every up/down tone in one entry is what lets the dark scheme
+ * restate them in one place instead of chasing hexes through components.
  */
 export interface MarketPalette {
   up: string
@@ -39,7 +47,23 @@ export interface MarketPalette {
   downChart: string
 }
 
-const market: MarketPalette = {
+/**
+ * Neutrals by role rather than by lightness. `grey.100` would have to mean a
+ * near-white in one scheme and a near-black in the other, which reads as a lie
+ * everywhere it is used.
+ */
+export interface SurfacePalette {
+  /** Low-contrast fill: metric chips, gauge tracks */
+  subtle: string
+  /** Hairline: card borders, dividers */
+  border: string
+  /** A mark that has to stay visible on `subtle` */
+  marker: string
+  /** Card elevation on hover */
+  shadow: string
+}
+
+const lightMarket: MarketPalette = {
   up: '#25a750',
   down: '#ca3f64',
   upSurface: 'rgba(37, 167, 80, 0.05)',
@@ -50,34 +74,102 @@ const market: MarketPalette = {
   downChart: '#ca3f64',
 }
 
+// Lifted and slightly desaturated: the light-scheme greens and reds sit too
+// close to the background to carry a 32px price on a dark surface.
+const darkMarket: MarketPalette = {
+  up: '#3ecf7f',
+  down: '#f2547d',
+  upSurface: 'rgba(62, 207, 127, 0.08)',
+  downSurface: 'rgba(242, 84, 125, 0.08)',
+  upBorder: 'rgba(62, 207, 127, 0.35)',
+  downBorder: 'rgba(242, 84, 125, 0.35)',
+  upChart: '#3ecf7f',
+  downChart: '#f2547d',
+}
+
+const lightSurface: SurfacePalette = {
+  subtle: '#EEF2F6',
+  border: '#E3E8EF',
+  marker: '#CDD5DF',
+  shadow: '0 4px 12px -2px rgba(16, 24, 40, 0.10)',
+}
+
+const darkSurface: SurfacePalette = {
+  subtle: '#1E2635',
+  border: '#28313F',
+  marker: '#46536A',
+  shadow: '0 4px 12px -2px rgba(0, 0, 0, 0.55)',
+}
+
+const grey = {
+  50: '#F8FAFC',
+  100: '#EEF2F6',
+  200: '#E3E8EF',
+  300: '#CDD5DF',
+  500: '#697586',
+  600: '#4B5565',
+  700: '#364152',
+  900: '#121926',
+}
+
 const theme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#444ce7',
-      contrastText: '#fff',
+  cssVariables: { colorSchemeSelector: 'class' },
+  colorSchemes: {
+    light: {
+      palette: {
+        primary: {
+          main: '#444ce7',
+          contrastText: '#fff',
+        },
+        secondary: {
+          main: '#ff9800',
+          contrastText: '#fff',
+        },
+        success: { main: '#25a750' },
+        error: { main: '#ca3f64' },
+        grey,
+        background: {
+          default: '#fff',
+          paper: '#fff',
+        },
+        text: {
+          primary: '#121926',
+          secondary: '#4B5565',
+        },
+        divider: '#E3E8EF',
+        market: lightMarket,
+        surface: lightSurface,
+      },
     },
-    secondary: {
-      main: '#ff9800',
-      contrastText: '#fff',
+    dark: {
+      palette: {
+        // Lifted off the dark background so it stays legible as a fill and as
+        // text, which the light scheme's indigo does not.
+        primary: {
+          main: '#7B87F5',
+          contrastText: '#0C111C',
+        },
+        secondary: {
+          main: '#ffab40',
+          contrastText: '#0C111C',
+        },
+        success: { main: '#3ecf7f' },
+        error: { main: '#f2547d' },
+        grey,
+        // Off-black, not #000: pure black flattens the card edges away.
+        background: {
+          default: '#0C111C',
+          paper: '#141B29',
+        },
+        text: {
+          primary: '#E3E8EF',
+          secondary: '#93A0B4',
+        },
+        divider: '#28313F',
+        market: darkMarket,
+        surface: darkSurface,
+      },
     },
-    success: {
-      main: '#25a750',
-    },
-    error: {
-      main: '#ca3f64',
-    },
-    grey: {
-      50: '#F8FAFC',
-      100: '#EEF2F6',
-      200: '#E3E8EF',
-      300: '#CDD5DF',
-      500: '#697586',
-      600: '#4B5565',
-      700: '#364152',
-      900: '#121926',
-    },
-    market,
   },
   shape: {
     borderRadius: 16,
@@ -104,13 +196,13 @@ const theme = createTheme({
         color: 'transparent',
       },
       styleOverrides: {
-        root: {
+        root: ({ theme }) => ({
           // The bar carries a logo, three links and a clock. It gets a neutral
           // surface so the only saturated colour on screen is price direction.
-          backgroundColor: '#fff',
-          color: '#121926',
-          borderBottom: '1px solid #E3E8EF',
-        },
+          backgroundColor: theme.vars.palette.background.paper,
+          color: theme.vars.palette.text.primary,
+          borderBottom: `1px solid ${theme.vars.palette.divider}`,
+        }),
       },
     },
     MuiToolbar: {
@@ -122,28 +214,28 @@ const theme = createTheme({
     },
     MuiToggleButtonGroup: {
       styleOverrides: {
-        grouped: {
-          borderColor: '#CDD5DF',
-        },
+        grouped: ({ theme }) => ({
+          borderColor: theme.vars.palette.divider,
+        }),
       },
     },
     MuiToggleButton: {
       styleOverrides: {
-        root: {
+        root: ({ theme }) => ({
           textTransform: 'none',
           fontWeight: 600,
-          color: '#4B5565',
+          color: theme.vars.palette.text.secondary,
           '&:hover': {
-            backgroundColor: '#F8FAFC',
+            backgroundColor: theme.vars.palette.surface.subtle,
           },
           '&.Mui-selected': {
-            backgroundColor: '#444ce7',
-            color: '#fff',
+            backgroundColor: theme.vars.palette.primary.main,
+            color: theme.vars.palette.primary.contrastText,
             '&:hover': {
-              backgroundColor: '#6172F3',
+              backgroundColor: theme.vars.palette.primary.dark,
             },
           },
-        },
+        }),
         sizeSmall: {
           fontSize: 13,
           height: 32,
@@ -206,10 +298,10 @@ const theme = createTheme({
     },
     MuiDivider: {
       styleOverrides: {
-        root: {
-          background: '#CDD5DF',
+        root: ({ theme }) => ({
+          background: theme.vars.palette.divider,
           margin: '32px 0',
-        },
+        }),
       },
     },
     MuiTypography: {
@@ -268,11 +360,10 @@ const theme = createTheme({
     },
     MuiCard: {
       styleOverrides: {
-        root: {
-          border: '1px solid #EEF2F6',
-          boxShadow:
-            '0px 12px 16px -4px rgba(16, 24, 40, 0.08), 0px 4px 6px -2px rgba(16, 24, 40, 0.03);',
-        },
+        root: ({ theme }) => ({
+          border: `1px solid ${theme.vars.palette.surface.border}`,
+          boxShadow: theme.vars.palette.surface.shadow,
+        }),
       },
     },
     MuiCardMedia: {
@@ -291,14 +382,14 @@ const theme = createTheme({
     },
     MuiLinearProgress: {
       styleOverrides: {
-        root: {
+        root: ({ theme }) => ({
           height: '8px',
           borderRadius: '4px',
-          backgroundColor: '#E3E8EF',
+          backgroundColor: theme.vars.palette.surface.subtle,
           '& .MuiLinearProgress-bar': {
             borderRadius: '4px',
           },
-        },
+        }),
       },
     },
     MuiBottomNavigationAction: {
@@ -313,39 +404,39 @@ const theme = createTheme({
     },
     MuiSelect: {
       styleOverrides: {
-        root: {
+        root: ({ theme }) => ({
           fontSize: '14px',
           fontWeight: 600,
           borderRadius: '12px',
           '& .MuiOutlinedInput-notchedOutline': {
             borderWidth: '1px',
-            borderColor: '#CDD5DF',
+            borderColor: theme.vars.palette.divider,
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
             borderWidth: '1px',
-            borderColor: '#121926',
+            borderColor: theme.vars.palette.text.primary,
           },
-        },
+        }),
       },
     },
     MuiMenuItem: {
       styleOverrides: {
-        root: {
+        root: ({ theme }) => ({
           '&.Mui-selected': {
             backgroundColor: 'transparent',
             '&:hover': {
-              backgroundColor: '#F8FAFC',
+              backgroundColor: theme.vars.palette.surface.subtle,
             },
           },
           '&:hover': {
-            backgroundColor: '#F8FAFC',
+            backgroundColor: theme.vars.palette.surface.subtle,
           },
-        },
+        }),
       },
     },
     MuiAccordion: {
       styleOverrides: {
-        root: {
+        root: ({ theme }) => ({
           boxShadow: 'none',
           backgroundColor: 'transparent',
           '&.Mui-expanded': {
@@ -353,9 +444,9 @@ const theme = createTheme({
           },
           '&::before': {
             opacity: '1 !important',
-            backgroundColor: '#CDD5DF',
+            backgroundColor: theme.vars.palette.divider,
           },
-        },
+        }),
       },
     },
     MuiAccordionSummary: {

@@ -6,7 +6,7 @@ import theme from './theme'
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme} defaultMode="system">
       <CssBaseline />
       <Pages />
     </ThemeProvider>

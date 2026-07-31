@@ -13,6 +13,7 @@ function TickerContainer({
   minWidth = 236,
   width,
   borderWidth = 3,
+  pending = false,
   children,
   sx,
 }: {
@@ -22,10 +23,17 @@ function TickerContainer({
   width?: number
   /** Width of the left direction bar. */
   borderWidth?: number
+  /** No data yet, so the card claims no direction. */
+  pending?: boolean
   children: React.ReactNode
   sx?: SxProps
 }) {
-  const strong = Math.abs(changePercent) >= STRONG_MOVE_PERCENT
+  const strong = !pending && Math.abs(changePercent) >= STRONG_MOVE_PERCENT
+  const directionColor = pending
+    ? 'surface.border'
+    : up
+      ? 'market.up'
+      : 'market.down'
 
   // Memoize the large sx object to avoid recreating on every render
   const containerSx = useMemo<SxProps<Theme>>(
@@ -45,29 +53,33 @@ function TickerContainer({
         ? up
           ? 'market.upSurface'
           : 'market.downSurface'
-        : '#fff',
+        : 'background.paper',
       border: '1px solid',
       borderColor: strong
         ? up
           ? 'market.upBorder'
           : 'market.downBorder'
-        : 'grey.200',
+        : 'surface.border',
       borderLeft: `${borderWidth}px solid`,
-      borderLeftColor: up ? 'market.up' : 'market.down',
+      borderLeftColor: directionColor,
       transition: 'box-shadow 0.2s ease-out, border-color 0.2s ease-out',
       '&:hover': {
         // No transform: a scaling card overlaps its neighbours in a dense grid
         // and forces a repaint of the whole row.
-        boxShadow: '0 4px 12px -2px rgba(16, 24, 40, 0.10)',
-        borderColor: up ? 'market.upBorder' : 'market.downBorder',
-        borderLeftColor: up ? 'market.up' : 'market.down',
+        boxShadow: (theme) => theme.vars.palette.surface.shadow,
+        borderColor: pending
+          ? 'surface.border'
+          : up
+            ? 'market.upBorder'
+            : 'market.downBorder',
+        borderLeftColor: directionColor,
         '& .actionBar': {
           display: 'flex',
         },
       },
       ...sx,
     }),
-    [up, strong, borderWidth, sx],
+    [up, strong, pending, directionColor, borderWidth, sx],
   )
 
   // Sits on the bottom edge rather than behind the symbol, where it used to cut
@@ -80,23 +92,25 @@ function TickerContainer({
       left: 0,
       right: 0,
       height: 3,
-      backgroundColor: 'grey.100',
+      backgroundColor: 'surface.subtle',
       zIndex: 1,
       '&::after': {
         content: '""',
         position: 'absolute',
         inset: 0,
         right: 'auto',
-        width: `${
-          Math.min(Math.abs(changePercent), AMPLITUDE_CEILING_PERCENT) *
-          (100 / AMPLITUDE_CEILING_PERCENT)
-        }%`,
-        backgroundColor: up ? 'market.up' : 'market.down',
+        width: pending
+          ? 0
+          : `${
+              Math.min(Math.abs(changePercent), AMPLITUDE_CEILING_PERCENT) *
+              (100 / AMPLITUDE_CEILING_PERCENT)
+            }%`,
+        backgroundColor: directionColor,
         opacity: 0.55,
         transition: 'width 0.3s ease-in-out',
       },
     }),
-    [changePercent, up],
+    [changePercent, pending, directionColor],
   )
 
   return (

@@ -9,6 +9,11 @@ import { useBinanceTickerStore } from '../store/useBinanceTickerStore'
 import { SortBy } from '../types/binance'
 import useBinanceSymbolUpdater from '../hooks/useBinanceSymbolUpdater'
 import useBinanceRatioUpdater from '../hooks/useBinanceRatioUpdater'
+import {
+  markFeedMessage,
+  resetFeed,
+  setFeedStatus,
+} from '../store/useConnectionStore'
 
 export default function Market() {
   const [count, setCount] = useState(20)
@@ -58,11 +63,18 @@ export default function Market() {
       'wss://fstream.binance.com/market/ws/!ticker@arr',
     )
 
+    setFeedStatus('connecting')
+
     socket.onopen = () => {
-      console.log('socket open')
+      setFeedStatus('live')
+    }
+
+    socket.onclose = () => {
+      setFeedStatus('reconnecting')
     }
 
     socket.onmessage = (event: MessageEvent) => {
+      markFeedMessage()
       try {
         const data = JSON.parse(event.data)
         if (data.ping) {
@@ -100,7 +112,11 @@ export default function Market() {
     }
 
     return () => {
+      // Cleared first so the close handler does not report a reconnect that
+      // is never going to be attempted.
+      socket.onclose = null
       socket.close()
+      resetFeed()
     }
   }, [])
 

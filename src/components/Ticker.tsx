@@ -3,16 +3,18 @@ import { useEffect, useState } from 'react'
 
 import { FullTicker } from '../types'
 import { compactNumberFormatter } from '../utils'
+import { numericFont } from '../fonts'
 
 const Description = ({ label, value }: { label: string; value: string }) => {
   return (
-    <Typography fontSize={20} color="text.secondary">
+    <Typography fontSize={18} color="text.secondary">
       {label}:{' '}
       <Typography
-        fontSize={20}
+        fontSize={18}
         fontWeight={500}
         component="span"
         color="text.primary"
+        sx={numericFont}
       >
         {value}
       </Typography>
@@ -68,6 +70,9 @@ export default function Ticker({ symbol }: { symbol: string }) {
     }
   }, [symbol])
 
+  const up = Number(ticker?.p) > 0
+  const changeColor = up ? 'market.up' : 'market.down'
+
   return (
     <Stack
       direction="row"
@@ -79,30 +84,34 @@ export default function Ticker({ symbol }: { symbol: string }) {
       <Stack spacing={1} sx={{ flex: 1 }}>
         <Stack direction="row" alignItems="flex-end" spacing={1.5}>
           <Typography
-            fontSize={48}
+            fontSize={44}
             lineHeight={1}
             fontWeight={600}
-            color={!aggTrade?.m ? 'success' : 'error'}
+            // 24h direction, matching the change below it. Colouring this by
+            // the last trade's side put a green price over a red change.
+            color={changeColor}
+            sx={numericFont}
           >
             {aggTrade?.p ?? '-'}
           </Typography>
           <Typography
-            fontSize={20}
+            fontSize={18}
             fontWeight={500}
             lineHeight={1.4}
             color="text.secondary"
+            sx={numericFont}
           >
             {aggTrade?.q ?? '-'}
           </Typography>
         </Stack>
         <Typography
-          sx={{ display: 'flex', gap: '16px' }}
-          fontSize={22}
+          sx={{ display: 'flex', gap: '16px', ...numericFont }}
+          fontSize={20}
           fontWeight={600}
-          color={Number(ticker?.p) > 0 ? 'success' : 'error'}
+          color={changeColor}
         >
-          <span>{Number(ticker?.p) > 0 ? `+${ticker?.p}` : ticker?.p}</span>
-          <span>{Number(ticker?.p) > 0 ? `+${ticker?.P}` : ticker?.P}%</span>
+          <span>{up ? `+${ticker?.p}` : ticker?.p}</span>
+          <span>{up ? `+${ticker?.P}` : ticker?.P}%</span>
         </Typography>
       </Stack>
       <Stack spacing={2} sx={{}}>

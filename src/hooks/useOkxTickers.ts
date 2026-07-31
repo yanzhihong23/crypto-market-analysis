@@ -9,6 +9,12 @@ import {
   setOkxPercent,
   updateOkxTicker,
 } from '../store/okxRealtimeTicker'
+import {
+  markFeedMessage,
+  resetFeed,
+  setFeedStatus,
+  useConnectionStore,
+} from '../store/useConnectionStore'
 
 import useOkxTickerFormat from './useOkxTickerFormat'
 
@@ -68,6 +74,12 @@ export const useOkxTickers = () => {
     wsRef.current?.close()
     clearPingTimer()
 
+    setFeedStatus(
+      useConnectionStore.getState().status === 'idle'
+        ? 'connecting'
+        : 'reconnecting',
+    )
+
     const ws = new WebSocket('wss://ws.okx.com:8443/ws/v5/public')
     wsRef.current = ws
 
@@ -76,6 +88,7 @@ export const useOkxTickers = () => {
         ws.close()
         return
       }
+      setFeedStatus('live')
       ws.send(
         JSON.stringify({
           op: 'subscribe',
@@ -85,6 +98,7 @@ export const useOkxTickers = () => {
     }
 
     ws.onmessage = ({ data }: { data: string }) => {
+      markFeedMessage()
       clearPingTimer()
       pingTimerRef.current = setTimeout(() => {
         if (ws.readyState === WebSocket.OPEN) {
@@ -124,6 +138,7 @@ export const useOkxTickers = () => {
         wsRef.current = null
       }
       if (mountedRef.current) {
+        setFeedStatus('reconnecting')
         clearReconnectTimer()
         reconnectTimerRef.current = setTimeout(() => {
           reconnectTimerRef.current = null
@@ -199,6 +214,7 @@ export const useOkxTickers = () => {
       clearPingTimer()
       wsRef.current?.close()
       wsRef.current = null
+      resetFeed()
     }
   }, [initialInstIds.length])
 

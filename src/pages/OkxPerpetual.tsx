@@ -8,6 +8,7 @@ import OkxTickerCard from '../components/OkxTickerCard'
 import ActionBar from '../components/ActionBar'
 import OkxDataSync from '../components/OkxDataSync'
 import OkxMarketToolbar from '../components/OkxMarketToolbar'
+import EmptyWatchlist from '../components/EmptyWatchlist'
 import useOkxTickerPercents from '../hooks/useOkxTickerPercents'
 
 const OkxTickerGridItem = memo(function OkxTickerGridItem({
@@ -78,6 +79,10 @@ const OkxTickerGrid = memo(function OkxTickerGrid() {
     sortedInstIds.forEach((id, index) => map.set(id, index))
     return map
   }, [sortedInstIds])
+
+  if (!instIds.length) {
+    return <EmptyWatchlist />
+  }
 
   return (
     <Box

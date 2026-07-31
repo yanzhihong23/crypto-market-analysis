@@ -37,6 +37,7 @@ export default function BaseAreaChart({
   const color = isUp
     ? theme.palette.market.upChart
     : theme.palette.market.downChart
+  const axisColor = theme.palette.text.secondary
 
   const renderLabel = ({
     index,
@@ -76,19 +77,25 @@ export default function BaseAreaChart({
             <stop offset="95%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <XAxis dataKey={xKey}>
-          <Label value={label} offset={10} position="bottom" />
+        {/* Recharts defaults its axes to a fixed grey that all but disappears
+            against the dark scheme's background. */}
+        <XAxis dataKey={xKey} stroke={axisColor} tick={{ fill: axisColor }}>
+          <Label value={label} offset={10} position="bottom" fill={axisColor} />
         </XAxis>
         <YAxis
           type="number"
           domain={['auto', 'auto']}
           tickFormatter={yDataFormatter}
+          stroke={axisColor}
+          tick={{ fill: axisColor }}
         />
         <Tooltip
           wrapperStyle={{ border: 'none' }}
           contentStyle={{
-            border: 'none',
-            background: 'rgba(255, 255, 255, .8)',
+            border: `1px solid ${theme.palette.surface.border}`,
+            borderRadius: 8,
+            background: theme.palette.background.paper,
+            color: theme.palette.text.primary,
           }}
         />
         <Area

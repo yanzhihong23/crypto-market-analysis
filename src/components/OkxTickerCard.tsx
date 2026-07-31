@@ -14,10 +14,14 @@ import LastPrice from './LastPrice'
 import PriceRange from './PriceRange'
 import OkxMarketMetrics from './OkxMarketMetrics'
 import OkxLogoSymbol from './OkxLogoSymbol'
+import OkxTickerCardSkeleton from './OkxTickerCardSkeleton'
 
 function OkxTickerCard({ instId }: { instId: string }) {
   const t = useOkxTicker(instId)
 
+  // The placeholder ticker carries empty strings until the first message for
+  // this instrument arrives, which may never happen for a delisted symbol.
+  const ready = t.last !== ''
   const up = useMemo(() => +t.percent > 0, [t.percent])
   const changePercent = useMemo(() => +(+t.percent).toFixed(2), [t.percent])
 
@@ -32,7 +36,8 @@ function OkxTickerCard({ instId }: { instId: string }) {
       display: 'none',
       height: 60,
       width: '100%',
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      // The blur alone separates the button from the sparkline behind it; the
+      // white wash that used to sit here inverted badly in the dark scheme.
       backdropFilter: 'blur(2px)',
       borderBottomLeftRadius: 16,
       borderBottomRightRadius: 16,
@@ -46,6 +51,10 @@ function OkxTickerCard({ instId }: { instId: string }) {
     const { instIds, setInstIds } = useTickerStore.getState()
     setInstIds(instIds.filter((i) => i !== instId))
   }, [instId])
+
+  if (!ready) {
+    return <OkxTickerCardSkeleton symbol={instId.split('-')[0]} />
+  }
 
   return (
     <TickerContainer

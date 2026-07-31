@@ -7,24 +7,27 @@ import {
   useVolCcyQuote,
 } from '../hooks/useTickerField'
 import { compactNumberFormatter } from '../utils'
-import { numericFont } from '../fonts'
 
-// Third-tier data, so it stays neutral and lets the price own the colour. It
-// also keeps the funding rate from being read as a price move: it used to be
-// tinted with the same red/green as the 24h change while meaning something
-// else. The sign carries that information instead.
-const chipSx = {
-  ...numericFont,
-  backgroundColor: 'grey.100',
-  color: 'grey.600',
-}
+import { metricChipSx } from './metricChipSx'
+
+/** Placeholder for a metric the feed has not sent yet. */
+const MISSING = '-'
 
 function OkxMarketMetrics({ instId }: { instId: string }) {
   const volCcyQuote = useVolCcyQuote(instId)
   const ratio = useRatio(instId)
   const fundingRate = useFundingRate(instId)
 
-  const signedFundingRate = +fundingRate > 0 ? `+${fundingRate}` : fundingRate
+  // Each of these arrives on its own channel, so a card can hold two real
+  // values and one gap. Formatting an absent value used to print NaN and
+  // "undefined‱" straight onto the card.
+  const volumeLabel = Number.isFinite(Number(volCcyQuote))
+    ? compactNumberFormatter(Number(volCcyQuote))
+    : MISSING
+  const ratioLabel = ratio?.value ?? MISSING
+  const fundingLabel = Number.isFinite(Number(fundingRate))
+    ? `${+fundingRate > 0 ? '+' : ''}${fundingRate}‱`
+    : MISSING
 
   return (
     <Stack direction="row" alignItems="center" gap={0.75} sx={{ zIndex: 2 }}>
@@ -32,24 +35,24 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
         <Chip
           size="small"
           aria-label="Quote volume"
-          sx={chipSx}
-          label={`${compactNumberFormatter(Number(volCcyQuote))}`}
+          sx={metricChipSx}
+          label={volumeLabel}
         />
       </Tooltip>
       <Tooltip title="L/S Ratio" arrow>
         <Chip
           size="small"
           aria-label="Long/short ratio"
-          sx={chipSx}
-          label={ratio?.value}
+          sx={metricChipSx}
+          label={ratioLabel}
         />
       </Tooltip>
       <Tooltip title="Funding Rate" arrow>
         <Chip
           size="small"
           aria-label="Funding rate"
-          sx={chipSx}
-          label={`${signedFundingRate}‱`}
+          sx={metricChipSx}
+          label={fundingLabel}
         />
       </Tooltip>
     </Stack>

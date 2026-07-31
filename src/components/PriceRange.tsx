@@ -72,7 +72,7 @@ function PriceRange({
           position: 'relative',
           height: 3,
           borderRadius: 1.5,
-          backgroundColor: 'grey.100',
+          backgroundColor: 'surface.subtle',
         }}
       >
         {referencePosition !== null && (
@@ -85,7 +85,7 @@ function PriceRange({
                 width: MARKER_WIDTH,
                 height: 5,
                 borderRadius: 1,
-                backgroundColor: 'grey.300',
+                backgroundColor: 'surface.marker',
               }}
             />
           </Tooltip>
@@ -101,7 +101,8 @@ function PriceRange({
               borderRadius: 1,
               backgroundColor: up ? 'market.up' : 'market.down',
               // Separates the marker from the track behind it at this size.
-              boxShadow: '0 0 0 1.5px #fff',
+              boxShadow: (theme) =>
+                `0 0 0 1.5px ${theme.vars.palette.background.paper}`,
               transition: 'left 0.3s ease-out',
             }}
           />

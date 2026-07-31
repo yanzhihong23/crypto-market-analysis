@@ -6,6 +6,8 @@ import Logo from '../assets/logo.svg?react'
 import { numericFont } from '../fonts'
 
 import NavMenu from './NavMenu'
+import FeedStatus from './FeedStatus'
+import ColorSchemeToggle from './ColorSchemeToggle'
 
 export default function TopBar() {
   const [time, setTime] = useState('')
@@ -47,14 +49,18 @@ export default function TopBar() {
 
         <NavMenu sx={{ display: { xs: 'none', md: 'block' } }} />
 
-        <Typography
-          fontSize={16}
-          fontWeight={500}
-          color="text.secondary"
-          sx={{ ml: 'auto', ...numericFont }}
-        >
-          {time}
-        </Typography>
+        <Stack direction="row" alignItems="center" gap={2} sx={{ ml: 'auto' }}>
+          <FeedStatus />
+          <Typography
+            fontSize={16}
+            fontWeight={500}
+            color="text.secondary"
+            sx={numericFont}
+          >
+            {time}
+          </Typography>
+          <ColorSchemeToggle />
+        </Stack>
       </Toolbar>
     </AppBar>
   )
