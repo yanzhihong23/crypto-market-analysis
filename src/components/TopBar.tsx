@@ -48,7 +48,7 @@ export default function TopBar() {
           {/* Sized down from 20px/700: the wordmark was the heaviest text on
               a page whose whole job is to make prices the heaviest text. */}
           <Typography fontSize={16} fontWeight={600} letterSpacing={-0.1}>
-            Perpetual Market
+            Vigil
           </Typography>
         </Stack>
 
