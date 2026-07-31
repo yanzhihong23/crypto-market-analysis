@@ -1,11 +1,20 @@
 import { Box, Stack, SxProps, Theme } from '@mui/material'
-import { memo, useMemo } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 
 /** Above this 24h move a card earns the stronger border and fill. */
 const STRONG_MOVE_PERCENT = 5
 
 /** The amplitude rail saturates here, so 10% and 40% look the same. */
 const AMPLITUDE_CEILING_PERCENT = 10
+
+/** Card radius, and so the length the stroke spends turning the corner. */
+const CORNER_RADIUS = 16
+
+/**
+ * Shortest bottom run. Anything under this would end inside the corner curve
+ * and leave the turn unfinished, so it is the floor rather than zero.
+ */
+const MIN_AMPLITUDE_PX = CORNER_RADIUS + 8
 
 function TickerContainer({
   up,
@@ -21,7 +30,7 @@ function TickerContainer({
   changePercent?: number
   minWidth?: number
   width?: number
-  /** Width of the left direction bar. */
+  /** Width of the direction stroke. */
   borderWidth?: number
   /** No data yet, so the card claims no direction. */
   pending?: boolean
@@ -34,6 +43,16 @@ function TickerContainer({
     : up
       ? 'market.up'
       : 'market.down'
+  // The tinted edge a mover earns, and the one every card shows on hover.
+  const edgeColor = useCallback(
+    (theme: Theme) =>
+      pending
+        ? theme.vars.palette.surface.border
+        : up
+          ? theme.vars.palette.market.upBorder
+          : theme.vars.palette.market.downBorder,
+    [pending, up],
+  )
 
   // Memoize the large sx object to avoid recreating on every render
   const containerSx = useMemo<SxProps<Theme>>(
@@ -45,72 +64,60 @@ function TickerContainer({
       height: '100%',
       p: 2.5,
       zIndex: 2,
-      borderRadius: 1,
-      // Direction lives in one 3px bar plus a wash of tint. Every card used to
-      // carry a full animated gradient outline, which meant no card stood out;
-      // now only real movers get the stronger border and fill.
+      borderRadius: `${CORNER_RADIUS}px`,
+      // Direction lives in one 3px stroke plus a wash of tint. Every card used
+      // to carry a full animated gradient outline, which meant no card stood
+      // out; now only real movers get the stronger edge and fill.
       backgroundColor: strong
         ? up
           ? 'market.upSurface'
           : 'market.downSurface'
         : 'background.paper',
-      border: '1px solid',
-      borderColor: strong
-        ? up
-          ? 'market.upBorder'
-          : 'market.downBorder'
-        : 'surface.border',
-      borderLeft: `${borderWidth}px solid`,
-      borderLeftColor: directionColor,
-      transition: 'box-shadow 0.2s ease-out, border-color 0.2s ease-out',
+      // An inset ring rather than a border: a border would push the padding box
+      // inwards, and the direction stroke below has to line up with the card's
+      // own edge and radius to turn the corner without a seam.
+      boxShadow: (theme: Theme) =>
+        `inset 0 0 0 1px ${
+          strong ? edgeColor(theme) : theme.vars.palette.surface.border
+        }`,
+      transition: 'box-shadow 0.2s ease-out',
       '&:hover': {
         // No transform: a scaling card overlaps its neighbours in a dense grid
         // and forces a repaint of the whole row.
-        boxShadow: (theme) => theme.vars.palette.surface.shadow,
-        borderColor: pending
-          ? 'surface.border'
-          : up
-            ? 'market.upBorder'
-            : 'market.downBorder',
-        borderLeftColor: directionColor,
+        boxShadow: (theme: Theme) =>
+          `${theme.vars.palette.surface.shadow}, inset 0 0 0 1px ${edgeColor(theme)}`,
         '& .actionBar': {
           display: 'flex',
         },
       },
       ...sx,
     }),
-    [up, strong, pending, directionColor, borderWidth, sx],
+    [up, strong, edgeColor, sx],
   )
 
-  // Sits on the bottom edge rather than behind the symbol, where it used to cut
-  // into the contrast of the text it overlapped. The track is what makes it
-  // read as a gauge of the move rather than a stray mark in the corner.
-  const amplitudeBarSx = useMemo<SxProps<Theme>>(
+  // One stroke down the left edge and around the bottom corner, cut to length.
+  // Drawing both arms on a single element is what closes the corner: as two
+  // pieces, the left arm sat in the border box and the bottom arm in the
+  // padding box, and the radius clipped the gap between them open.
+  const directionStrokeSx = useMemo<SxProps<Theme>>(
     () => ({
       position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: 3,
-      backgroundColor: 'surface.subtle',
-      zIndex: 1,
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        inset: 0,
-        right: 'auto',
-        width: pending
-          ? 0
-          : `${
-              Math.min(Math.abs(changePercent), AMPLITUDE_CEILING_PERCENT) *
-              (100 / AMPLITUDE_CEILING_PERCENT)
-            }%`,
-        backgroundColor: directionColor,
-        opacity: 0.55,
-        transition: 'width 0.3s ease-in-out',
-      },
+      inset: 0,
+      borderRadius: 'inherit',
+      borderLeft: `${borderWidth}px solid`,
+      borderBottom: `${borderWidth}px solid`,
+      borderColor: directionColor,
+      // The bottom arm is what carries the 24h amplitude: the further the
+      // stroke runs past the corner, the bigger the move.
+      clipPath: `inset(0 calc(100% - max(${MIN_AMPLITUDE_PX}px, ${
+        Math.min(Math.abs(changePercent), AMPLITUDE_CEILING_PERCENT) *
+        (100 / AMPLITUDE_CEILING_PERCENT)
+      }%)) 0 0)`,
+      pointerEvents: 'none',
+      zIndex: 3,
+      transition: 'clip-path 0.3s ease-in-out',
     }),
-    [changePercent, pending, directionColor],
+    [changePercent, directionColor, borderWidth],
   )
 
   return (
@@ -122,7 +129,7 @@ function TickerContainer({
       sx={containerSx}
     >
       {children}
-      <Box sx={amplitudeBarSx} />
+      <Box sx={directionStrokeSx} />
     </Stack>
   )
 }
