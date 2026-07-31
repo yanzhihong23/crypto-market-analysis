@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local machine state, not shared: the codegraph index is rebuilt from the
+# source, and the local settings hold one machine's tool permissions.
+.codegraph
+.claude/settings.local.json
