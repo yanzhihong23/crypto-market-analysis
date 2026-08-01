@@ -4,6 +4,7 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  ReferenceLine,
   Tooltip,
   XAxis,
   YAxis,
@@ -17,6 +18,8 @@ export default function BaseAreaChart({
   label,
   syncId,
   yDataFormatter,
+  stroke,
+  referenceY,
   width = '99%',
   height = 300,
 }: {
@@ -25,6 +28,15 @@ export default function BaseAreaChart({
   yKey: string
   label?: string
   yDataFormatter?: (val: number) => string
+  /**
+   * Overrides the red/green the series would otherwise take from its own
+   * direction. Anything that is not a price has to pass one: on this palette
+   * red and green mean the market moved, and a rising long/short ratio is not
+   * the market moving.
+   */
+  stroke?: string
+  /** A level the series is read against, e.g. zero for a funding rate. */
+  referenceY?: number
   width?: string | number
   height?: string | number
   syncId?: string
@@ -34,10 +46,13 @@ export default function BaseAreaChart({
   // Unique per instance: a fixed id makes every chart on the page resolve to
   // the first one's <defs>.
   const gradientId = `area-${useId().replace(/:/g, '')}`
-  const color = isUp
-    ? theme.palette.market.upChart
-    : theme.palette.market.downChart
+  const color =
+    stroke ??
+    (isUp ? theme.palette.market.upChart : theme.palette.market.downChart)
   const axisColor = theme.palette.text.secondary
+  // Axes are chrome, not data. At the inherited size a sub-cent price needs
+  // more than a fifth of a small chart's width just to print its own scale.
+  const tickStyle = { fill: axisColor, fontSize: 11 }
 
   const renderLabel = ({
     index,
@@ -79,7 +94,7 @@ export default function BaseAreaChart({
         </defs>
         {/* Recharts defaults its axes to a fixed grey that all but disappears
             against the dark scheme's background. */}
-        <XAxis dataKey={xKey} stroke={axisColor} tick={{ fill: axisColor }}>
+        <XAxis dataKey={xKey} stroke={axisColor} tick={tickStyle}>
           <Label value={label} offset={10} position="bottom" fill={axisColor} />
         </XAxis>
         <YAxis
@@ -87,7 +102,11 @@ export default function BaseAreaChart({
           domain={['auto', 'auto']}
           tickFormatter={yDataFormatter}
           stroke={axisColor}
-          tick={{ fill: axisColor }}
+          tick={tickStyle}
+          // Wider than the 60px default, which cut the leading digit off any
+          // tick as long as a sub-cent price: `0.002175` is eight characters
+          // and every small cap on the board quotes at that scale.
+          width={76}
         />
         <Tooltip
           wrapperStyle={{ border: 'none' }}
@@ -98,6 +117,14 @@ export default function BaseAreaChart({
             color: theme.palette.text.primary,
           }}
         />
+        {/* Declared before the area so the stroke crosses over it. */}
+        {referenceY !== undefined && (
+          <ReferenceLine
+            y={referenceY}
+            stroke={theme.palette.surface.marker}
+            strokeDasharray="3 3"
+          />
+        )}
         <Area
           type="monotone"
           dataKey={yKey}

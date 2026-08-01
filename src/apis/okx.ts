@@ -7,14 +7,17 @@ import { proxyGet } from './util'
 
 const baseUrl = 'https://www.okx.com'
 
-type OkxRatio = [ts: string, ratio: string]
+/** The three sample sizes every rubik statistics endpoint is cut to. */
+export type RubikPeriod = '5m' | '1H' | '1D'
+
+export type OkxRatio = [ts: string, ratio: string]
 
 export const fetchOkxRatio = ({
   coin,
   period = '5m',
 }: {
   coin: string
-  period: '5m' | '1H' | '1D'
+  period: RubikPeriod
 }): Promise<OkxRatio[]> => {
   const url = pathcat(
     baseUrl,
@@ -53,7 +56,7 @@ export const fetchOkxFundingRateHistory = ({
 }
 
 /** `[ts, oi, oiCcy, oiUsd]`, newest first. */
-type OkxOpenInterestHistoryRow = [
+export type OkxOpenInterestHistoryRow = [
   ts: string,
   oi: string,
   oiCcy: string,
@@ -68,6 +71,9 @@ type OkxOpenInterestHistoryRow = [
  * Hourly, because the reference point is a session open and every open the
  * board offers falls on the hour. 100 rows is a little over four days, which
  * covers the longest window (24h) with room for a gap in the series.
+ *
+ * The endpoint caps at 100 rows whatever is asked for, so a window longer than
+ * 100 bars of the requested period has to be asked for at a coarser one.
  */
 export const fetchOkxOpenInterestHistory = ({
   instId,
@@ -75,7 +81,7 @@ export const fetchOkxOpenInterestHistory = ({
   limit = 100,
 }: {
   instId: string
-  period?: '5m' | '1H' | '1D'
+  period?: RubikPeriod
   limit?: number
 }): Promise<OkxOpenInterestHistoryRow[]> => {
   const url = pathcat(
@@ -101,10 +107,13 @@ export const fetchOkxKlines = ({
   instId,
   period = Period.MINUTE_15,
   openTime,
+  limit = 96,
 }: {
   instId: string
   period?: Period
   openTime?: OpenTime
+  /** Capped at 300 by the endpoint. */
+  limit?: number
 }): Promise<OkxKline[]> => {
   // 减去1秒，确保获取到开盘时间的k线
   const before =
@@ -116,7 +125,7 @@ export const fetchOkxKlines = ({
     instId,
     bar: period,
     before,
-    limit: 96,
+    limit,
   })
 
   return proxyGet(url)

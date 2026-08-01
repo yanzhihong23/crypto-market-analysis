@@ -1,6 +1,7 @@
 import { IconButton, Stack, Tooltip, Typography } from '@mui/material'
-import { memo, useMemo, useCallback, type MouseEvent } from 'react'
+import { memo, useMemo, useCallback, useState, type MouseEvent } from 'react'
 import BookmarkRemoveIcon from '@mui/icons-material/BookmarkRemove'
+import QueryStatsIcon from '@mui/icons-material/QueryStats'
 import StarIcon from '@mui/icons-material/Star'
 import StarBorderIcon from '@mui/icons-material/StarBorder'
 
@@ -23,6 +24,7 @@ import PriceRange from './PriceRange'
 import OkxMarketMetrics from './OkxMarketMetrics'
 import OkxLogoSymbol from './OkxLogoSymbol'
 import OkxTickerCardSkeleton from './OkxTickerCardSkeleton'
+import OkxTickerDetail from './OkxTickerDetail'
 
 function OkxTickerCard({ instId }: { instId: string }) {
   const t = useOkxTicker(instId)
@@ -30,6 +32,10 @@ function OkxTickerCard({ instId }: { instId: string }) {
   const fundingRate = useFundingRate(instId)
   const fundingBaseline = useFundingBaseline(instId)
   const pinned = useTickerStore((state) => state.pinnedInstIds.includes(instId))
+  // Opening the detail is deliberately a button rather than a click on the
+  // card: the card already answers a double-click by pinning, and a single
+  // click that opened a dialog would fire on the way to every one of those.
+  const [detailOpen, setDetailOpen] = useState(false)
 
   // The chips carry either reading on its own; the card only claims the ring
   // when both have left their usual range, which is the case worth crossing the
@@ -79,6 +85,9 @@ function OkxTickerCard({ instId }: { instId: string }) {
   const handleTogglePin = useCallback(() => {
     useTickerStore.getState().togglePinned(instId)
   }, [instId])
+
+  const handleOpenDetail = useCallback(() => setDetailOpen(true), [])
+  const handleCloseDetail = useCallback(() => setDetailOpen(false), [])
 
   // The action bar sits on top of the card, so a click on either of its buttons
   // would otherwise reach the card's own double-click handler as well.
@@ -146,6 +155,16 @@ function OkxTickerCard({ instId }: { instId: string }) {
         sx={actionBarSx}
         onDoubleClick={stopDoubleClick}
       >
+        <Tooltip title="Open charts" arrow>
+          <IconButton
+            size="small"
+            aria-label="Open charts"
+            onClick={handleOpenDetail}
+            sx={{ color: 'text.secondary' }}
+          >
+            <QueryStatsIcon />
+          </IconButton>
+        </Tooltip>
         {/* The pin is reachable by double-clicking the card, which nothing on
             the card announces; this is where that gesture is discoverable. */}
         <Tooltip title={pinned ? 'Unpin' : 'Pin to front'} arrow>
@@ -162,6 +181,16 @@ function OkxTickerCard({ instId }: { instId: string }) {
           <BookmarkRemoveIcon />
         </IconButton>
       </Stack>
+
+      {/* Mounted only once it has been asked for, so the board does not carry a
+          dialog and its four series for every card on it. */}
+      {detailOpen && (
+        <OkxTickerDetail
+          instId={instId}
+          open={detailOpen}
+          onClose={handleCloseDetail}
+        />
+      )}
     </TickerContainer>
   )
 }
