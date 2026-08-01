@@ -1,11 +1,7 @@
-import { pathcat } from 'pathcat'
-
 import { OkxInstrument, OkxKline, OpenTime, Period } from '../types/okx'
 import { sessionStartMs } from '../utils/session'
 
-import { proxyGet } from './util'
-
-const baseUrl = 'https://www.okx.com'
+import { okxGet, okxProxyGet } from './util'
 
 /** The three sample sizes every rubik statistics endpoint is cut to. */
 export type RubikPeriod = '5m' | '1H' | '1D'
@@ -18,15 +14,11 @@ export const fetchOkxRatio = ({
 }: {
   coin: string
   period: RubikPeriod
-}): Promise<OkxRatio[]> => {
-  const url = pathcat(
-    baseUrl,
-    '/api/v5/rubik/stat/contracts/long-short-account-ratio',
-    { ccy: coin.toUpperCase(), period },
-  )
-
-  return proxyGet(url)
-}
+}): Promise<OkxRatio[]> =>
+  okxProxyGet('/rubik/stat/contracts/long-short-account-ratio', {
+    ccy: coin.toUpperCase(),
+    period,
+  })
 
 type OkxFundingRateHistoryRow = {
   instId: string
@@ -46,14 +38,8 @@ export const fetchOkxFundingRateHistory = ({
 }: {
   instId: string
   limit?: number
-}): Promise<OkxFundingRateHistoryRow[]> => {
-  const url = pathcat(baseUrl, '/api/v5/public/funding-rate-history', {
-    instId,
-    limit,
-  })
-
-  return proxyGet(url)
-}
+}): Promise<OkxFundingRateHistoryRow[]> =>
+  okxGet('/public/funding-rate-history', { instId, limit })
 
 /** `[ts, oi, oiCcy, oiUsd]`, newest first. */
 export type OkxOpenInterestHistoryRow = [
@@ -83,25 +69,15 @@ export const fetchOkxOpenInterestHistory = ({
   instId: string
   period?: RubikPeriod
   limit?: number
-}): Promise<OkxOpenInterestHistoryRow[]> => {
-  const url = pathcat(
-    baseUrl,
-    '/api/v5/rubik/stat/contracts/open-interest-history',
-    {
-      instId,
-      period,
-      limit,
-    },
-  )
+}): Promise<OkxOpenInterestHistoryRow[]> =>
+  okxProxyGet('/rubik/stat/contracts/open-interest-history', {
+    instId,
+    period,
+    limit,
+  })
 
-  return proxyGet(url)
-}
-
-export const fetchOkxInstruments = (): Promise<OkxInstrument[]> => {
-  const url = pathcat(baseUrl, '/api/v5/public/instruments?instType=SWAP')
-
-  return proxyGet(url)
-}
+export const fetchOkxInstruments = (): Promise<OkxInstrument[]> =>
+  okxGet('/public/instruments', { instType: 'SWAP' })
 
 export const fetchOkxKlines = ({
   instId,
@@ -121,12 +97,5 @@ export const fetchOkxKlines = ({
       ? sessionStartMs(openTime) - 1000
       : undefined
 
-  const url = pathcat(baseUrl, '/api/v5/market/candles', {
-    instId,
-    bar: period,
-    before,
-    limit,
-  })
-
-  return proxyGet(url)
+  return okxGet('/market/candles', { instId, bar: period, before, limit })
 }

@@ -2,8 +2,23 @@
   "installCommand": "npx pnpm@11.17.0 install",
   "rewrites": [
     {
+      "source": "/okx/:path*",
+      "destination": "https://www.okx.com/api/v5/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/okx/:path*",
+      "headers": [
+        {
+          "key": "CDN-Cache-Control",
+          "value": "max-age=30"
+        }
+      ]
     }
   ]
 }
