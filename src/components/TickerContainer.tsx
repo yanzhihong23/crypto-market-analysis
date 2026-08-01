@@ -118,18 +118,18 @@ function TickerContainer({
     [up, strong, flagged, edgeColor, sx],
   )
 
-  // One stroke down the left edge and around the bottom corner, cut to length.
-  // Drawing both arms on a single element is what closes the corner: as two
-  // pieces, the left arm sat in the border box and the bottom arm in the
-  // padding box, and the radius clipped the gap between them open.
+  // One stroke along the bottom edge, rising only as far as the corner curve
+  // carries it. It used to run the full left edge as well, but that arm stood a
+  // second coloured line beside the card's own ring and read as a heavier
+  // outline rather than as a reading.
   const amplitude = amplitudePercent(changePercent)
 
-  // The width is the 24h amplitude: the further the stroke runs past the
+  // The width is the 24h amplitude: the further the stroke runs from the
   // corner, the bigger the move. It used to be cut out of a full-card overlay
   // with clip-path, and that clip rect was the height of the card, so its
   // animated right edge swept a repaint boundary straight down the front of the
-  // content. Sizing the element keeps it, and everything it invalidates, inside
-  // the left gutter.
+  // content. Sizing the element keeps it, and everything it invalidates, along
+  // the bottom edge.
   //
   // It travels as a custom property on the plain `style` attribute rather than
   // through `sx`, for the same reason the price marker does: emotion caches a
@@ -151,11 +151,11 @@ function TickerContainer({
       left: 0,
       width: 'var(--direction-stroke-width)',
       borderRadius: 'inherit',
-      // The bottom arm has to end square where it stops, so only the two corners
-      // it actually turns keep the card's radius.
+      // The stroke has to end square where it stops, so only the bottom left
+      // corner, the one it actually turns, keeps the card's radius.
+      borderTopLeftRadius: 0,
       borderTopRightRadius: 0,
       borderBottomRightRadius: 0,
-      borderLeft: `${borderWidth}px solid`,
       borderBottom: `${borderWidth}px solid`,
       borderColor: directionColor,
       pointerEvents: 'none',
