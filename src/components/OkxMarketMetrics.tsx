@@ -27,7 +27,10 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
   const volumeLabel = Number.isFinite(Number(volCcyQuote))
     ? compactNumberFormatter(Number(volCcyQuote))
     : MISSING
-  const ratioLabel = ratio?.value ?? MISSING
+  // The only one of the three that needs saying: a compact volume carries its
+  // own suffix and the funding rate its own unit, but a bare 2.1 between them
+  // meant nothing until you hovered it.
+  const ratioLabel = `L/S ${ratio?.value ?? MISSING}`
   const fundingLabel = Number.isFinite(Number(fundingRate))
     ? `${+fundingRate > 0 ? '+' : ''}${fundingRate}‱`
     : MISSING
