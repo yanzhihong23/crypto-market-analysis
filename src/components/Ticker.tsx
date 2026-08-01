@@ -29,7 +29,7 @@ export default function Ticker({ symbol }: { symbol: string }) {
     s: string // symbol
     p: string // price
     q: string // quantity
-    m: string // market maker?
+    m: boolean // is the buyer the maker, i.e. the taker sold into the bid
   }>()
   const [ticker, setTicker] = useState<FullTicker>()
 
@@ -72,6 +72,14 @@ export default function Ticker({ symbol }: { symbol: string }) {
 
   const up = Number(ticker?.p) > 0
   const changeColor = up ? 'market.up' : 'market.down'
+  // aggTrade carries the side, so the price shows who took the trade: buyer
+  // taking the ask is up, seller hitting the bid is down. The 24h reading sits
+  // on the change line below, which is why the two are allowed to disagree.
+  const tradeColor = !aggTrade
+    ? 'text.primary'
+    : aggTrade.m
+      ? 'market.down'
+      : 'market.up'
 
   return (
     <Stack
@@ -87,9 +95,7 @@ export default function Ticker({ symbol }: { symbol: string }) {
             fontSize={44}
             lineHeight={1}
             fontWeight={600}
-            // 24h direction, matching the change below it. Colouring this by
-            // the last trade's side put a green price over a red change.
-            color={changeColor}
+            color={tradeColor}
             sx={numericFont}
           >
             {aggTrade?.p ?? '-'}

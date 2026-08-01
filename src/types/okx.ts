@@ -41,6 +41,7 @@ export interface OkxTickerFormatted extends OkxTicker {
   percent: string
   vol: string
   color: string
+  /** Direction of the last tick against the one before it, filled in by the store. */
   isUp?: boolean
 }
 

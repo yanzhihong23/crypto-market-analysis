@@ -92,7 +92,7 @@ function OkxTickerCard({ instId }: { instId: string }) {
           </Typography>
         </Stack>
       </Stack>
-      <LastPrice last={t.last} lastSz={t.lastSz} up={up} />
+      <LastPrice last={t.last} lastSz={t.lastSz} up={t.isUp} />
       <PriceRange low={t.low24h} high={t.high24h} last={t.last} up={up} />
 
       <OkxMarketMetrics instId={instId} />

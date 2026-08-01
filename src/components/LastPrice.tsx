@@ -22,9 +22,11 @@ function LastPrice({
   last: string
   lastSz: string
   /**
-   * 24h direction, matching the change percent and the card border. This used
-   * to be the last tick's direction, so a coin down 1.48% on the day rendered
-   * its price in green.
+   * The last tick's direction, not the 24h one: whether this print landed above
+   * or below the previous one, which is as close to buy/sell pressure as the
+   * OKX tickers channel gets — it carries no side. The 24h reading is on the
+   * change percent, the card border and the range bar, so the two never have to
+   * share this number.
    */
   up?: boolean
 }) {
