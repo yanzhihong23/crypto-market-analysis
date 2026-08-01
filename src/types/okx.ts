@@ -88,6 +88,7 @@ export enum Period {
  * @member {string} instId - 产品ID
  * @member {string} oi - 持仓量，按张为单位，open interest
  * @member {string} oiCcy - 持仓量，按币为单位
+ * @member {string} oiUsd - 持仓量，按美元为单位
  * @member {string} ts - 数据产生时间，Unix时间戳的毫秒数格式，如 1597026383085
  */
 export interface OkxOpenInterest {
@@ -95,6 +96,7 @@ export interface OkxOpenInterest {
   instId: string
   oi: string
   oiCcy: string
+  oiUsd: string
   ts: string
 }
 

@@ -6,6 +6,7 @@ import { OkxTicker } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
 import {
   getEmptyTicker,
+  setOkxOpenInterest,
   setOkxPercent,
   updateOkxTicker,
 } from '../store/okxRealtimeTicker'
@@ -131,7 +132,8 @@ export const useOkxTickers = () => {
         const ticker = res.data[0] as OkxTicker
         updateOkxTicker(ticker.instId, formatTickerRef.current({ ticker }))
       } else if (res.arg.channel === OkxChannel.OPEN_INTEREST) {
-        // do nothing
+        const { oi } = res.data[0] as OkxOpenInterest
+        setOkxOpenInterest(instId, oi)
       } else if (res.arg.channel === OkxChannel.FUNDING_RATE) {
         const { fundingRate } = res.data[0] as OkxFundingRate
         setFundingRateRef.current(

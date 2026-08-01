@@ -35,6 +35,21 @@ interface TickerStore {
   fundingBaseline: Record<string, Baseline | null>
   setFundingBaseline: (instId: string, baseline: Baseline | null) => void
   fundingBaselineAt: Record<string, number>
+  /**
+   * Open interest as it stood when the current session opened, which is what
+   * the live figure off the websocket is measured against. Stamped with the
+   * session it was taken for, so switching the board's open discards it rather
+   * than quietly comparing against the wrong morning.
+   */
+  openInterestOpen: Record<
+    string,
+    { value: string; openTime: OpenTime; fetchedAt: number }
+  >
+  setOpenInterestOpen: (
+    instId: string,
+    value: string,
+    openTime: OpenTime,
+  ) => void
   openTime: OpenTime
   setOpenTime: (openTime: OpenTime) => void
   sortBy: SortBy
@@ -81,6 +96,18 @@ export const useTickerStore = create<TickerStore>()(
           fundingBaselineAt: {
             ...state.fundingBaselineAt,
             [instId]: Date.now(),
+          },
+        })),
+      openInterestOpen: {},
+      setOpenInterestOpen: (
+        instId: string,
+        value: string,
+        openTime: OpenTime,
+      ) =>
+        set((state) => ({
+          openInterestOpen: {
+            ...state.openInterestOpen,
+            [instId]: { value, openTime, fetchedAt: Date.now() },
           },
         })),
       fundingRate: {},

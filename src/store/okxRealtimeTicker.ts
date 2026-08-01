@@ -6,8 +6,16 @@ type Listener = () => void
 
 const tickers = new Map<string, OkxTickerFormatted>()
 const percent = new Map<string, number>()
+/**
+ * Live open interest, in contracts. Out here with the tickers rather than in
+ * the persisted store: it arrives every few seconds per instrument, and each of
+ * those would otherwise be a write through to localStorage. The session-open
+ * figure it gets compared against is polled, so that one does live in the store.
+ */
+const openInterest = new Map<string, string>()
 const tickerListeners = new Map<string, Set<Listener>>()
 const percentListeners = new Map<string, Set<Listener>>()
+const openInterestListeners = new Map<string, Set<Listener>>()
 
 const subscribeByInstId = (
   registry: Map<string, Set<Listener>>,
@@ -61,7 +69,19 @@ export const subscribeOkxTicker = (instId: string, listener: Listener) =>
 export const subscribeOkxPercent = (instId: string, listener: Listener) =>
   subscribeByInstId(percentListeners, instId, listener)
 
+export const subscribeOkxOpenInterest = (instId: string, listener: Listener) =>
+  subscribeByInstId(openInterestListeners, instId, listener)
+
 export const getOkxTickerSnapshot = (instId: string) => tickers.get(instId)
+
+export const getOkxOpenInterestSnapshot = (instId: string) =>
+  openInterest.get(instId)
+
+export const setOkxOpenInterest = (instId: string, oi: string) => {
+  if (openInterest.get(instId) === oi) return
+  openInterest.set(instId, oi)
+  notify(openInterestListeners, instId)
+}
 
 export const getOkxPercentSnapshot = (instId: string) =>
   percent.get(instId) ?? 0
@@ -91,6 +111,8 @@ export const updateOkxTicker = (instId: string, ticker: OkxTickerFormatted) => {
 export const removeOkxTicker = (instId: string) => {
   tickers.delete(instId)
   percent.delete(instId)
+  openInterest.delete(instId)
   notify(tickerListeners, instId)
   notify(percentListeners, instId)
+  notify(openInterestListeners, instId)
 }

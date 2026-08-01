@@ -1,6 +1,7 @@
 import { pathcat } from 'pathcat'
 
 import { OkxInstrument, OkxKline, OpenTime, Period } from '../types/okx'
+import { sessionStartMs } from '../utils/session'
 
 import { proxyGet } from './util'
 
@@ -51,6 +52,45 @@ export const fetchOkxFundingRateHistory = ({
   return proxyGet(url)
 }
 
+/** `[ts, oi, oiCcy, oiUsd]`, newest first. */
+type OkxOpenInterestHistoryRow = [
+  ts: string,
+  oi: string,
+  oiCcy: string,
+  oiUsd: string,
+]
+
+/**
+ * Open interest per settlement bar, newest first. The live channel carries only
+ * the current figure, and a level on its own says nothing — it is the change
+ * across the session that says whether a price move is new money or an exit.
+ *
+ * Hourly, because the reference point is a session open and every open the
+ * board offers falls on the hour. 100 rows is a little over four days, which
+ * covers the longest window (24h) with room for a gap in the series.
+ */
+export const fetchOkxOpenInterestHistory = ({
+  instId,
+  period = '1H',
+  limit = 100,
+}: {
+  instId: string
+  period?: '5m' | '1H' | '1D'
+  limit?: number
+}): Promise<OkxOpenInterestHistoryRow[]> => {
+  const url = pathcat(
+    baseUrl,
+    '/api/v5/rubik/stat/contracts/open-interest-history',
+    {
+      instId,
+      period,
+      limit,
+    },
+  )
+
+  return proxyGet(url)
+}
+
 export const fetchOkxInstruments = (): Promise<OkxInstrument[]> => {
   const url = pathcat(baseUrl, '/api/v5/public/instruments?instType=SWAP')
 
@@ -66,23 +106,11 @@ export const fetchOkxKlines = ({
   period?: Period
   openTime?: OpenTime
 }): Promise<OkxKline[]> => {
-  const now = new Date()
-  const currentHour = now.getUTCHours()
-
-  let before =
-    openTime === OpenTime.UTC0
-      ? currentHour >= 0
-        ? now.setUTCHours(0, 0, 0, 0)
-        : new Date(now).setUTCHours(0, 0, 0, 0) - 24 * 60 * 60 * 1000
-      : openTime === OpenTime.UTC8
-        ? currentHour >= 16
-          ? now.setUTCHours(16, 0, 0, 0)
-          : new Date(now).setUTCHours(16, 0, 0, 0) - 24 * 60 * 60 * 1000
-        : undefined
-
-  if (before) {
-    before = before - 1000 // 减去1秒，确保获取到开盘时间的k线
-  }
+  // 减去1秒，确保获取到开盘时间的k线
+  const before =
+    openTime && openTime !== OpenTime.OPEN24H
+      ? sessionStartMs(openTime) - 1000
+      : undefined
 
   const url = pathcat(baseUrl, '/api/v5/market/candles', {
     instId,

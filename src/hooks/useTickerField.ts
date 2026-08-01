@@ -72,6 +72,20 @@ export function useFundingBaseline(instId: string) {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
 
+export function useOpenInterestOpen(instId: string) {
+  const read = useCallback(
+    (state: ReturnType<typeof useTickerStore.getState>) =>
+      state.openInterestOpen[instId],
+    [instId],
+  )
+  const subscribe = useCallback(
+    (listener: () => void) => subscribeInstField(read)(listener),
+    [read],
+  )
+  const getSnapshot = useCallback(() => getInstFieldSnapshot(read), [read])
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
 export function useKlineData(instId: string) {
   const read = useCallback(
     (state: ReturnType<typeof useTickerStore.getState>) =>

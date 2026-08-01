@@ -10,6 +10,10 @@ export const metricChipSx = {
   ...numericFont,
   backgroundColor: 'surface.subtle',
   color: 'text.secondary',
+  // Two pixels a side off the default, which is what buys the fourth chip a
+  // place on the same line at the width most of the grid runs at. The row still
+  // wraps on a narrow card rather than clipping.
+  '& .MuiChip-label': { paddingLeft: 0.75, paddingRight: 0.75 },
 }
 
 /**
