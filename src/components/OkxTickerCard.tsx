@@ -1,6 +1,6 @@
 import { IconButton, Stack, Tooltip, Typography } from '@mui/material'
 import { memo, useMemo, useCallback, useState, type MouseEvent } from 'react'
-import BookmarkRemoveIcon from '@mui/icons-material/BookmarkRemove'
+import BookmarkRemoveIcon from '@mui/icons-material/BookmarkRemoveOutlined'
 import QueryStatsIcon from '@mui/icons-material/QueryStats'
 import StarIcon from '@mui/icons-material/Star'
 import StarBorderIcon from '@mui/icons-material/StarBorder'
@@ -177,9 +177,24 @@ function OkxTickerCard({ instId }: { instId: string }) {
             {pinned ? <StarIcon /> : <StarBorderIcon />}
           </IconButton>
         </Tooltip>
-        <IconButton color="error" size="small" onClick={handleRemove}>
-          <BookmarkRemoveIcon />
-        </IconButton>
+        {/* Neutral until it is pointed at. The theme's destructive red is the
+            same hex as its price-down red, so carrying it permanently put a
+            third red on a card that is already coloured by direction; on hover
+            it is unambiguous, because nothing else on the card responds to a
+            cursor sitting on it. */}
+        <Tooltip title="Remove from watchlist" arrow>
+          <IconButton
+            size="small"
+            aria-label="Remove ticker from watchlist"
+            onClick={handleRemove}
+            sx={{
+              color: 'text.secondary',
+              '&:hover': { color: 'error.main' },
+            }}
+          >
+            <BookmarkRemoveIcon />
+          </IconButton>
+        </Tooltip>
       </Stack>
 
       {/* Mounted only once it has been asked for, so the board does not carry a
