@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 
 import { fetchOkxRatio } from '../apis'
 import { useTickerStore } from '../store/useTickerStore'
+import { baselineOf, deviationFrom } from '../utils/signals'
 
 export default function useOkxRatioUpdater() {
   const setRatio = useTickerStore((state) => state.setRatio)
@@ -23,7 +24,18 @@ export default function useOkxRatioUpdater() {
         coin: instId.split('-')[0],
         period: '5m',
       })
-      setRatio(instId, res[0][1])
+      if (!res?.length) return
+
+      // Newest first, so the head is the current reading and the tail is what
+      // counts as normal for this coin. The window is whatever the endpoint
+      // hands back, currently two days of five-minute samples.
+      const [, latest] = res[0]
+      const history = res.slice(1).map(([, value]) => Number(value))
+      setRatio(
+        instId,
+        latest,
+        deviationFrom(Number(latest), baselineOf(history)),
+      )
     },
     [setRatio],
   )

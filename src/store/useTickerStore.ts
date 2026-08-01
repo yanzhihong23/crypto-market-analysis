@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 import { OkxInstrument, OkxKline, OpenTime, SortBy } from '../types/okx'
+import { Baseline } from '../utils/signals'
 
 interface TickerStore {
   instruments: OkxInstrument[]
@@ -12,10 +13,21 @@ interface TickerStore {
   setKlineData: (instId: string, klineData: OkxKline[]) => void
   volCcyQuote: Record<string, string>
   setVolCcyQuote: (instId: string, volCcyQuote: string) => void
-  ratio: Record<string, { value: string; updatedAt: number }>
-  setRatio: (instId: string, ratio: string) => void
+  ratio: Record<
+    string,
+    { value: string; deviation: number | null; updatedAt: number }
+  >
+  setRatio: (instId: string, ratio: string, deviation: number | null) => void
   fundingRate: Record<string, string>
   setFundingRate: (instId: string, fundingRate: string) => void
+  /**
+   * The shape of each instrument's funding history, so the live rate off the
+   * websocket can be measured against it. The rate itself is not stored with a
+   * deviation the way the ratio is, because it moves between polls.
+   */
+  fundingBaseline: Record<string, Baseline | null>
+  setFundingBaseline: (instId: string, baseline: Baseline | null) => void
+  fundingBaselineAt: Record<string, number>
   openTime: OpenTime
   setOpenTime: (openTime: OpenTime) => void
   sortBy: SortBy
@@ -40,11 +52,21 @@ export const useTickerStore = create<TickerStore>()(
           volCcyQuote: { ...state.volCcyQuote, [instId]: volCcyQuote },
         })),
       ratio: {},
-      setRatio: (instId: string, ratio: string) =>
+      setRatio: (instId: string, ratio: string, deviation: number | null) =>
         set((state) => ({
           ratio: {
             ...state.ratio,
-            [instId]: { value: ratio, updatedAt: Date.now() },
+            [instId]: { value: ratio, deviation, updatedAt: Date.now() },
+          },
+        })),
+      fundingBaseline: {},
+      fundingBaselineAt: {},
+      setFundingBaseline: (instId: string, baseline: Baseline | null) =>
+        set((state) => ({
+          fundingBaseline: { ...state.fundingBaseline, [instId]: baseline },
+          fundingBaselineAt: {
+            ...state.fundingBaselineAt,
+            [instId]: Date.now(),
           },
         })),
       fundingRate: {},

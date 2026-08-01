@@ -2,12 +2,13 @@ import { Chip, Stack, Tooltip } from '@mui/material'
 import { memo } from 'react'
 
 import {
+  useFundingBaseline,
   useFundingRate,
   useRatio,
   useVolCcyQuote,
 } from '../hooks/useTickerField'
 import { compactNumberFormatter } from '../utils'
-import { isCrowdedShort, isFundingNegative } from '../utils/signals'
+import { describeDeviation, deviationFrom, isAnomalous } from '../utils/signals'
 
 import { metricChipSx, signalChipSx } from './metricChipSx'
 
@@ -18,6 +19,7 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
   const volCcyQuote = useVolCcyQuote(instId)
   const ratio = useRatio(instId)
   const fundingRate = useFundingRate(instId)
+  const fundingBaseline = useFundingBaseline(instId)
 
   // Each of these arrives on its own channel, so a card can hold two real
   // values and one gap. Formatting an absent value used to print NaN and
@@ -30,8 +32,21 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
     ? `${+fundingRate > 0 ? '+' : ''}${fundingRate}‱`
     : MISSING
 
-  const shortCrowded = isCrowdedShort(ratio?.value)
-  const fundingNegative = isFundingNegative(fundingRate)
+  // The ratio arrives with its own history, so its deviation is computed where
+  // it is fetched. The funding rate does not: the live one comes off the
+  // websocket and is measured here against the polled history.
+  const ratioDeviation = ratio?.deviation
+  const fundingDeviation = deviationFrom(Number(fundingRate), fundingBaseline)
+  const ratioUnusual = isAnomalous(ratioDeviation)
+  const fundingUnusual = isAnomalous(fundingDeviation)
+  const ratioTitle =
+    ratioUnusual && ratioDeviation != null
+      ? `L/S Ratio — ${describeDeviation(ratioDeviation)}`
+      : 'L/S Ratio'
+  const fundingTitle =
+    fundingUnusual && fundingDeviation != null
+      ? `Funding Rate — ${describeDeviation(fundingDeviation)}`
+      : 'Funding Rate'
 
   return (
     <Stack direction="row" alignItems="center" gap={0.75} sx={{ zIndex: 2 }}>
@@ -43,27 +58,19 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
           label={volumeLabel}
         />
       </Tooltip>
-      <Tooltip
-        title={shortCrowded ? 'L/S Ratio — more short than long' : 'L/S Ratio'}
-        arrow
-      >
+      <Tooltip title={ratioTitle} arrow>
         <Chip
           size="small"
           aria-label="Long/short ratio"
-          sx={shortCrowded ? signalChipSx : metricChipSx}
+          sx={ratioUnusual ? signalChipSx : metricChipSx}
           label={ratioLabel}
         />
       </Tooltip>
-      <Tooltip
-        title={
-          fundingNegative ? 'Funding Rate — shorts pay longs' : 'Funding Rate'
-        }
-        arrow
-      >
+      <Tooltip title={fundingTitle} arrow>
         <Chip
           size="small"
           aria-label="Funding rate"
-          sx={fundingNegative ? signalChipSx : metricChipSx}
+          sx={fundingUnusual ? signalChipSx : metricChipSx}
           label={fundingLabel}
         />
       </Tooltip>

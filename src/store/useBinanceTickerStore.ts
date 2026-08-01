@@ -12,10 +12,12 @@ interface TickerStore {
     string,
     {
       value: string
+      /** Standard deviations from this symbol's own recent range, or null. */
+      deviation: number | null
       updatedAt: number
     }
   >
-  setRatio: (symbol: string, ratio: string) => void
+  setRatio: (symbol: string, ratio: string, deviation: number | null) => void
 }
 
 export const useBinanceTickerStore = create<TickerStore>()(
@@ -26,11 +28,11 @@ export const useBinanceTickerStore = create<TickerStore>()(
       sortBy: SortBy.VOLUME,
       setSortBy: (sortBy: SortBy) => set({ sortBy }),
       ratio: {},
-      setRatio: (symbol: string, ratio: string) =>
+      setRatio: (symbol: string, ratio: string, deviation: number | null) =>
         set((state) => ({
           ratio: {
             ...state.ratio,
-            [symbol]: { value: ratio, updatedAt: Date.now() },
+            [symbol]: { value: ratio, deviation, updatedAt: Date.now() },
           },
         })),
     }),

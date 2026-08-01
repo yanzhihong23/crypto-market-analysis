@@ -24,6 +24,33 @@ export const fetchOkxRatio = ({
   return proxyGet(url)
 }
 
+type OkxFundingRateHistoryRow = {
+  instId: string
+  fundingRate: string
+  realizedRate: string
+  fundingTime: string
+}
+
+/**
+ * Realised funding, newest first. The live channel only carries the current
+ * rate, so this is what says whether that rate is normal for this instrument:
+ * 100 rows at one settlement every eight hours is roughly a month.
+ */
+export const fetchOkxFundingRateHistory = ({
+  instId,
+  limit = 100,
+}: {
+  instId: string
+  limit?: number
+}): Promise<OkxFundingRateHistoryRow[]> => {
+  const url = pathcat(baseUrl, '/api/v5/public/funding-rate-history', {
+    instId,
+    limit,
+  })
+
+  return proxyGet(url)
+}
+
 export const fetchOkxInstruments = (): Promise<OkxInstrument[]> => {
   const url = pathcat(baseUrl, '/api/v5/public/instruments?instType=SWAP')
 

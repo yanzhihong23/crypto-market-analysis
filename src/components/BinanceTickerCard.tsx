@@ -4,7 +4,7 @@ import { FullTicker } from '../types'
 import { compactNumberFormatter, formatNumber } from '../utils'
 import { useBinanceTickerStore } from '../store/useBinanceTickerStore'
 import { numericFont } from '../fonts'
-import { isCrowdedShort } from '../utils/signals'
+import { describeDeviation, isAnomalous } from '../utils/signals'
 
 import TickerContainer from './TickerContainer'
 import PriceRange from './PriceRange'
@@ -12,11 +12,18 @@ import { metricChipSx, signalChipSx } from './metricChipSx'
 
 export default function BinanceTickerCard({ t }: { t: FullTicker }) {
   const ratio = useBinanceTickerStore((state) => state.ratio[t.s]?.value)
+  const ratioDeviation = useBinanceTickerStore(
+    (state) => state.ratio[t.s]?.deviation,
+  )
   const up = +t.p > 0
   const priceColor = up ? 'market.up' : 'market.down'
   // No funding rate on this feed, so the card never earns the flagged ring the
   // OKX card can — the ratio chip is the whole signal here.
-  const shortCrowded = isCrowdedShort(ratio)
+  const ratioUnusual = isAnomalous(ratioDeviation)
+  const ratioTitle =
+    ratioUnusual && ratioDeviation != null
+      ? `Long/Short Ratio — ${describeDeviation(ratioDeviation)}`
+      : 'Long/Short Ratio'
 
   return (
     <TickerContainer up={up} changePercent={+t.P} borderWidth={3}>
@@ -86,18 +93,11 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
             />
           </Tooltip>
           {!!ratio && (
-            <Tooltip
-              title={
-                shortCrowded
-                  ? 'Long/Short Ratio — more short than long'
-                  : 'Long/Short Ratio'
-              }
-              arrow
-            >
+            <Tooltip title={ratioTitle} arrow>
               <Chip
                 size="small"
                 aria-label="Long/short ratio"
-                sx={shortCrowded ? signalChipSx : metricChipSx}
+                sx={ratioUnusual ? signalChipSx : metricChipSx}
                 label={formatNumber(Number(ratio), 2)}
               />
             </Tooltip>
