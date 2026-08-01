@@ -44,6 +44,7 @@ const OkxTickerGridItem = memo(function OkxTickerGridItem({
 const OkxTickerGrid = memo(function OkxTickerGrid() {
   const sortBy = useTickerStore((state) => state.sortBy)
   const instIds = useTickerStore((state) => state.instIds)
+  const pinnedInstIds = useTickerStore((state) => state.pinnedInstIds)
   const sortValues = useTickerStore(
     useShallow((state) => {
       if (sortBy === SortBy.VOLUME) {
@@ -76,8 +77,15 @@ const OkxTickerGrid = memo(function OkxTickerGrid() {
       // Default is the order the tickers were added in, so it sorts by nothing.
       ordered.sort((a, b) => (score.get(b) ?? 0) - (score.get(a) ?? 0))
     }
-    return ordered
-  }, [instIds, percentValues, sortBy, sortValues])
+
+    // Pinned symbols take the front, keeping the order they hold under the
+    // current sort so that pinning one does not reshuffle the others.
+    const pinned = new Set(pinnedInstIds)
+    return [
+      ...ordered.filter((instId) => pinned.has(instId)),
+      ...ordered.filter((instId) => !pinned.has(instId)),
+    ]
+  }, [instIds, percentValues, pinnedInstIds, sortBy, sortValues])
 
   const sortIndexByInstId = useMemo(() => {
     const map = new Map<string, number>()

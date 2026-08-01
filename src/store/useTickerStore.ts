@@ -9,6 +9,13 @@ interface TickerStore {
   setInstruments: (instruments: OkxInstrument[]) => void
   instIds: string[]
   setInstIds: (instIds: string[]) => void
+  /**
+   * Tickers that hold the front of the board whatever the sort is. Sorting a
+   * live board by volume or by change moves everything every few seconds, and
+   * the handful of symbols actually being watched moved with it.
+   */
+  pinnedInstIds: string[]
+  togglePinned: (instId: string) => void
   klineData: Record<string, OkxKline[]>
   setKlineData: (instId: string, klineData: OkxKline[]) => void
   volCcyQuote: Record<string, string>
@@ -41,6 +48,13 @@ export const useTickerStore = create<TickerStore>()(
       setInstruments: (instruments: OkxInstrument[]) => set({ instruments }),
       instIds: ['BTC-USDT-SWAP', 'ETH-USDT-SWAP', 'SUI-USDT-SWAP'],
       setInstIds: (instIds: string[]) => set({ instIds }),
+      pinnedInstIds: [],
+      togglePinned: (instId: string) =>
+        set((state) => ({
+          pinnedInstIds: state.pinnedInstIds.includes(instId)
+            ? state.pinnedInstIds.filter((id) => id !== instId)
+            : [...state.pinnedInstIds, instId],
+        })),
       klineData: {},
       setKlineData: (instId: string, klineData: OkxKline[]) =>
         set((state) => ({

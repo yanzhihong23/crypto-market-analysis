@@ -35,6 +35,7 @@ function TickerContainer({
   borderWidth = 3,
   pending = false,
   flagged = false,
+  onDoubleClick,
   children,
   sx,
 }: {
@@ -53,6 +54,9 @@ function TickerContainer({
    * when a strong mover is also the one the crowd is short.
    */
   flagged?: boolean
+  /** Toggles the pin. Double-click rather than a control, so the card front
+   * stays given over to the readings. */
+  onDoubleClick?: () => void
   children: React.ReactNode
   sx?: SxProps
 }) {
@@ -86,6 +90,10 @@ function TickerContainer({
       p: 2.5,
       zIndex: 2,
       borderRadius: `${CORNER_RADIUS}px`,
+      // Double-clicking to pin would otherwise select whichever price sat under
+      // the cursor, and on a card that redraws every tick that selection is
+      // never worth keeping.
+      userSelect: 'none',
       // Direction lives in one 3px stroke plus a wash of tint. Every card used
       // to carry a full animated gradient outline, which meant no card stood
       // out; now only real movers get the stronger edge and fill.
@@ -171,6 +179,7 @@ function TickerContainer({
       gap={1.5}
       width={width}
       minWidth={minWidth}
+      onDoubleClick={onDoubleClick}
       sx={containerSx}
     >
       {children}
