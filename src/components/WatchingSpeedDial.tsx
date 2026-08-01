@@ -9,22 +9,22 @@ export default function NavSpeedDial() {
   const actions = [
     {
       icon: <AddIcon />,
-      tooltipTitle: 'Add',
+      title: 'Add',
       onClick: () => {},
     },
     {
       icon: <WatchIcon />,
-      tooltipTitle: '24H',
+      title: '24H',
       onClick: () => {},
     },
     {
       icon: <StorefrontIcon />,
-      tooltipTitle: 'UTC+0',
+      title: 'UTC+0',
       onClick: () => {},
     },
     {
       icon: <StorefrontIcon />,
-      tooltipTitle: 'UTC+8',
+      title: 'UTC+8',
       onClick: () => {},
     },
   ]
@@ -40,9 +40,9 @@ export default function NavSpeedDial() {
     >
       {actions.map((action) => (
         <SpeedDialAction
-          key={action.tooltipTitle}
+          key={action.title}
           icon={action.icon}
-          tooltipTitle={action.tooltipTitle}
+          title={action.title}
           onClick={action.onClick}
         />
       ))}

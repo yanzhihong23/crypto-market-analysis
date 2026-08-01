@@ -31,10 +31,12 @@ export default function OkxMarketToolbar() {
   return (
     <Stack
       direction="row"
-      alignItems="center"
-      gap={3}
-      flexWrap="wrap"
-      sx={{ mb: 2.5 }}
+      sx={{
+        alignItems: 'center',
+        gap: 3,
+        flexWrap: 'wrap',
+        mb: 2.5,
+      }}
     >
       <SegmentedToggle
         label="Sort by"

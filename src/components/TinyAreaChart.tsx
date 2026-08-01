@@ -20,8 +20,8 @@ function BaseAreaChart({
   xKey: string
   yKey: string
   label?: string
-  width?: string | number
-  height?: string | number
+  width?: number | `${number}%`
+  height?: number | `${number}%`
 }) {
   const theme = useTheme()
   // Unique per instance: with a fixed id, every chart on the page resolves to
@@ -38,8 +38,8 @@ function BaseAreaChart({
   const isUp = !data?.length || Number(data[data.length - 1][yKey]) >= open
 
   const color = isUp
-    ? theme.palette.market.upChart
-    : theme.palette.market.downChart
+    ? theme.vars.palette.market.upChart
+    : theme.vars.palette.market.downChart
 
   return (
     <ResponsiveContainer width={width} height={height}>
@@ -58,7 +58,7 @@ function BaseAreaChart({
         {Number.isFinite(open) && (
           <ReferenceLine
             y={open}
-            stroke={theme.palette.surface.marker}
+            stroke={theme.vars.palette.surface.marker}
             strokeDasharray="3 3"
           />
         )}
@@ -69,6 +69,7 @@ function BaseAreaChart({
           strokeWidth={1.5}
           fillOpacity={1}
           fill={`url(#${gradientId})`}
+          activeDot={false}
         />
       </AreaChart>
     </ResponsiveContainer>

@@ -41,27 +41,51 @@ export default function TopBar() {
           gap: 2,
         }}
       >
-        <Stack direction="row" alignItems="center" gap={1} pr={3}>
+        <Stack
+          direction="row"
+          sx={{
+            alignItems: 'center',
+            gap: 1,
+            pr: 3,
+          }}
+        >
           <Box
             component={Logo}
             sx={{ color: 'primary.main', width: 24, height: 24 }}
           />
           {/* Sized down from 20px/700: the wordmark was the heaviest text on
               a page whose whole job is to make prices the heaviest text. */}
-          <Typography fontSize={16} fontWeight={600} letterSpacing={-0.1}>
+          <Typography
+            sx={{
+              fontSize: 16,
+              fontWeight: 600,
+              letterSpacing: -0.1,
+            }}
+          >
             Vigil
           </Typography>
         </Stack>
 
         <NavMenu sx={{ display: { xs: 'none', md: 'block' } }} />
 
-        <Stack direction="row" alignItems="center" gap={2} sx={{ ml: 'auto' }}>
+        <Stack
+          direction="row"
+          sx={{
+            alignItems: 'center',
+            gap: 2,
+            ml: 'auto',
+          }}
+        >
           <FeedStatus />
           <Typography
-            fontSize={16}
-            fontWeight={500}
-            color="text.secondary"
-            sx={numericFont}
+            sx={[
+              {
+                fontSize: 16,
+                fontWeight: 500,
+                color: 'text.secondary',
+              },
+              ...(Array.isArray(numericFont) ? numericFont : [numericFont]),
+            ]}
           >
             {time}
           </Typography>

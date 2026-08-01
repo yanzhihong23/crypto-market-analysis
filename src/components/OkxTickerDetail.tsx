@@ -50,12 +50,10 @@ function ChartSection({
 }) {
   return (
     <Box>
-      <Stack direction="row" alignItems="baseline" gap={1} sx={{ mb: 0.5 }}>
-        <Typography fontSize={13} fontWeight={600}>
-          {title}
-        </Typography>
+      <Stack direction="row" sx={{ alignItems: 'baseline', gap: 1, mb: 0.5 }}>
+        <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{title}</Typography>
         {note && (
-          <Typography fontSize={12} color="text.secondary">
+          <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
             {note}
           </Typography>
         )}
@@ -72,9 +70,12 @@ function ChartSection({
         />
       ) : (
         <Typography
-          fontSize={13}
-          color="text.secondary"
-          sx={{ py: 4, textAlign: 'center' }}
+          sx={{
+            fontSize: 13,
+            color: 'text.secondary',
+            py: 4,
+            textAlign: 'center',
+          }}
         >
           The exchange has no history for this one
         </Typography>
@@ -107,7 +108,7 @@ export default function OkxTickerDetail({
   const detail = useOkxTickerDetail(instId, detailWindow, open)
 
   const [symbol, ...rest] = instId.split('-')
-  const neutral = theme.palette.primary.main
+  const neutral = theme.vars.palette.primary.main
 
   return (
     <Dialog
@@ -127,16 +128,16 @@ export default function OkxTickerDetail({
     >
       <Stack
         direction="row"
-        alignItems="center"
-        gap={2}
-        sx={{ px: 3, pt: 2.5, pb: 1.5 }}
+        sx={{ alignItems: 'center', gap: 2, px: 3, pt: 2.5, pb: 1.5 }}
       >
         <SymbolAvatar instId={instId} size={28} />
         <Stack sx={{ minWidth: 0 }}>
-          <Typography fontSize={18} fontWeight={600} lineHeight={1.2}>
+          <Typography sx={{ fontSize: 18, fontWeight: 600, lineHeight: 1.2 }}>
             {symbol}
           </Typography>
-          <Typography fontSize={12} color="text.secondary" sx={numericFont}>
+          <Typography
+            sx={{ fontSize: 12, color: 'text.secondary', ...numericFont }}
+          >
             {rest.join('-')}
           </Typography>
         </Stack>
@@ -144,16 +145,20 @@ export default function OkxTickerDetail({
         {/* The live price stays on the dialog: the charts are history, and
             without it the price you are looking at is the one from whenever the
             candles were fetched. */}
-        <Stack alignItems="end" sx={{ ml: 'auto' }}>
+        <Stack sx={{ alignItems: 'end', ml: 'auto' }}>
           <Typography
-            fontSize={22}
-            fontWeight={600}
-            color={ticker.color}
-            sx={numericFont}
+            sx={{
+              fontSize: 22,
+              fontWeight: 600,
+              color: ticker.color,
+              ...numericFont,
+            }}
           >
             {ticker.last}
           </Typography>
-          <Typography fontSize={13} color={ticker.color} sx={numericFont}>
+          <Typography
+            sx={{ fontSize: 13, color: ticker.color, ...numericFont }}
+          >
             {+ticker.percent > 0 ? '+' : ''}
             {ticker.percent}% {ticker.dif}
           </Typography>
@@ -170,11 +175,14 @@ export default function OkxTickerDetail({
 
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        flexWrap="wrap"
-        gap={2}
-        sx={{ px: 3, pb: 1.5 }}
+        sx={{
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 2,
+          px: 3,
+          pb: 1.5,
+        }}
       >
         <OkxMarketMetrics instId={instId} />
         <SegmentedToggle
@@ -187,19 +195,22 @@ export default function OkxTickerDetail({
 
       <DialogContent sx={{ px: 3, pb: 3, pt: 0 }}>
         {detail.loading && !detail.price.length ? (
-          <Stack alignItems="center" sx={{ py: 10 }}>
+          <Stack sx={{ alignItems: 'center', py: 10 }}>
             <CircularProgress size={28} />
           </Stack>
         ) : detail.failed ? (
           <Typography
-            fontSize={13}
-            color="text.secondary"
-            sx={{ py: 10, textAlign: 'center' }}
+            sx={{
+              fontSize: 13,
+              color: 'text.secondary',
+              py: 10,
+              textAlign: 'center',
+            }}
           >
             Could not reach the exchange for this symbol's history
           </Typography>
         ) : (
-          <Stack gap={2.5}>
+          <Stack sx={{ gap: 2.5 }}>
             <ChartSection
               title="Price"
               data={detail.price}

@@ -125,8 +125,19 @@ export default function AlertBell() {
           },
         }}
       >
-        <Stack sx={{ px: 2, py: 1.5 }} gap={0.5}>
-          <Typography fontSize={13} color="text.secondary">
+        <Stack
+          sx={{
+            gap: 0.5,
+            px: 2,
+            py: 1.5,
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: 13,
+              color: 'text.secondary',
+            }}
+          >
             {/* Says what the list is a list of, so an empty one reads as
                 nothing having happened rather than as nothing working. */}
             When a symbol's long/short ratio and funding rate both leave their
@@ -135,10 +146,18 @@ export default function AlertBell() {
 
           <Stack
             direction="row"
-            alignItems="center"
-            justifyContent="space-between"
+            sx={{
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
           >
-            <Typography fontSize={14}>Desktop notifications</Typography>
+            <Typography
+              sx={{
+                fontSize: 14,
+              }}
+            >
+              Desktop notifications
+            </Typography>
             <Switch
               size="small"
               checked={notificationsEnabled}
@@ -147,7 +166,12 @@ export default function AlertBell() {
             />
           </Stack>
           {(denied || unsupported) && (
-            <Typography fontSize={12} color="text.secondary">
+            <Typography
+              sx={{
+                fontSize: 12,
+                color: 'text.secondary',
+              }}
+            >
               {denied
                 ? 'Blocked for this site in your browser settings.'
                 : 'This browser does not support notifications.'}
@@ -156,17 +180,30 @@ export default function AlertBell() {
 
           <Stack
             direction="row"
-            alignItems="center"
-            justifyContent="space-between"
+            sx={{
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
           >
-            <Typography fontSize={14}>Sound</Typography>
+            <Typography
+              sx={{
+                fontSize: 14,
+              }}
+            >
+              Sound
+            </Typography>
             <Switch
               size="small"
               checked={soundEnabled}
               onChange={(_, checked) => toggleSound(checked)}
             />
           </Stack>
-          <Typography fontSize={12} color="text.secondary">
+          <Typography
+            sx={{
+              fontSize: 12,
+              color: 'text.secondary',
+            }}
+          >
             Both stay quiet while this window is the one in front.
           </Typography>
         </Stack>
@@ -175,37 +212,67 @@ export default function AlertBell() {
 
         {alerts.length === 0 ? (
           <Typography
-            fontSize={13}
-            color="text.secondary"
-            sx={{ px: 2, py: 2.5, textAlign: 'center' }}
+            sx={{
+              fontSize: 13,
+              color: 'text.secondary',
+              px: 2,
+              py: 2.5,
+              textAlign: 'center',
+            }}
           >
             Nothing has fired yet
           </Typography>
         ) : (
           <Box sx={{ maxHeight: 280, overflowY: 'auto' }}>
             {alerts.map((alert) => (
-              <Stack key={alert.id} sx={{ px: 2, py: 1.25 }} gap={0.25}>
+              <Stack
+                key={alert.id}
+                sx={{
+                  gap: 0.25,
+                  px: 2,
+                  py: 1.25,
+                }}
+              >
                 <Stack
                   direction="row"
-                  alignItems="baseline"
-                  justifyContent="space-between"
-                  gap={1}
+                  sx={{
+                    alignItems: 'baseline',
+                    justifyContent: 'space-between',
+                    gap: 1,
+                  }}
                 >
-                  <Typography fontSize={14} fontWeight={600}>
+                  <Typography
+                    sx={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                    }}
+                  >
                     {alert.instId.split('-')[0]}
                   </Typography>
                   <Typography
-                    fontSize={12}
-                    color="text.secondary"
-                    sx={numericFont}
+                    sx={[
+                      {
+                        fontSize: 12,
+                        color: 'text.secondary',
+                      },
+                      ...(Array.isArray(numericFont)
+                        ? numericFont
+                        : [numericFont]),
+                    ]}
                   >
                     {formatDistanceToNowStrict(alert.at, { addSuffix: true })}
                   </Typography>
                 </Stack>
                 <Typography
-                  fontSize={12}
-                  color="text.secondary"
-                  sx={numericFont}
+                  sx={[
+                    {
+                      fontSize: 12,
+                      color: 'text.secondary',
+                    },
+                    ...(Array.isArray(numericFont)
+                      ? numericFont
+                      : [numericFont]),
+                  ]}
                 >
                   L/S {formatDeviation(alert.ratioDeviation)} · funding{' '}
                   {formatDeviation(alert.fundingDeviation)}
@@ -218,7 +285,14 @@ export default function AlertBell() {
         {alerts.length > 0 && (
           <>
             <Divider />
-            <Stack direction="row" justifyContent="end" sx={{ px: 1, py: 0.5 }}>
+            <Stack
+              direction="row"
+              sx={{
+                justifyContent: 'end',
+                px: 1,
+                py: 0.5,
+              }}
+            >
               <Button
                 size="small"
                 onClick={clear}

@@ -8,9 +8,22 @@ function OkxLogoSymbol({ instId }: { instId: string }) {
   const symbol = useMemo(() => instId.split('-')[0], [instId])
 
   return (
-    <Stack direction="row" alignItems="center" gap={1} zIndex={2}>
+    <Stack
+      direction="row"
+      sx={{
+        alignItems: 'center',
+        gap: 1,
+        zIndex: 2,
+      }}
+    >
       <SymbolAvatar instId={instId} />
-      <Typography fontSize={17} fontWeight={600} letterSpacing={0.2}>
+      <Typography
+        sx={{
+          fontSize: 17,
+          fontWeight: 600,
+          letterSpacing: 0.2,
+        }}
+      >
         {symbol}
       </Typography>
     </Stack>

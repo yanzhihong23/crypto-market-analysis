@@ -103,10 +103,12 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
     // single line.
     <Stack
       direction="row"
-      alignItems="center"
-      flexWrap="wrap"
-      gap={0.75}
-      sx={{ zIndex: 2 }}
+      sx={{
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 0.75,
+        zIndex: 2,
+      }}
     >
       <Tooltip title="Quote Volume" arrow>
         <Chip

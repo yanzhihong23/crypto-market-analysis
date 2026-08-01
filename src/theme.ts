@@ -334,20 +334,6 @@ const theme = createTheme({
     },
     MuiButton: {
       styleOverrides: {
-        containedPrimary: {
-          '&:hover': {
-            background: '#6172F3',
-          },
-          '&:disabled': {
-            color: '#fff',
-            background: '#C7D7FE',
-            cursor: 'not-allowed',
-          },
-        },
-        outlinedPrimary: {
-          color: '#364152',
-          borderColor: '#CDD5DF',
-        },
         sizeMedium: {
           height: '44px',
           borderRadius: '100px',
@@ -363,6 +349,28 @@ const theme = createTheme({
           fontWeight: 600,
         },
       },
+      variants: [
+        {
+          props: { variant: 'contained', color: 'primary' },
+          style: {
+            '&:hover': {
+              background: '#6172F3',
+            },
+            '&:disabled': {
+              color: '#fff',
+              background: '#C7D7FE',
+              cursor: 'not-allowed',
+            },
+          },
+        },
+        {
+          props: { variant: 'outlined', color: 'primary' },
+          style: {
+            color: '#364152',
+            borderColor: '#CDD5DF',
+          },
+        },
+      ],
     },
     MuiLink: {
       styleOverrides: {
@@ -419,17 +427,25 @@ const theme = createTheme({
           marginRight: '40px',
           fontWeight: 600,
         },
-        outlinedSuccess: {
-          color: '#067647',
-          background: '#F6FEF9',
-          border: '1px solid #75E0A7',
-        },
-        outlinedError: {
-          color: '#B42318',
-          background: '#FFFBFA',
-          border: '1px solid #FDA29B',
-        },
       },
+      variants: [
+        {
+          props: { variant: 'outlined', color: 'success' },
+          style: {
+            color: '#067647',
+            background: '#F6FEF9',
+            border: '1px solid #75E0A7',
+          },
+        },
+        {
+          props: { variant: 'outlined', color: 'error' },
+          style: {
+            color: '#B42318',
+            background: '#FFFBFA',
+            border: '1px solid #FDA29B',
+          },
+        },
+      ],
     },
     MuiAlertTitle: {
       styleOverrides: {

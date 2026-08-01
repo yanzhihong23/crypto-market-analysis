@@ -83,16 +83,38 @@ function PriceRange({
   }
 
   return (
-    <Stack gap={0.75}>
+    <Stack
+      sx={{
+        gap: 0.75,
+      }}
+    >
       <Stack
         direction="row"
-        alignItems="baseline"
-        justifyContent="space-between"
+        sx={{
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+        }}
       >
-        <Typography fontSize={12} color="text.secondary" sx={numericFont}>
+        <Typography
+          sx={[
+            {
+              fontSize: 12,
+              color: 'text.secondary',
+            },
+            ...(Array.isArray(numericFont) ? numericFont : [numericFont]),
+          ]}
+        >
           {low}
         </Typography>
-        <Typography fontSize={12} color="text.secondary" sx={numericFont}>
+        <Typography
+          sx={[
+            {
+              fontSize: 12,
+              color: 'text.secondary',
+            },
+            ...(Array.isArray(numericFont) ? numericFont : [numericFont]),
+          ]}
+        >
           {high}
         </Typography>
       </Stack>

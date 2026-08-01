@@ -103,11 +103,15 @@ function TickerContainer({
   return (
     <Stack
       direction="column"
-      gap={1.5}
-      width={width}
-      minWidth={minWidth}
       onDoubleClick={onDoubleClick}
-      sx={containerSx}
+      sx={[
+        {
+          gap: 1.5,
+          width: width,
+          minWidth: minWidth,
+        },
+        ...(Array.isArray(containerSx) ? containerSx : [containerSx]),
+      ]}
     >
       {children}
     </Stack>

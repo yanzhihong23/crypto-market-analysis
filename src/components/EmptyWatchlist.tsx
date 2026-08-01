@@ -10,10 +10,10 @@ import AddTickerButton from './AddTickerButton'
 export default function EmptyWatchlist() {
   return (
     <Stack
-      alignItems="center"
-      justifyContent="center"
-      gap={1}
       sx={{
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 1,
         py: 12,
         px: 3,
         borderRadius: 1,
@@ -23,10 +23,21 @@ export default function EmptyWatchlist() {
       }}
     >
       <ShowChartIcon sx={{ fontSize: 32, color: 'text.secondary' }} />
-      <Typography fontSize={16} fontWeight={600}>
+      <Typography
+        sx={{
+          fontSize: 16,
+          fontWeight: 600,
+        }}
+      >
         No tickers yet
       </Typography>
-      <Typography fontSize={14} color="text.secondary" mb={1}>
+      <Typography
+        sx={{
+          fontSize: 14,
+          color: 'text.secondary',
+          mb: 1,
+        }}
+      >
         Add a perpetual to start streaming prices.
       </Typography>
       <AddTickerButton variant="standalone" />

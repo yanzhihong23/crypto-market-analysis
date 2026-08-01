@@ -27,7 +27,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
 
   return (
     <TickerContainer up={up} changePercent={+t.P}>
-      <Stack direction="row" alignItems="center" gap={1} sx={{ zIndex: 2 }}>
+      <Stack direction="row" sx={{ alignItems: 'center', gap: 1, zIndex: 2 }}>
         <Avatar
           src={`/logos/${t.s}.png`}
           sx={{ width: 24, height: 24, fontSize: 12 }}
@@ -35,35 +35,44 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
         >
           {t.s.charAt(0)}
         </Avatar>
-        <Typography fontSize={17} fontWeight={600} letterSpacing={0.2}>
+        <Typography sx={{ fontSize: 17, fontWeight: 600, letterSpacing: 0.2 }}>
           {t.s.replace('USDT', '')}
         </Typography>
         <Typography
-          flex={1}
-          fontSize={20}
-          fontWeight={600}
-          color={priceColor}
           align="right"
-          sx={numericFont}
+          sx={{
+            flex: 1,
+            fontSize: 20,
+            fontWeight: 600,
+            color: priceColor,
+            ...numericFont,
+          }}
         >
           {+t.P > 0 ? `+${+t.P}` : +t.P}%
         </Typography>
       </Stack>
-      <Stack direction="row" alignItems="end" justifyContent="space-between">
+      <Stack
+        direction="row"
+        sx={{ alignItems: 'end', justifyContent: 'space-between' }}
+      >
         <Typography
-          fontSize={34}
-          fontWeight={600}
-          lineHeight={1.15}
-          color={priceColor}
-          sx={numericFont}
+          sx={{
+            fontSize: 34,
+            fontWeight: 600,
+            lineHeight: 1.15,
+            color: priceColor,
+            ...numericFont,
+          }}
         >
           {+t.c}{' '}
           <Typography
-            fontSize={14}
-            fontWeight={400}
-            color="text.secondary"
             component="span"
-            sx={numericFont}
+            sx={{
+              fontSize: 14,
+              fontWeight: 400,
+              color: 'text.secondary',
+              ...numericFont,
+            }}
           >
             {compactNumberFormatter(+t.Q)}
           </Typography>
@@ -80,11 +89,13 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
       />
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ zIndex: 2 }}
+        sx={{
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          zIndex: 2,
+        }}
       >
-        <Stack direction="row" alignItems="center" gap={0.75}>
+        <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75 }}>
           <Tooltip title="Quote Volume" arrow>
             <Chip
               size="small"
@@ -105,7 +116,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
           )}
         </Stack>
 
-        <Typography fontSize={13} color={priceColor} sx={numericFont}>
+        <Typography sx={{ fontSize: 13, color: priceColor, ...numericFont }}>
           {+t.p > 0 ? `+${+t.p}` : +t.p}
         </Typography>
       </Stack>

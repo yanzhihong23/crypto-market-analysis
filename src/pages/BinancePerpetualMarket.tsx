@@ -166,10 +166,13 @@ export default function Market() {
 
       {showTickers.length < tickers.length && (
         <Stack
-          sx={{ width: '100%', p: 2 }}
           direction="row"
-          alignItems="center"
-          justifyContent="center"
+          sx={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            p: 2,
+          }}
         >
           <CircularProgress size="24px" ref={ref} />
         </Stack>

@@ -156,13 +156,24 @@ export default function AddTickerButton({
                   sx={{ gap: 1.5, px: 1.5 }}
                 >
                   <SymbolAvatar instId={option.instId} size={20} />
-                  <Typography fontSize={14} fontWeight={600}>
+                  <Typography
+                    sx={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                    }}
+                  >
                     {symbol}
                   </Typography>
                   <Typography
-                    fontSize={12}
-                    color="text.secondary"
-                    sx={numericFont}
+                    sx={[
+                      {
+                        fontSize: 12,
+                        color: 'text.secondary',
+                      },
+                      ...(Array.isArray(numericFont)
+                        ? numericFont
+                        : [numericFont]),
+                    ]}
                   >
                     {rest.join('-')}
                   </Typography>

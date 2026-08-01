@@ -59,10 +59,12 @@ export default function FeedStatus() {
     >
       <Stack
         direction="row"
-        alignItems="center"
-        gap={0.75}
         role="status"
         aria-live="polite"
+        sx={{
+          alignItems: 'center',
+          gap: 0.75,
+        }}
       >
         <Box
           sx={{
@@ -73,9 +75,13 @@ export default function FeedStatus() {
           }}
         />
         <Typography
-          fontSize={13}
-          color="text.secondary"
-          sx={stale ? numericFont : undefined}
+          sx={[
+            {
+              fontSize: 13,
+              color: 'text.secondary',
+            },
+            stale && numericFont,
+          ]}
         >
           {label}
         </Typography>

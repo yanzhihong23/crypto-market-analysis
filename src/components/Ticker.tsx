@@ -7,14 +7,16 @@ import { numericFont } from '../fonts'
 
 const Description = ({ label, value }: { label: string; value: string }) => {
   return (
-    <Typography fontSize={18} color="text.secondary">
+    <Typography sx={{ fontSize: 18, color: 'text.secondary' }}>
       {label}:{' '}
       <Typography
-        fontSize={18}
-        fontWeight={500}
         component="span"
-        color="text.primary"
-        sx={numericFont}
+        sx={{
+          fontSize: 18,
+          fontWeight: 500,
+          color: 'text.primary',
+          ...numericFont,
+        }}
       >
         {value}
       </Typography>
@@ -84,37 +86,47 @@ export default function Ticker({ symbol }: { symbol: string }) {
   return (
     <Stack
       direction="row"
-      alignItems="center"
-      justifyContent="space-between"
-      flexWrap="wrap"
       spacing={3}
+      sx={{
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+      }}
     >
       <Stack spacing={1} sx={{ flex: 1 }}>
-        <Stack direction="row" alignItems="flex-end" spacing={1.5}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-end' }}>
           <Typography
-            fontSize={44}
-            lineHeight={1}
-            fontWeight={600}
-            color={tradeColor}
-            sx={numericFont}
+            sx={{
+              fontSize: 44,
+              lineHeight: 1,
+              fontWeight: 600,
+              color: tradeColor,
+              ...numericFont,
+            }}
           >
             {aggTrade?.p ?? '-'}
           </Typography>
           <Typography
-            fontSize={18}
-            fontWeight={500}
-            lineHeight={1.4}
-            color="text.secondary"
-            sx={numericFont}
+            sx={{
+              fontSize: 18,
+              fontWeight: 500,
+              lineHeight: 1.4,
+              color: 'text.secondary',
+              ...numericFont,
+            }}
           >
             {aggTrade?.q ?? '-'}
           </Typography>
         </Stack>
         <Typography
-          sx={{ display: 'flex', gap: '16px', ...numericFont }}
-          fontSize={20}
-          fontWeight={600}
-          color={changeColor}
+          sx={{
+            display: 'flex',
+            gap: '16px',
+            fontSize: 20,
+            fontWeight: 600,
+            color: changeColor,
+            ...numericFont,
+          }}
         >
           <span>{up ? `+${ticker?.p}` : ticker?.p}</span>
           <span>{up ? `+${ticker?.P}` : ticker?.P}%</span>

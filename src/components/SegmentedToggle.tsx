@@ -27,8 +27,20 @@ export default function SegmentedToggle<T extends string>({
   onChange: (value: T) => void
 }) {
   return (
-    <Stack direction="row" alignItems="center" gap={1}>
-      <Typography fontSize={13} color="text.secondary" component="span">
+    <Stack
+      direction="row"
+      sx={{
+        alignItems: 'center',
+        gap: 1,
+      }}
+    >
+      <Typography
+        component="span"
+        sx={{
+          fontSize: 13,
+          color: 'text.secondary',
+        }}
+      >
         {label}
       </Typography>
       <ToggleButtonGroup

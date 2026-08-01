@@ -33,24 +33,32 @@ function LastPrice({
   return (
     <Stack
       direction="row"
-      alignItems="baseline"
-      justifyContent="space-between"
-      gap={1}
-      flexWrap="nowrap"
+      sx={{
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        gap: 1,
+        flexWrap: 'nowrap',
+      }}
     >
       <Typography
-        fontSize={priceFontSize(last)}
-        fontWeight={600}
-        lineHeight={1.15}
-        color={up ? 'market.up' : 'market.down'}
-        sx={{ ...numericFont, whiteSpace: 'nowrap' }}
+        sx={{
+          fontSize: priceFontSize(last),
+          fontWeight: 600,
+          lineHeight: 1.15,
+          color: up ? 'market.up' : 'market.down',
+          ...numericFont,
+          whiteSpace: 'nowrap',
+        }}
       >
         {last}
       </Typography>
       <Typography
-        fontSize={13}
-        color="text.secondary"
-        sx={{ ...numericFont, whiteSpace: 'nowrap' }}
+        sx={{
+          fontSize: 13,
+          color: 'text.secondary',
+          ...numericFont,
+          whiteSpace: 'nowrap',
+        }}
       >
         {lastSz}
       </Typography>

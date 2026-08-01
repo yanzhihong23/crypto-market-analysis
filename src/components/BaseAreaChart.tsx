@@ -10,6 +10,7 @@ import {
   YAxis,
   Label,
 } from 'recharts'
+import type { LabelProps } from 'recharts'
 
 export default function BaseAreaChart({
   data,
@@ -37,8 +38,8 @@ export default function BaseAreaChart({
   stroke?: string
   /** A level the series is read against, e.g. zero for a funding rate. */
   referenceY?: number
-  width?: string | number
-  height?: string | number
+  width?: number | `${number}%`
+  height?: number | `${number}%`
   syncId?: string
 }) {
   const [isUp, setIsUp] = useState(true)
@@ -48,8 +49,10 @@ export default function BaseAreaChart({
   const gradientId = `area-${useId().replace(/:/g, '')}`
   const color =
     stroke ??
-    (isUp ? theme.palette.market.upChart : theme.palette.market.downChart)
-  const axisColor = theme.palette.text.secondary
+    (isUp
+      ? theme.vars.palette.market.upChart
+      : theme.vars.palette.market.downChart)
+  const axisColor = theme.vars.palette.text.secondary
   // Axes are chrome, not data. At the inherited size a sub-cent price needs
   // more than a fifth of a small chart's width just to print its own scale.
   const tickStyle = { fill: axisColor, fontSize: 11 }
@@ -59,16 +62,11 @@ export default function BaseAreaChart({
     value,
     x,
     y,
-  }: {
-    value: number
-    index: number
-    x: number
-    y: number
-  }) => {
+  }: LabelProps & { index?: number }) => {
     if (index === data.length - 1) {
       return (
         <text x={x} y={y} dx={-66} dy={-10} fill={color}>
-          {yDataFormatter ? yDataFormatter(value) : value}
+          {yDataFormatter ? yDataFormatter(Number(value)) : value}
         </text>
       )
     }
@@ -111,17 +109,17 @@ export default function BaseAreaChart({
         <Tooltip
           wrapperStyle={{ border: 'none' }}
           contentStyle={{
-            border: `1px solid ${theme.palette.surface.border}`,
+            border: `1px solid ${theme.vars.palette.surface.border}`,
             borderRadius: 8,
-            background: theme.palette.background.paper,
-            color: theme.palette.text.primary,
+            background: theme.vars.palette.background.paper,
+            color: theme.vars.palette.text.primary,
           }}
         />
         {/* Declared before the area so the stroke crosses over it. */}
         {referenceY !== undefined && (
           <ReferenceLine
             y={referenceY}
-            stroke={theme.palette.surface.marker}
+            stroke={theme.vars.palette.surface.marker}
             strokeDasharray="3 3"
           />
         )}

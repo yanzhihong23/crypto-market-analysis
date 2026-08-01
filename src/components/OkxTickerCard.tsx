@@ -108,31 +108,40 @@ function OkxTickerCard({ instId }: { instId: string }) {
     >
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        zIndex={2}
+        sx={{
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          zIndex: 2,
+        }}
       >
-        <Stack direction="row" alignItems="center" gap={0.75} minWidth={0}>
+        <Stack
+          direction="row"
+          sx={{ alignItems: 'center', gap: 0.75, minWidth: 0 }}
+        >
           <OkxLogoSymbol instId={instId} />
           {pinned && <StarIcon sx={{ fontSize: 14, color: 'primary.main' }} />}
         </Stack>
 
         {/* Both readings of the same 24h change, so they sit together. */}
-        <Stack alignItems="end">
+        <Stack sx={{ alignItems: 'end' }}>
           <Typography
-            fontSize={20}
-            fontWeight={600}
-            color={t.color}
-            sx={numericFont}
+            sx={{
+              fontSize: 20,
+              fontWeight: 600,
+              color: t.color,
+              ...numericFont,
+            }}
           >
             {+t.percent > 0 ? '+' : ''}
             {t.percent}%
           </Typography>
           <Typography
-            fontSize={12}
-            color={t.color}
-            lineHeight={1.2}
-            sx={numericFont}
+            sx={{
+              fontSize: 12,
+              color: t.color,
+              lineHeight: 1.2,
+              ...numericFont,
+            }}
           >
             {t.dif}
           </Typography>
@@ -154,11 +163,13 @@ function OkxTickerCard({ instId }: { instId: string }) {
 
         <Stack
           direction="row"
-          alignItems="center"
-          justifyContent="end"
-          gap={1}
           className="actionBar"
-          sx={actionBarSx}
+          sx={{
+            ...actionBarSx,
+            alignItems: 'center',
+            justifyContent: 'end',
+            gap: 1,
+          }}
           onDoubleClick={stopDoubleClick}
         >
           <Tooltip title="Open charts" arrow>

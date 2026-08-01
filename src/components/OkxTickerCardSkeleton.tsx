@@ -15,9 +15,21 @@ import TickerContainer from './TickerContainer'
 function OkxTickerCardSkeleton({ symbol }: { symbol: string }) {
   return (
     <TickerContainer pending minWidth={236}>
-      <Stack direction="row" alignItems="center" gap={1}>
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
         <Skeleton variant="circular" width={24} height={24} />
-        <Typography fontSize={17} fontWeight={600} letterSpacing={0.2}>
+        <Typography
+          sx={{
+            fontSize: 17,
+            fontWeight: 600,
+            letterSpacing: 0.2,
+          }}
+        >
           {symbol}
         </Typography>
         <Skeleton variant="text" width={62} sx={{ fontSize: 20, ml: 'auto' }} />
@@ -25,12 +37,21 @@ function OkxTickerCardSkeleton({ symbol }: { symbol: string }) {
 
       <Skeleton variant="text" width="65%" sx={{ fontSize: 32 }} />
 
-      <Stack gap={0.75}>
+      <Stack
+        sx={{
+          gap: 0.75,
+        }}
+      >
         <Skeleton variant="text" width="100%" sx={{ fontSize: 12 }} />
         <Skeleton variant="rounded" height={3} />
       </Stack>
 
-      <Stack direction="row" gap={0.75}>
+      <Stack
+        direction="row"
+        sx={{
+          gap: 0.75,
+        }}
+      >
         <Skeleton variant="rounded" width={46} height={22} />
         <Skeleton variant="rounded" width={38} height={22} />
         <Skeleton variant="rounded" width={46} height={22} />
