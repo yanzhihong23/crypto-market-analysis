@@ -26,7 +26,13 @@ interface TickerStore {
   >
   setRatio: (instId: string, ratio: string, deviation: number | null) => void
   fundingRate: Record<string, string>
-  setFundingRate: (instId: string, fundingRate: string) => void
+  /**
+   * When the rate currently being quoted is actually charged. A funding rate
+   * only costs anything to a position held through its settlement, so the
+   * number on the card means something different an hour out than a minute out.
+   */
+  fundingTime: Record<string, string>
+  setFunding: (instId: string, fundingRate: string, fundingTime: string) => void
   /**
    * The shape of each instrument's funding history, so the live rate off the
    * websocket can be measured against it. The rate itself is not stored with a
@@ -111,9 +117,12 @@ export const useTickerStore = create<TickerStore>()(
           },
         })),
       fundingRate: {},
-      setFundingRate: (instId: string, fundingRate: string) =>
+      fundingTime: {},
+      // Both off the same message, so both in one write rather than two.
+      setFunding: (instId: string, fundingRate: string, fundingTime: string) =>
         set((state) => ({
           fundingRate: { ...state.fundingRate, [instId]: fundingRate },
+          fundingTime: { ...state.fundingTime, [instId]: fundingTime },
         })),
       openTime: OpenTime.UTC0,
       setOpenTime: (openTime: OpenTime) => set({ openTime }),

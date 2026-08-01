@@ -105,12 +105,14 @@ export interface OkxOpenInterest {
  * @member {string} instType - 产品类型
  * @member {string} instId - 产品ID
  * @member {string} fundingRate - 资金费率
+ * @member {string} fundingTime - 下次结算时间，Unix时间戳的毫秒数格式
  * @member {string} ts - 数据产生时间，Unix时间戳的毫秒数格式，如 1597026383085
  */
 export interface OkxFundingRate {
   instType: string
   instId: string
   fundingRate: string
+  fundingTime: string
   ts: string
 }
 

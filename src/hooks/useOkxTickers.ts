@@ -31,17 +31,17 @@ interface TickerResponse {
 
 export const useOkxTickers = () => {
   const initialInstIds = useTickerStore.getState().instIds // read once
-  const setFundingRate = useTickerStore((state) => state.setFundingRate)
+  const setFunding = useTickerStore((state) => state.setFunding)
   const { formatTicker } = useOkxTickerFormat()
   const wsRef = useRef<WebSocket | null>(null)
   const mountedRef = useRef(true)
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const formatTickerRef = useRef(formatTicker)
-  const setFundingRateRef = useRef(setFundingRate)
+  const setFundingRef = useRef(setFunding)
 
   formatTickerRef.current = formatTicker
-  setFundingRateRef.current = setFundingRate
+  setFundingRef.current = setFunding
 
   const generateSubscribeArgsByInstId = (instId: string) => {
     return [
@@ -135,10 +135,11 @@ export const useOkxTickers = () => {
         const { oi } = res.data[0] as OkxOpenInterest
         setOkxOpenInterest(instId, oi)
       } else if (res.arg.channel === OkxChannel.FUNDING_RATE) {
-        const { fundingRate } = res.data[0] as OkxFundingRate
-        setFundingRateRef.current(
+        const { fundingRate, fundingTime } = res.data[0] as OkxFundingRate
+        setFundingRef.current(
           instId,
           (Number(fundingRate) * 10000).toFixed(1),
+          fundingTime,
         )
       }
     }

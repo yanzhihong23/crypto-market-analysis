@@ -4,12 +4,15 @@ import { memo } from 'react'
 import {
   useFundingBaseline,
   useFundingRate,
+  useFundingTime,
   useOpenInterestOpen,
   useRatio,
   useVolCcyQuote,
 } from '../hooks/useTickerField'
 import { useOkxOpenInterest, useOkxPercent } from '../hooks/useOkxOpenInterest'
+import useMinute from '../hooks/useMinute'
 import { compactNumberFormatter } from '../utils'
+import { formatCountdown, isImminent, msUntilFunding } from '../utils/funding'
 import { describeFlow, flowRead } from '../utils/openInterest'
 import { describeDeviation, deviationFrom, isAnomalous } from '../utils/signals'
 
@@ -23,6 +26,7 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
   const ratio = useRatio(instId)
   const fundingRate = useFundingRate(instId)
   const fundingBaseline = useFundingBaseline(instId)
+  const fundingTime = useFundingTime(instId)
   const openInterest = useOkxOpenInterest(instId)
   const openInterestOpen = useOpenInterestOpen(instId)
   const pricePercent = useOkxPercent(instId)
@@ -37,9 +41,21 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
   // own suffix and the funding rate its own unit, but a bare 2.1 between them
   // meant nothing until you hovered it.
   const ratioLabel = `L/S ${ratio?.value ?? MISSING}`
-  const fundingLabel = Number.isFinite(Number(fundingRate))
+
+  // Recomputed on the minute rather than on every message, so the countdown is
+  // the only thing on the card that moves when nothing has traded.
+  useMinute()
+  const untilFunding = msUntilFunding(fundingTime)
+  const fundingRateLabel = Number.isFinite(Number(fundingRate))
     ? `${+fundingRate > 0 ? '+' : ''}${fundingRate}‱`
     : MISSING
+  // The countdown joins the chip only once the settlement is close. Carrying it
+  // all day would put eight hours of nothing-yet next to every rate on the
+  // board; the last half hour is when it decides anything.
+  const fundingLabel =
+    untilFunding !== null && isImminent(untilFunding)
+      ? `${fundingRateLabel} ${formatCountdown(untilFunding)}`
+      : fundingRateLabel
 
   // Open interest is only worth a card slot as a change: the level says how big
   // the instrument is, the change over the session says whether the price move
@@ -70,10 +86,19 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
     ratioUnusual && ratioDeviation != null
       ? `L/S Ratio — ${describeDeviation(ratioDeviation)}`
       : 'L/S Ratio'
-  const fundingTitle =
+  // The chip only shows the countdown near the settlement; the tooltip carries
+  // it whenever the feed knows one, which is where you look to find out how
+  // long a rate has to be held through before it costs anything.
+  const fundingTitle = [
     fundingUnusual && fundingDeviation != null
       ? `Funding Rate — ${describeDeviation(fundingDeviation)}`
-      : 'Funding Rate'
+      : 'Funding Rate',
+    untilFunding !== null
+      ? `settles in ${formatCountdown(untilFunding)}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
 
   return (
     // Four chips overflow a card at its narrowest, so the row wraps rather than
