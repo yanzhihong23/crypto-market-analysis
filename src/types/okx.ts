@@ -60,7 +60,15 @@ export enum OpenTime {
 export enum SortBy {
   RATIO = 'ratio',
   VOLUME = 'volume',
-  PERCENT = 'percent',
+  /**
+   * Biggest 24h gainers first. The stored value stays `percent` from when this
+   * was the only change sort, so a selection already in localStorage survives
+   * the split into gainers and losers.
+   */
+  GAINERS = 'percent',
+  LOSERS = 'losers',
+  /** The order the tickers were added in, which is the one the user chose. */
+  DEFAULT = 'default',
 }
 
 export enum Period {

@@ -5,9 +5,14 @@ import { useTickerStore } from '../store/useTickerStore'
 
 import SegmentedToggle, { SegmentedOption } from './SegmentedToggle'
 
+// Gainers and losers are separate segments rather than one Change segment with
+// a direction: the sort ran descending only, so the worst movers of the day
+// were the one thing the board could not be asked for.
 const SORT_OPTIONS: SegmentedOption<SortBy>[] = [
+  { value: SortBy.DEFAULT, label: 'Default' },
+  { value: SortBy.GAINERS, label: 'Gainers' },
+  { value: SortBy.LOSERS, label: 'Losers' },
   { value: SortBy.VOLUME, label: 'Volume' },
-  { value: SortBy.PERCENT, label: 'Change' },
   { value: SortBy.RATIO, label: 'L/S' },
 ]
 

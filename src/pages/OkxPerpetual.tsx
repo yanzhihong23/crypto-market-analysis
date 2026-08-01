@@ -11,6 +11,12 @@ import OkxMarketToolbar from '../components/OkxMarketToolbar'
 import EmptyWatchlist from '../components/EmptyWatchlist'
 import useOkxTickerPercents from '../hooks/useOkxTickerPercents'
 
+/**
+ * A stable empty list for the sorts that do not read the live percent, so the
+ * subscription is not torn down and rebuilt on every render.
+ */
+const NO_INST_IDS: string[] = []
+
 const OkxTickerGridItem = memo(function OkxTickerGridItem({
   instId,
   sortIndex,
@@ -49,29 +55,28 @@ const OkxTickerGrid = memo(function OkxTickerGrid() {
       return null
     }),
   )
-  const percentValues = useOkxTickerPercents(
-    sortBy === SortBy.PERCENT ? instIds : [],
-  )
+  const byChange = sortBy === SortBy.GAINERS || sortBy === SortBy.LOSERS
+  const percentValues = useOkxTickerPercents(byChange ? instIds : NO_INST_IDS)
 
   const sortedInstIds = useMemo(() => {
-    return [...instIds].sort((a, b) => {
-      if (sortBy === SortBy.VOLUME) {
-        const indexA = instIds.indexOf(a)
-        const indexB = instIds.indexOf(b)
-        return +(sortValues?.[indexB] ?? 0) - +(sortValues?.[indexA] ?? 0)
-      }
-      if (sortBy === SortBy.PERCENT) {
-        const indexA = instIds.indexOf(a)
-        const indexB = instIds.indexOf(b)
-        return (percentValues[indexB] ?? 0) - (percentValues[indexA] ?? 0)
-      }
-      if (sortBy === SortBy.RATIO) {
-        const indexA = instIds.indexOf(a)
-        const indexB = instIds.indexOf(b)
-        return +(sortValues?.[indexB] ?? 0) - +(sortValues?.[indexA] ?? 0)
-      }
-      return instIds.indexOf(a) - instIds.indexOf(b)
+    // Scored up front: the comparator used to call indexOf on every comparison,
+    // which walked the whole watchlist to place each pair.
+    const score = new Map<string, number>()
+    instIds.forEach((instId, index) => {
+      score.set(
+        instId,
+        sortValues ? +(sortValues[index] ?? 0) : (percentValues[index] ?? 0),
+      )
     })
+
+    const ordered = [...instIds]
+    if (sortBy === SortBy.LOSERS) {
+      ordered.sort((a, b) => (score.get(a) ?? 0) - (score.get(b) ?? 0))
+    } else if (sortBy !== SortBy.DEFAULT) {
+      // Default is the order the tickers were added in, so it sorts by nothing.
+      ordered.sort((a, b) => (score.get(b) ?? 0) - (score.get(a) ?? 0))
+    }
+    return ordered
   }, [instIds, percentValues, sortBy, sortValues])
 
   const sortIndexByInstId = useMemo(() => {
