@@ -1,6 +1,13 @@
 import { memo, useId } from 'react'
 import { useTheme } from '@mui/material/styles'
-import { ResponsiveContainer, AreaChart, Area, YAxis, XAxis } from 'recharts'
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  ReferenceLine,
+  YAxis,
+  XAxis,
+} from 'recharts'
 
 function BaseAreaChart({
   data,
@@ -21,11 +28,14 @@ function BaseAreaChart({
   // the first one's <defs>. Colons are stripped for the url() reference.
   const gradientId = `area-${useId().replace(/:/g, '')}`
 
+  // Where the series starts, which is the level the stroke's colour is measured
+  // against. Without it the sparkline shows the shape of the session but not
+  // how much of it is above water.
+  const open = data?.length ? Number(data[0][yKey]) : NaN
+
   // Derived during render. Holding this in state meant the first paint of every
   // chart was green regardless of direction, until the effect caught up.
-  const isUp =
-    !data?.length ||
-    Number(data[data.length - 1][yKey]) >= Number(data[0][yKey])
+  const isUp = !data?.length || Number(data[data.length - 1][yKey]) >= open
 
   const color = isUp
     ? theme.palette.market.upChart
@@ -42,6 +52,16 @@ function BaseAreaChart({
         </defs>
         <XAxis dataKey={xKey} hide />
         <YAxis type="number" domain={['auto', 'auto']} hide />
+        {/* Declared before the area so the stroke crosses over it rather than
+            being cut by it. Neutral, because the colour on this chart already
+            means direction and this line is what direction is measured from. */}
+        {Number.isFinite(open) && (
+          <ReferenceLine
+            y={open}
+            stroke={theme.palette.surface.marker}
+            strokeDasharray="3 3"
+          />
+        )}
         <Area
           type="monotone"
           dataKey={yKey}
