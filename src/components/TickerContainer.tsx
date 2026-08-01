@@ -34,6 +34,7 @@ function TickerContainer({
   width,
   borderWidth = 3,
   pending = false,
+  flagged = false,
   children,
   sx,
 }: {
@@ -45,6 +46,13 @@ function TickerContainer({
   borderWidth?: number
   /** No data yet, so the card claims no direction. */
   pending?: boolean
+  /**
+   * Every positioning signal on this card is firing at once, which is rarer and
+   * more worth crossing the grid for than either one alone. It takes over the
+   * ring; direction still reads off the stroke and the fill, so nothing is lost
+   * when a strong mover is also the one the crowd is short.
+   */
+  flagged?: boolean
   children: React.ReactNode
   sx?: SxProps
 }) {
@@ -57,12 +65,14 @@ function TickerContainer({
   // The tinted edge a mover earns, and the one every card shows on hover.
   const edgeColor = useCallback(
     (theme: Theme) =>
-      pending
-        ? theme.vars.palette.surface.border
-        : up
-          ? theme.vars.palette.market.upBorder
-          : theme.vars.palette.market.downBorder,
-    [pending, up],
+      flagged
+        ? theme.vars.palette.signal.border
+        : pending
+          ? theme.vars.palette.surface.border
+          : up
+            ? theme.vars.palette.market.upBorder
+            : theme.vars.palette.market.downBorder,
+    [flagged, pending, up],
   )
 
   // Memoize the large sx object to avoid recreating on every render
@@ -89,7 +99,9 @@ function TickerContainer({
       // own edge and radius to turn the corner without a seam.
       boxShadow: (theme: Theme) =>
         `inset 0 0 0 1px ${
-          strong ? edgeColor(theme) : theme.vars.palette.surface.border
+          strong || flagged
+            ? edgeColor(theme)
+            : theme.vars.palette.surface.border
         }`,
       transition: 'box-shadow 0.2s ease-out',
       '&:hover': {
@@ -103,7 +115,7 @@ function TickerContainer({
       },
       ...sx,
     }),
-    [up, strong, edgeColor, sx],
+    [up, strong, flagged, edgeColor, sx],
   )
 
   // One stroke down the left edge and around the bottom corner, cut to length.

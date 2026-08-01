@@ -7,8 +7,9 @@ import {
   useVolCcyQuote,
 } from '../hooks/useTickerField'
 import { compactNumberFormatter } from '../utils'
+import { isCrowdedShort, isFundingNegative } from '../utils/signals'
 
-import { metricChipSx } from './metricChipSx'
+import { metricChipSx, signalChipSx } from './metricChipSx'
 
 /** Placeholder for a metric the feed has not sent yet. */
 const MISSING = '-'
@@ -29,6 +30,9 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
     ? `${+fundingRate > 0 ? '+' : ''}${fundingRate}‱`
     : MISSING
 
+  const shortCrowded = isCrowdedShort(ratio?.value)
+  const fundingNegative = isFundingNegative(fundingRate)
+
   return (
     <Stack direction="row" alignItems="center" gap={0.75} sx={{ zIndex: 2 }}>
       <Tooltip title="Quote Volume" arrow>
@@ -39,19 +43,27 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
           label={volumeLabel}
         />
       </Tooltip>
-      <Tooltip title="L/S Ratio" arrow>
+      <Tooltip
+        title={shortCrowded ? 'L/S Ratio — more short than long' : 'L/S Ratio'}
+        arrow
+      >
         <Chip
           size="small"
           aria-label="Long/short ratio"
-          sx={metricChipSx}
+          sx={shortCrowded ? signalChipSx : metricChipSx}
           label={ratioLabel}
         />
       </Tooltip>
-      <Tooltip title="Funding Rate" arrow>
+      <Tooltip
+        title={
+          fundingNegative ? 'Funding Rate — shorts pay longs' : 'Funding Rate'
+        }
+        arrow
+      >
         <Chip
           size="small"
           aria-label="Funding rate"
-          sx={metricChipSx}
+          sx={fundingNegative ? signalChipSx : metricChipSx}
           label={fundingLabel}
         />
       </Tooltip>

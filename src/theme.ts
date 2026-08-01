@@ -22,17 +22,20 @@ declare module '@mui/material/styles' {
   interface Palette {
     market: MarketPalette
     surface: SurfacePalette
+    signal: SignalPalette
   }
   interface PaletteOptions {
     market?: MarketPalette
     surface?: SurfacePalette
+    signal?: SignalPalette
   }
 }
 
 /**
  * Colour budget: red and green are reserved for price direction and nothing
- * else. Keeping every up/down tone in one entry is what lets the dark scheme
- * restate them in one place instead of chasing hexes through components.
+ * else — positioning signals get amber instead, see `SignalPalette`. Keeping
+ * every up/down tone in one entry is what lets the dark scheme restate them in
+ * one place instead of chasing hexes through components.
  */
 export interface MarketPalette {
   up: string
@@ -45,6 +48,22 @@ export interface MarketPalette {
   /** Chart stroke and gradient, same hues as the price text */
   upChart: string
   downChart: string
+}
+
+/**
+ * Positioning signals: a long/short ratio under 1, a funding rate under zero.
+ * Amber rather than red, because neither is a price move — red would say the
+ * market is down when what is actually happening is that the crowd is short.
+ * This is the one exception to red-and-green-only; it earns it by being rare
+ * and by never appearing on a number that also has a direction.
+ */
+export interface SignalPalette {
+  /** Chip text. Deep enough in the light scheme to carry 12px on `surface`. */
+  main: string
+  /** Chip fill */
+  surface: string
+  /** Card ring, for when both signals fire on the same card */
+  border: string
 }
 
 /**
@@ -89,6 +108,21 @@ const darkMarket: MarketPalette = {
   downBorder: 'rgba(242, 84, 125, 0.35)',
   upChart: '#3ecf7f',
   downChart: '#f2547d',
+}
+
+// The theme's `secondary` amber (#ff9800) is the hue, but not the tone: at 12px
+// on a white card it sits around 2:1 against the background. Both schemes use
+// the tone of that hue that stays legible on their own chip fill.
+const lightSignal: SignalPalette = {
+  main: '#B54708',
+  surface: 'rgba(247, 144, 9, 0.12)',
+  border: 'rgba(247, 144, 9, 0.55)',
+}
+
+const darkSignal: SignalPalette = {
+  main: '#FDB022',
+  surface: 'rgba(253, 176, 34, 0.14)',
+  border: 'rgba(253, 176, 34, 0.45)',
 }
 
 const lightSurface: SurfacePalette = {
@@ -149,6 +183,7 @@ const theme = createTheme({
         divider: '#E3E8EF',
         market: lightMarket,
         surface: lightSurface,
+        signal: lightSignal,
       },
     },
     dark: {
@@ -178,6 +213,7 @@ const theme = createTheme({
         divider: '#28313F',
         market: darkMarket,
         surface: darkSurface,
+        signal: darkSignal,
       },
     },
   },
