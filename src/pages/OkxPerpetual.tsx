@@ -103,7 +103,12 @@ const OkxTickerGrid = memo(function OkxTickerGrid() {
         display: 'grid',
         // Column count follows the available width instead of six hardcoded
         // breakpoints, which used to stretch cards past 400px on wide screens.
-        gridTemplateColumns: 'repeat(auto-fill, minmax(236px, 1fr))',
+        //
+        // The minimum is what the chip row needs to stay on one line: four
+        // chips come to about 217px and the card spends 20px of padding a side.
+        // Below that the footer wraps and every card on the board ends in a
+        // ragged second row carrying one lone chip.
+        gridTemplateColumns: 'repeat(auto-fill, minmax(264px, 1fr))',
         gap: 2,
       }}
     >

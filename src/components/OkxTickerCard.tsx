@@ -1,4 +1,4 @@
-import { IconButton, Stack, Tooltip, Typography } from '@mui/material'
+import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material'
 import { memo, useMemo, useCallback, useState, type MouseEvent } from 'react'
 import BookmarkRemoveIcon from '@mui/icons-material/BookmarkRemoveOutlined'
 import QueryStatsIcon from '@mui/icons-material/QueryStats'
@@ -54,19 +54,18 @@ function OkxTickerCard({ instId }: { instId: string }) {
   // memoized style object
   const actionBarSx = useMemo(
     () => ({
+      // Over the sparkline rather than pinned to the card's bottom edge, which
+      // is where the chips now sit. The chart is the one thing on the card that
+      // can afford to be covered: it is the shape of the session, and the
+      // buttons are only up while a cursor is on the card.
       position: 'absolute',
-      bottom: 0,
-      left: 0,
-      p: 2,
+      inset: 0,
+      px: 2,
       zIndex: 3,
       display: 'none',
-      height: 60,
-      width: '100%',
       // The blur alone separates the button from the sparkline behind it; the
       // white wash that used to sit here inverted badly in the dark scheme.
       backdropFilter: 'blur(2px)',
-      borderBottomLeftRadius: 16,
-      borderBottomRightRadius: 16,
     }),
     [],
   )
@@ -143,59 +142,64 @@ function OkxTickerCard({ instId }: { instId: string }) {
       <LastPrice last={t.last} lastSz={t.lastSz} up={t.isUp} />
       <PriceRange low={t.low24h} high={t.high24h} last={t.last} up={up} />
 
-      <OkxMarketMetrics instId={instId} />
-      <OkxKlineChart instId={instId} />
+      {/* The action bar is positioned against the chart, so the chart owns the
+          containing block rather than the card. */}
+      <Box sx={{ position: 'relative' }}>
+        <OkxKlineChart instId={instId} />
 
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="end"
-        gap={1}
-        className="actionBar"
-        sx={actionBarSx}
-        onDoubleClick={stopDoubleClick}
-      >
-        <Tooltip title="Open charts" arrow>
-          <IconButton
-            size="small"
-            aria-label="Open charts"
-            onClick={handleOpenDetail}
-            sx={{ color: 'text.secondary' }}
-          >
-            <QueryStatsIcon />
-          </IconButton>
-        </Tooltip>
-        {/* The pin is reachable by double-clicking the card, which nothing on
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="end"
+          gap={1}
+          className="actionBar"
+          sx={actionBarSx}
+          onDoubleClick={stopDoubleClick}
+        >
+          <Tooltip title="Open charts" arrow>
+            <IconButton
+              size="small"
+              aria-label="Open charts"
+              onClick={handleOpenDetail}
+              sx={{ color: 'text.secondary' }}
+            >
+              <QueryStatsIcon />
+            </IconButton>
+          </Tooltip>
+          {/* The pin is reachable by double-clicking the card, which nothing on
             the card announces; this is where that gesture is discoverable. */}
-        <Tooltip title={pinned ? 'Unpin' : 'Pin to front'} arrow>
-          <IconButton
-            size="small"
-            aria-label={pinned ? 'Unpin ticker' : 'Pin ticker to front'}
-            onClick={handleTogglePin}
-            sx={{ color: pinned ? 'primary.main' : 'text.secondary' }}
-          >
-            {pinned ? <StarIcon /> : <StarBorderIcon />}
-          </IconButton>
-        </Tooltip>
-        {/* Neutral until it is pointed at. The theme's destructive red is the
+          <Tooltip title={pinned ? 'Unpin' : 'Pin to front'} arrow>
+            <IconButton
+              size="small"
+              aria-label={pinned ? 'Unpin ticker' : 'Pin ticker to front'}
+              onClick={handleTogglePin}
+              sx={{ color: pinned ? 'primary.main' : 'text.secondary' }}
+            >
+              {pinned ? <StarIcon /> : <StarBorderIcon />}
+            </IconButton>
+          </Tooltip>
+          {/* Neutral until it is pointed at. The theme's destructive red is the
             same hex as its price-down red, so carrying it permanently put a
             third red on a card that is already coloured by direction; on hover
             it is unambiguous, because nothing else on the card responds to a
             cursor sitting on it. */}
-        <Tooltip title="Remove from watchlist" arrow>
-          <IconButton
-            size="small"
-            aria-label="Remove ticker from watchlist"
-            onClick={handleRemove}
-            sx={{
-              color: 'text.secondary',
-              '&:hover': { color: 'error.main' },
-            }}
-          >
-            <BookmarkRemoveIcon />
-          </IconButton>
-        </Tooltip>
-      </Stack>
+          <Tooltip title="Remove from watchlist" arrow>
+            <IconButton
+              size="small"
+              aria-label="Remove ticker from watchlist"
+              onClick={handleRemove}
+              sx={{
+                color: 'text.secondary',
+                '&:hover': { color: 'error.main' },
+              }}
+            >
+              <BookmarkRemoveIcon />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      </Box>
+
+      <OkxMarketMetrics instId={instId} />
 
       {/* Mounted only once it has been asked for, so the board does not carry a
           dialog and its four series for every card on it. */}
