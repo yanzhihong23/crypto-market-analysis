@@ -5,6 +5,7 @@ import useOkxKlinesUpdater from '../hooks/useOkxKlinesUpdater'
 import useOkxRatioUpdater from '../hooks/useOkxRatioUpdater'
 import useOkxFundingBaselineUpdater from '../hooks/useOkxFundingBaselineUpdater'
 import useOkxOpenInterestUpdater from '../hooks/useOkxOpenInterestUpdater'
+import useOkxAlerts from '../hooks/useOkxAlerts'
 import { useOkxTickers } from '../hooks/useOkxTickers'
 import { okxTickerActions } from '../okx/okxTickerActions'
 
@@ -15,6 +16,7 @@ export default function OkxDataSync() {
   const { updateRatioByInstId } = useOkxRatioUpdater()
   const { updateFundingBaselineByInstId } = useOkxFundingBaselineUpdater()
   const { updateOpenInterestOpenByInstId } = useOkxOpenInterestUpdater()
+  useOkxAlerts()
 
   useEffect(() => {
     okxTickerActions.add = async (instId: string) => {

@@ -10,7 +10,7 @@ import {
   useFundingRate,
   useRatio,
 } from '../hooks/useTickerField'
-import { deviationFrom, isAnomalous } from '../utils/signals'
+import { deviationFrom, isFlagged } from '../utils/signals'
 import { useTickerStore } from '../store/useTickerStore'
 import { removeOkxTicker } from '../store/okxRealtimeTicker'
 import { okxTickerActions } from '../okx/okxTickerActions'
@@ -34,9 +34,10 @@ function OkxTickerCard({ instId }: { instId: string }) {
   // The chips carry either reading on its own; the card only claims the ring
   // when both have left their usual range, which is the case worth crossing the
   // grid for.
-  const flagged =
-    isAnomalous(ratio?.deviation) &&
-    isAnomalous(deviationFrom(Number(fundingRate), fundingBaseline))
+  const flagged = isFlagged({
+    ratioDeviation: ratio?.deviation,
+    fundingDeviation: deviationFrom(Number(fundingRate), fundingBaseline),
+  })
 
   // The placeholder ticker carries empty strings until the first message for
   // this instrument arrives, which may never happen for a delisted symbol.

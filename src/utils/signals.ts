@@ -69,11 +69,33 @@ export function isAnomalous(deviation?: number | null) {
 }
 
 /**
+ * Both positioning readings out of their usual range at once. Either one alone
+ * gets its chip marked; this is the bar for claiming the card's ring and for
+ * being worth interrupting someone who is not looking at the page.
+ *
+ * Defined here rather than at either call site so the ring and the alert can
+ * never disagree about what they are reporting.
+ */
+export function isFlagged({
+  ratioDeviation,
+  fundingDeviation,
+}: {
+  ratioDeviation?: number | null
+  fundingDeviation?: number | null
+}) {
+  return isAnomalous(ratioDeviation) && isAnomalous(fundingDeviation)
+}
+
+/**
  * How the chip's tooltip says it, e.g. "2.4σ above its recent range". The sign
  * is the whole point — above means the crowd is longer, or paying more, than it
  * has been, and below means the opposite.
  */
-export function describeDeviation(deviation: number) {
+export function formatDeviation(deviation: number) {
   const side = deviation > 0 ? 'above' : 'below'
-  return `${Math.abs(deviation).toFixed(1)}σ ${side} its recent range`
+  return `${Math.abs(deviation).toFixed(1)}σ ${side}`
+}
+
+export function describeDeviation(deviation: number) {
+  return `${formatDeviation(deviation)} its recent range`
 }

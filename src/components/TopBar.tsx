@@ -7,6 +7,7 @@ import { numericFont } from '../fonts'
 
 import NavMenu from './NavMenu'
 import FeedStatus from './FeedStatus'
+import AlertBell from './AlertBell'
 import ColorSchemeToggle from './ColorSchemeToggle'
 
 export default function TopBar() {
@@ -64,6 +65,7 @@ export default function TopBar() {
           >
             {time}
           </Typography>
+          <AlertBell />
           <ColorSchemeToggle />
         </Stack>
       </Toolbar>
