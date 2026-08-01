@@ -1,5 +1,5 @@
 import {
-  Fab,
+  ButtonBase,
   Box,
   Dialog,
   DialogTitle,
@@ -33,8 +33,16 @@ const filterOptions = createFilterOptions<OkxInstrument>({
  * Adding is the only watchlist action that has nowhere else to live: removing
  * a ticker is done on the card itself, so the paired remove button sat here
  * duplicating it behind an extra dialog.
+ *
+ * `cell` is the slot that trails the board, sized like a card. `standalone` is
+ * for the empty state, where there is no grid for it to trail and the button
+ * carries the whole call to action.
  */
-export default function AddTickerButton() {
+export default function AddTickerButton({
+  variant = 'cell',
+}: {
+  variant?: 'cell' | 'standalone'
+}) {
   const instruments = useTickerStore((state) => state.instruments)
   const instIds = useTickerStore((state) => state.instIds)
   const setInstIds = useTickerStore((state) => state.setInstIds)
@@ -59,38 +67,37 @@ export default function AddTickerButton() {
 
   return (
     <>
-      <Fab
-        variant="extended"
+      <ButtonBase
         aria-label="Add ticker"
         onClick={() => setOpen(true)}
         sx={(theme) => ({
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          zIndex: 10,
+          flexDirection: 'column',
           gap: 1,
-          height: 44,
+          width: '100%',
+          // Matches a card in the cell, and stays a button in the empty state,
+          // where there is no row of cards to take its height from.
+          height: variant === 'cell' ? '100%' : 'auto',
+          minHeight: variant === 'cell' ? 160 : 0,
           px: 2.5,
-          textTransform: 'none',
+          py: variant === 'cell' ? 2.5 : 1.5,
+          maxWidth: variant === 'cell' ? 'none' : 200,
+          borderRadius: '16px',
           fontSize: 14,
           fontWeight: 600,
-          // Raised rather than filled, like the selected toggle segments: a
-          // saturated circle for a secondary action pulled the eye off the
-          // prices, and it carried no label to earn that weight.
-          color: theme.vars.palette.text.primary,
-          backgroundColor: theme.vars.palette.surface.raised,
-          border: `1px solid ${theme.vars.palette.surface.border}`,
-          boxShadow: theme.vars.palette.surface.shadow,
+          // Dashed and unfilled: the slot reads as the space a card would take
+          // rather than as another card, and the prices keep the saturation.
+          color: theme.vars.palette.text.secondary,
+          border: `1px dashed ${theme.vars.palette.surface.border}`,
+          transition: 'color 0.2s ease-out, border-color 0.2s ease-out',
           '&:hover': {
-            backgroundColor: theme.vars.palette.surface.raised,
+            color: theme.vars.palette.text.primary,
             borderColor: theme.vars.palette.surface.marker,
-            boxShadow: theme.vars.palette.surface.shadow,
           },
         })}
       >
         <AddIcon sx={{ fontSize: 20 }} />
         Add ticker
-      </Fab>
+      </ButtonBase>
 
       <Dialog
         open={open}

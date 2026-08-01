@@ -114,6 +114,12 @@ const OkxTickerGrid = memo(function OkxTickerGrid() {
           sortIndex={sortIndexByInstId.get(instId) ?? 0}
         />
       ))}
+      {/* Ordered past every card so it holds the end of the grid. It used to be
+          a floating button pinned to the corner of the viewport, which sat on
+          top of the last row once the cards filled the page. */}
+      <Box sx={{ order: instIds.length, minWidth: 0, height: '100%' }}>
+        <AddTickerButton />
+      </Box>
     </Box>
   )
 })
@@ -124,7 +130,6 @@ export default function OkxPerpetual() {
       <OkxDataSync />
       <OkxMarketToolbar />
       <OkxTickerGrid />
-      <AddTickerButton />
     </Box>
   )
 }
