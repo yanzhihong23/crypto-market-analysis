@@ -26,7 +26,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
       : 'Long/Short Ratio'
 
   return (
-    <TickerContainer up={up} changePercent={+t.P} borderWidth={3}>
+    <TickerContainer up={up} changePercent={+t.P}>
       <Stack direction="row" alignItems="center" gap={1} sx={{ zIndex: 2 }}>
         <Avatar
           src={`/logos/${t.s}.png`}
@@ -74,6 +74,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
         low={String(+t.l)}
         high={String(+t.h)}
         last={t.c}
+        open={String(+t.o)}
         reference={String(+t.w)}
         up={up}
       />

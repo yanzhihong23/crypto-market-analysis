@@ -14,12 +14,19 @@ function PriceRange({
   low,
   high,
   last,
+  open,
   reference,
   up,
 }: {
   low: string
   high: string
   last: string
+  /**
+   * Where the session opened. Given one, the track fills between it and the
+   * live price, and that fill is the change: which way it points is the
+   * direction, how much of the range it covers is the size.
+   */
+  open?: string
   /** Optional secondary value, such as a 24h weighted average. */
   reference?: string
   up?: boolean
@@ -46,6 +53,7 @@ function PriceRange({
 
   const position = positionOf(last)
   const referencePosition = positionOf(reference)
+  const openPosition = positionOf(open)
 
   // Nudged back by its own width at the far end so a marker stays inside the
   // track when the price is sitting on the high.
@@ -58,6 +66,21 @@ function PriceRange({
     ({
       '--marker-left': `calc(${ratio * 100}% - ${ratio * MARKER_WIDTH}px)`,
     }) as CSSProperties
+
+  // The run between the open and the live price, in the same coordinates as the
+  // markers so its far end lands under the one it reaches. A flat session
+  // leaves it one marker wide rather than nothing, which is the honest reading:
+  // the price is where it opened.
+  const changeOffset = (from: number, to: number) => {
+    const start = Math.min(from, to)
+    const span = Math.abs(to - from)
+    return {
+      '--change-left': `calc(${start * 100}% - ${start * MARKER_WIDTH}px)`,
+      '--change-width': `calc(${span * 100}% - ${
+        span * MARKER_WIDTH - MARKER_WIDTH
+      }px)`,
+    } as CSSProperties
+  }
 
   return (
     <Stack gap={0.75}>
@@ -82,6 +105,23 @@ function PriceRange({
           backgroundColor: 'surface.subtle',
         }}
       >
+        {openPosition !== null && position !== null && (
+          <Tooltip title={`Open ${open}`} arrow>
+            <Box
+              style={changeOffset(openPosition, position)}
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 'var(--change-left)',
+                width: 'var(--change-width)',
+                height: '100%',
+                borderRadius: 'inherit',
+                backgroundColor: up ? 'market.up' : 'market.down',
+                transition: 'left 0.3s ease-out, width 0.3s ease-out',
+              }}
+            />
+          </Tooltip>
+        )}
         {referencePosition !== null && (
           <Tooltip title={`Weighted average ${reference}`} arrow>
             <Box
@@ -94,6 +134,15 @@ function PriceRange({
                 height: 5,
                 borderRadius: 1,
                 backgroundColor: 'surface.marker',
+                // The same ring the live marker carries, for the same reason it
+                // needs one more than it used to: this mark spends most of its
+                // life inside the coloured run now, and a neutral grey on a
+                // saturated up/down fill was the one thing on the track you had
+                // to hunt for. Against the ring it reads as a notch cut into
+                // the run, which is also what it means — the traded average
+                // splits the session's travel in two.
+                boxShadow: (theme) =>
+                  `0 0 0 1.5px ${theme.vars.palette.background.paper}`,
               }}
             />
           </Tooltip>

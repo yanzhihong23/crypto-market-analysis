@@ -41,6 +41,12 @@ export interface OkxTickerFormatted extends OkxTicker {
   percent: string
   vol: string
   color: string
+  /**
+   * The open the change is measured from: whichever of the three the toolbar
+   * has selected. Carried here so a card reading the change does not have to
+   * subscribe to the toolbar to find out which one it was.
+   */
+  open: string
   /** Direction of the last tick against the one before it, filled in by the store. */
   isUp?: boolean
 }

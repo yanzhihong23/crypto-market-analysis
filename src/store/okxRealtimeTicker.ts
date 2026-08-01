@@ -61,6 +61,7 @@ export const getEmptyTicker = (instId: string): OkxTickerFormatted => ({
   percent: '',
   vol: '',
   color: '',
+  open: '',
 })
 
 export const subscribeOkxTicker = (instId: string, listener: Listener) =>

@@ -14,7 +14,7 @@ import TickerContainer from './TickerContainer'
  */
 function OkxTickerCardSkeleton({ symbol }: { symbol: string }) {
   return (
-    <TickerContainer pending minWidth={236} borderWidth={3}>
+    <TickerContainer pending minWidth={236}>
       <Stack direction="row" alignItems="center" gap={1}>
         <Skeleton variant="circular" width={24} height={24} />
         <Typography fontSize={17} fontWeight={600} letterSpacing={0.2}>

@@ -31,6 +31,7 @@ export default function useOkxTickerFormat() {
         vol,
         color,
         ...ticker,
+        open: ticker[openTime],
         lastSz: lastSz.toString(),
       }
     },

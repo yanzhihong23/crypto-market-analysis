@@ -103,7 +103,6 @@ function OkxTickerCard({ instId }: { instId: string }) {
       up={up}
       changePercent={changePercent}
       minWidth={236}
-      borderWidth={3}
       flagged={flagged}
       onDoubleClick={handleTogglePin}
     >
@@ -140,7 +139,13 @@ function OkxTickerCard({ instId }: { instId: string }) {
         </Stack>
       </Stack>
       <LastPrice last={t.last} lastSz={t.lastSz} up={t.isUp} />
-      <PriceRange low={t.low24h} high={t.high24h} last={t.last} up={up} />
+      <PriceRange
+        low={t.low24h}
+        high={t.high24h}
+        last={t.last}
+        open={t.open}
+        up={up}
+      />
 
       {/* The action bar is positioned against the chart, so the chart owns the
           containing block rather than the card. */}
