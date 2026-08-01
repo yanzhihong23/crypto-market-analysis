@@ -48,7 +48,7 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
     : MISSING
   // The countdown joins the chip only once the settlement is close. Carrying it
   // all day would put eight hours of nothing-yet next to every rate on the
-  // board; the last half hour is when it decides anything.
+  // board; the last few minutes are when it decides anything.
   const fundingLabel =
     untilFunding !== null && isImminent(untilFunding)
       ? `${fundingRateLabel} ${formatCountdown(untilFunding)}`

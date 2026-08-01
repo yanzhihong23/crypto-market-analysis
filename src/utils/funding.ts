@@ -9,7 +9,7 @@
  * decision being made now rather than later, and the countdown earns a place on
  * the card. Outside it, it stays in the chip's tooltip.
  */
-const IMMINENT_MS = 1000 * 60 * 30
+const IMMINENT_MS = 1000 * 60 * 5
 
 const MINUTE_MS = 1000 * 60
 
