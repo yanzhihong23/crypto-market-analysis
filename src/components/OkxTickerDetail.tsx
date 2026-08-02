@@ -69,9 +69,11 @@ function ChartSection({
   referenceY,
   height,
   syncId,
+  volumeKey,
   xDataFormatter,
   yDataFormatter,
   tooltipFormatter,
+  volumeFormatter,
 }: {
   title: string
   note?: string
@@ -81,9 +83,11 @@ function ChartSection({
   height: number
   /** Passed by the charts that share the window, and so share a cursor. */
   syncId?: string
+  volumeKey?: string
   xDataFormatter: (value: number) => string
   yDataFormatter?: (value: number) => string
   tooltipFormatter?: (value: number) => string
+  volumeFormatter?: (value: number) => string
 }) {
   return (
     <Box>
@@ -100,6 +104,7 @@ function ChartSection({
           data={data}
           xKey="time"
           yKey="value"
+          volumeKey={volumeKey}
           height={height}
           stroke={stroke}
           referenceY={referenceY}
@@ -108,6 +113,7 @@ function ChartSection({
           xDataFormatter={xDataFormatter}
           yDataFormatter={yDataFormatter}
           tooltipFormatter={tooltipFormatter}
+          volumeFormatter={volumeFormatter}
         />
       ) : (
         <Typography
@@ -262,11 +268,14 @@ export default function OkxTickerDetail({
           <Stack sx={{ gap: 2.5 }}>
             <ChartSection
               title="Price"
+              note="bars are coin volume"
               data={detail.price}
               height={220}
               syncId={windowSyncId}
+              volumeKey="volume"
               xDataFormatter={formatWindowTime}
               yDataFormatter={(value) => formatNumber(value, 6)}
+              volumeFormatter={(value) => compactNumberFormatter(value)}
             />
             {/* Everything below is a positioning reading, and none of them is a
                 price move, so none of them takes the price's red and green. */}

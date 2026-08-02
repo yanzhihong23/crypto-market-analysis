@@ -76,7 +76,8 @@ export const FUNDING_TICK_FORMAT = 'MM-dd HH:mm'
 
 export interface SeriesPoint {
   // Recharts is addressed by key name, so the chart's prop type is an index
-  // signature; the two named fields are what this app's charts actually use.
+  // signature; the named fields are what this app's charts actually use.
+  // Price also carries `volume` (`volCcy`) for the bars under the stroke.
   [key: string]: number
   /**
    * The raw milliseconds, and the x value itself rather than a label: the three
@@ -126,6 +127,22 @@ const toSeries = (
     }))
     .reverse()
 
+/** Close plus coin volume from the same candle, so the price chart can host both. */
+const toPriceSeries = (
+  rows: Array<[ts: string, ...rest: string[]]>,
+  since: number,
+) =>
+  rows
+    .filter((row) => Number(row[0]) >= since)
+    .map((row) => ({
+      time: Number(row[0]),
+      // Close, index 4 of the candle.
+      value: Number(row[4]),
+      // volCcy — coin, same unit as open interest on this dialog.
+      volume: Number(row[6]),
+    }))
+    .reverse()
+
 export default function useOkxTickerDetail(
   instId: string,
   detailWindow: DetailWindow,
@@ -160,8 +177,7 @@ export default function useOkxTickerDetail(
       .then(([klines, ratio, funding, openInterest]) => {
         if (cancelled) return
         setDetail({
-          // Close, index 4 of the candle.
-          price: toSeries(klines ?? [], 4, since),
+          price: toPriceSeries(klines ?? [], since),
           ratio: toSeries(ratio ?? [], 1, since),
           // Settlements are their own window, and in the unit the card shows.
           funding: (funding ?? [])
