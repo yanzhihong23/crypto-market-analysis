@@ -33,7 +33,9 @@ export default function OkxMarketToolbar() {
       direction="row"
       sx={{
         alignItems: 'center',
-        gap: 3,
+        // Tighter once the two controls stack: 24px between them read as two
+        // unrelated blocks rather than one settings row.
+        gap: { xs: 2, sm: 3 },
         flexWrap: 'wrap',
         mb: 2.5,
       }}

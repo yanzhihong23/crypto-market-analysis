@@ -14,7 +14,9 @@ export default function Pages() {
     <Suspense fallback={<div>Loading...</div>}>
       <Router>
         <TopBar />
-        <Box sx={{ flex: 1, padding: 3, mt: 8 }}>
+        {/* 16px on a phone, matching the app bar, so the logo and the content
+            below it start on the same line. */}
+        <Box sx={{ flex: 1, padding: { xs: 2, md: 3 }, mt: 8 }}>
           <Routes>
             <Route path="/" element={<OkxPerpetual />} />
             <Route path="/binance" element={<BinancePerpetualMarket />} />

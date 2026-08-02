@@ -6,6 +6,7 @@ import Logo from '../assets/logo.svg?react'
 import { numericFont } from '../fonts'
 
 import NavMenu from './NavMenu'
+import MobileNavMenu from './MobileNavMenu'
 import FeedStatus from './FeedStatus'
 import AlertBell from './AlertBell'
 import ColorSchemeToggle from './ColorSchemeToggle'
@@ -37,8 +38,8 @@ export default function TopBar() {
           height: 64,
           minHeight: 64,
           zIndex: 10,
-          px: 3,
-          gap: 2,
+          px: { xs: 2, md: 3 },
+          gap: { xs: 1, md: 2 },
         }}
       >
         <Stack
@@ -72,7 +73,7 @@ export default function TopBar() {
           direction="row"
           sx={{
             alignItems: 'center',
-            gap: 2,
+            gap: { xs: 1, md: 2 },
             ml: 'auto',
           }}
         >
@@ -83,6 +84,9 @@ export default function TopBar() {
                 fontSize: 16,
                 fontWeight: 500,
                 color: 'text.secondary',
+                // A phone already prints the time an inch above this one, and
+                // the row needs the width more than it needs to repeat it.
+                display: { xs: 'none', sm: 'block' },
               },
               ...(Array.isArray(numericFont) ? numericFont : [numericFont]),
             ]}
@@ -91,6 +95,7 @@ export default function TopBar() {
           </Typography>
           <AlertBell />
           <ColorSchemeToggle />
+          <MobileNavMenu />
         </Stack>
       </Toolbar>
     </AppBar>

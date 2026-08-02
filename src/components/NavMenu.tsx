@@ -1,6 +1,8 @@
 import { SxProps, Tab, Tabs, Box, styled } from '@mui/material'
 import { Link, useLocation } from 'react-router'
 
+import { NAV_ITEMS } from './navItems'
+
 const StyledTab = styled(Tab)<{ component?: React.ElementType; to?: string }>(
   ({ theme }) => ({
     color: theme.vars.palette.text.secondary,
@@ -10,13 +12,6 @@ const StyledTab = styled(Tab)<{ component?: React.ElementType; to?: string }>(
     },
   }),
 )
-
-/** The routes that own a tab, so the selected value cannot drift from them. */
-const NAV_ITEMS = [
-  { label: 'OKX', path: '/' },
-  { label: 'Binance', path: '/binance' },
-  { label: 'Charts', path: '/charts' },
-]
 
 export default function NavMenu({ sx }: { sx?: SxProps }) {
   const location = useLocation()
