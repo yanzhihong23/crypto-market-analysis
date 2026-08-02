@@ -1,5 +1,5 @@
 import { SxProps, Tab, Tabs, Box, styled } from '@mui/material'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router'
 
 const StyledTab = styled(Tab)<{ component?: React.ElementType; to?: string }>(
   ({ theme }) => ({

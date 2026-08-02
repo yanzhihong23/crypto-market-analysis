@@ -1,10 +1,5 @@
 import { Suspense, lazy } from 'react'
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router'
 import { Box } from '@mui/material'
 
 import TopBar from '../components/TopBar'
