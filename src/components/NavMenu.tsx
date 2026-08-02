@@ -11,34 +11,37 @@ const StyledTab = styled(Tab)<{ component?: React.ElementType; to?: string }>(
   }),
 )
 
+/** The routes that own a tab, so the selected value cannot drift from them. */
+const NAV_ITEMS = [
+  { label: 'OKX', path: '/' },
+  { label: 'Binance', path: '/binance' },
+  { label: 'Charts', path: '/charts' },
+]
+
 export default function NavMenu({ sx }: { sx?: SxProps }) {
   const location = useLocation()
 
-  const getActiveTab = (pathname: string) => {
-    if (pathname === '/test') return false
-    return pathname
-  }
+  // Anything off that list selects nothing rather than itself: Tabs logs an
+  // error over a value none of its children carry, and an unknown path holds
+  // the location for the frame it takes the catch-all route to redirect. This
+  // used to name the one such path there was, which only worked until the next
+  // one turned up.
+  const active = NAV_ITEMS.some((item) => item.path === location.pathname)
+    ? location.pathname
+    : false
 
   return (
     <Box sx={sx}>
-      <Tabs
-        value={getActiveTab(location.pathname)}
-        role="navigation"
-        className="nav-tabs"
-      >
-        <StyledTab label="OKX" value="/" component={Link} to="/" />
-        <StyledTab
-          label="Binance"
-          value="/binance"
-          component={Link}
-          to="/binance"
-        />
-        <StyledTab
-          label="Charts"
-          value="/charts"
-          component={Link}
-          to="/charts"
-        />
+      <Tabs value={active} role="navigation" className="nav-tabs">
+        {NAV_ITEMS.map((item) => (
+          <StyledTab
+            key={item.path}
+            label={item.label}
+            value={item.path}
+            component={Link}
+            to={item.path}
+          />
+        ))}
       </Tabs>
     </Box>
   )
