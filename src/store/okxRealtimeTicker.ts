@@ -1,5 +1,3 @@
-import { throttle } from 'lodash'
-
 import { OkxTickerFormatted } from '../types/okx'
 
 type Listener = () => void
@@ -88,13 +86,41 @@ export const getOkxPercentSnapshot = (instId: string) =>
   percent.get(instId) ?? 0
 
 export const setOkxPercent = (instId: string, value: number) => {
+  if (percent.get(instId) === value) return
   percent.set(instId, value)
   notify(percentListeners, instId)
 }
 
-const throttledPercentUpdate = throttle((instId: string, value: number) => {
-  setOkxPercent(instId, value)
-}, 3000)
+/**
+ * The percent drives the gainers/losers sort, so publishing it on every ticker
+ * message would re-sort the whole board several times a second. The delay is
+ * shared by every instrument rather than owned per instrument: one timer means
+ * the board reorders once, as a whole, instead of a card at a time.
+ *
+ * This used to be a single lodash throttle called with the instId as an
+ * argument, which kept only the last caller's arguments — so out of however
+ * many instruments ticked inside a window, all but two had their update thrown
+ * away, and a fresh sort took a minute to settle.
+ */
+const PERCENT_FLUSH_MS = 3000
+const pendingPercent = new Map<string, number>()
+let percentFlushTimer: ReturnType<typeof setTimeout> | undefined
+
+const flushPercent = () => {
+  percentFlushTimer = undefined
+  const flushing = [...pendingPercent]
+  pendingPercent.clear()
+  flushing.forEach(([instId, value]) => setOkxPercent(instId, value))
+}
+
+const schedulePercentUpdate = (instId: string, value: number) => {
+  if (percent.get(instId) === value) {
+    pendingPercent.delete(instId)
+    return
+  }
+  pendingPercent.set(instId, value)
+  percentFlushTimer ??= setTimeout(flushPercent, PERCENT_FLUSH_MS)
+}
 
 export const updateOkxTicker = (instId: string, ticker: OkxTickerFormatted) => {
   const lastTicker = tickers.get(instId)
@@ -106,12 +132,13 @@ export const updateOkxTicker = (instId: string, ticker: OkxTickerFormatted) => {
 
   tickers.set(instId, ticker)
   notify(tickerListeners, instId)
-  throttledPercentUpdate(instId, Number(ticker.percent))
+  schedulePercentUpdate(instId, Number(ticker.percent))
 }
 
 export const removeOkxTicker = (instId: string) => {
   tickers.delete(instId)
   percent.delete(instId)
+  pendingPercent.delete(instId)
   openInterest.delete(instId)
   notify(tickerListeners, instId)
   notify(percentListeners, instId)
