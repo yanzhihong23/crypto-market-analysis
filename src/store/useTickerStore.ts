@@ -10,6 +10,13 @@ interface TickerStore {
   instIds: string[]
   setInstIds: (instIds: string[]) => void
   /**
+   * Takes a symbol off the board and everything held under its name with it.
+   * Dropping it from the watchlist alone left its klines, its ratio and its
+   * funding history behind in a store that is persisted, so the saved state
+   * grew with every symbol ever watched and never shrank.
+   */
+  removeInstId: (instId: string) => void
+  /**
    * Tickers that hold the front of the board whatever the sort is. Sorting a
    * live board by volume or by change moves everything every few seconds, and
    * the handful of symbols actually being watched moved with it.
@@ -17,9 +24,17 @@ interface TickerStore {
   pinnedInstIds: string[]
   togglePinned: (instId: string) => void
   klineData: Record<string, OkxKline[]>
-  setKlineData: (instId: string, klineData: OkxKline[]) => void
   volCcyQuote: Record<string, string>
-  setVolCcyQuote: (instId: string, volCcyQuote: string) => void
+  /**
+   * Both come off the same candles, so both go in on one write. Every write
+   * through this store is serialised and handed to localStorage, which is the
+   * one cost here that does not care how small the values are.
+   */
+  setKlines: (
+    instId: string,
+    klineData: OkxKline[],
+    volCcyQuote: string,
+  ) => void
   ratio: Record<
     string,
     { value: string; deviation: number | null; updatedAt: number }
@@ -69,6 +84,29 @@ export const useTickerStore = create<TickerStore>()(
       setInstruments: (instruments: OkxInstrument[]) => set({ instruments }),
       instIds: ['BTC-USDT-SWAP', 'ETH-USDT-SWAP', 'SUI-USDT-SWAP'],
       setInstIds: (instIds: string[]) => set({ instIds }),
+      removeInstId: (instId: string) =>
+        set((state) => {
+          const without = <T>(record: Record<string, T>) => {
+            const rest = { ...record }
+            delete rest[instId]
+            return rest
+          }
+
+          return {
+            instIds: state.instIds.filter((id) => id !== instId),
+            // Otherwise the pin outlives the card and reappears if the symbol
+            // is added back later.
+            pinnedInstIds: state.pinnedInstIds.filter((id) => id !== instId),
+            klineData: without(state.klineData),
+            volCcyQuote: without(state.volCcyQuote),
+            ratio: without(state.ratio),
+            fundingRate: without(state.fundingRate),
+            fundingTime: without(state.fundingTime),
+            fundingBaseline: without(state.fundingBaseline),
+            fundingBaselineAt: without(state.fundingBaselineAt),
+            openInterestOpen: without(state.openInterestOpen),
+          }
+        }),
       pinnedInstIds: [],
       togglePinned: (instId: string) =>
         set((state) => ({
@@ -77,13 +115,10 @@ export const useTickerStore = create<TickerStore>()(
             : [...state.pinnedInstIds, instId],
         })),
       klineData: {},
-      setKlineData: (instId: string, klineData: OkxKline[]) =>
+      volCcyQuote: {},
+      setKlines: (instId: string, klineData: OkxKline[], volCcyQuote: string) =>
         set((state) => ({
           klineData: { ...state.klineData, [instId]: klineData },
-        })),
-      volCcyQuote: {},
-      setVolCcyQuote: (instId: string, volCcyQuote: string) =>
-        set((state) => ({
           volCcyQuote: { ...state.volCcyQuote, [instId]: volCcyQuote },
         })),
       ratio: {},
@@ -132,6 +167,19 @@ export const useTickerStore = create<TickerStore>()(
     {
       name: 'tickers',
       storage: createJSONStorage(() => localStorage),
+      /**
+       * Everything but the instrument list, which is four hundred-odd contracts
+       * and was 425KB of the 431KB this store saved. It is refetched on every
+       * mount regardless, so persisting it bought nothing and cost a full
+       * serialisation of it on every write through the store — with a live feed
+       * writing several times a minute per symbol, megabytes a minute of
+       * throwaway strings handed to a synchronous localStorage. Safari reloads
+       * a tab that goes on doing that.
+       *
+       * Saved empty rather than dropped so the persisted shape still matches
+       * the store's, which is the same state the app boots into anyway.
+       */
+      partialize: (state) => ({ ...state, instruments: [] }),
     },
   ),
 )

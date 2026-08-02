@@ -73,12 +73,7 @@ function OkxTickerCard({ instId }: { instId: string }) {
   const handleRemove = useCallback(() => {
     void okxTickerActions.remove(instId)
     removeOkxTicker(instId)
-    const { instIds, setInstIds, pinnedInstIds, togglePinned } =
-      useTickerStore.getState()
-    setInstIds(instIds.filter((i) => i !== instId))
-    // Otherwise the pin outlives the card and reappears if the symbol is added
-    // back later.
-    if (pinnedInstIds.includes(instId)) togglePinned(instId)
+    useTickerStore.getState().removeInstId(instId)
   }, [instId])
 
   const handleTogglePin = useCallback(() => {
