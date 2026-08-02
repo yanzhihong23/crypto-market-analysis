@@ -3,7 +3,11 @@ import { format } from 'date-fns/format'
 import { useInterval } from 'usehooks-ts'
 
 import { fetchBinanceOpenInterestHist } from '../apis'
-import { compactNumberFormatter, getPeriodPattern } from '../utils'
+import {
+  compactNumberFormatter,
+  formatNumber,
+  getPeriodPattern,
+} from '../utils'
 
 import BaseAreaChart from './BaseAreaChart'
 
@@ -46,6 +50,7 @@ export default function RatioTrendChart(props: {
       xKey="time"
       yKey="sumOpenInterest"
       yDataFormatter={(val: number) => compactNumberFormatter(val, 1)}
+      tooltipFormatter={(val: number) => formatNumber(val)}
       label="Open Interest Hist"
       syncId={props.syncId}
     />

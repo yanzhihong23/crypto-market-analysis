@@ -10,17 +10,19 @@ import {
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import CloseIcon from '@mui/icons-material/Close'
-import { useState } from 'react'
+import { useId, useState } from 'react'
+import { format } from 'date-fns'
 
 import useOkxTicker from '../hooks/useOkxTicker'
 import useOkxTickerDetail, {
   DetailWindow,
+  FUNDING_TICK_FORMAT,
   type SeriesPoint,
 } from '../hooks/useOkxTickerDetail'
 import { compactNumberFormatter, formatNumber } from '../utils'
 import { numericFont } from '../fonts'
 
-import BaseAreaChart from './BaseAreaChart'
+import BaseAreaChart, { type SyncMethod } from './BaseAreaChart'
 import SegmentedToggle, { SegmentedOption } from './SegmentedToggle'
 import SymbolAvatar from './SymbolAvatar'
 import OkxMarketMetrics from './OkxMarketMetrics'
@@ -31,6 +33,34 @@ const WINDOW_OPTIONS: SegmentedOption<DetailWindow>[] = [
   { value: DetailWindow.MONTH, label: '30D' },
 ]
 
+/**
+ * The three charts the window governs do not sample at the same rate — quarter
+ * hour candles against five minute ratio rows against hourly open interest — so
+ * recharts' default, which carries the cursor across by position in the array,
+ * would leave each chart pointing at a different hour. The x value is the
+ * timestamp itself, so the cursor can be carried across by time.
+ */
+const syncByTime: SyncMethod = (ticks, { activeLabel }) => {
+  const target = Number(activeLabel)
+  if (ticks.length < 2 || Number.isNaN(target)) return -1
+
+  let nearest = -1
+  let distance = Infinity
+  ticks.forEach((tick, index) => {
+    const gap = Math.abs(Number(tick.value) - target)
+    if (gap < distance) {
+      distance = gap
+      nearest = index
+    }
+  })
+
+  // A series that does not reach as far back as the one being hovered would
+  // otherwise pin its cursor to whichever end is closest, hours away from the
+  // moment being read. Past its own sampling step there is nothing to point at.
+  const step = Math.abs(Number(ticks[1].value) - Number(ticks[0].value))
+  return distance > step ? -1 : nearest
+}
+
 function ChartSection({
   title,
   note,
@@ -38,7 +68,10 @@ function ChartSection({
   stroke,
   referenceY,
   height,
+  syncId,
+  xDataFormatter,
   yDataFormatter,
+  tooltipFormatter,
 }: {
   title: string
   note?: string
@@ -46,7 +79,11 @@ function ChartSection({
   stroke?: string
   referenceY?: number
   height: number
+  /** Passed by the charts that share the window, and so share a cursor. */
+  syncId?: string
+  xDataFormatter: (value: number) => string
   yDataFormatter?: (value: number) => string
+  tooltipFormatter?: (value: number) => string
 }) {
   return (
     <Box>
@@ -66,7 +103,11 @@ function ChartSection({
           height={height}
           stroke={stroke}
           referenceY={referenceY}
+          syncId={syncId}
+          syncMethod={syncByTime}
+          xDataFormatter={xDataFormatter}
           yDataFormatter={yDataFormatter}
+          tooltipFormatter={tooltipFormatter}
         />
       ) : (
         <Typography
@@ -87,8 +128,12 @@ function ChartSection({
 /**
  * The card is a glance; this is the look that follows it. Every reading the
  * card compresses to a single number — the price, the crowd's positioning, what
- * it is paying, how much of it is open — is here as the series it came from,
- * over one window so the four can be read against each other.
+ * it is paying, how much of it is open — is here as the series it came from.
+ *
+ * Price, positioning and open interest run over the chosen window and share a
+ * cursor, so a move in one can be read against the others at the same moment.
+ * Funding answers to the exchange's settlement schedule instead, so it sits
+ * last, below the three the window governs and out of their company.
  */
 export default function OkxTickerDetail({
   instId,
@@ -106,9 +151,13 @@ export default function OkxTickerDetail({
   // Nothing is fetched until the dialog is open, so a board of thirty cards
   // does not carry thirty sets of history it will never show.
   const detail = useOkxTickerDetail(instId, detailWindow, open)
+  // Per dialog: two of these open at once would otherwise hand each other a
+  // cursor for a symbol the other is not showing.
+  const windowSyncId = useId()
 
   const [symbol, ...rest] = instId.split('-')
   const neutral = theme.vars.palette.primary.main
+  const formatWindowTime = (value: number) => format(value, detail.tickFormat)
 
   return (
     <Dialog
@@ -215,6 +264,8 @@ export default function OkxTickerDetail({
               title="Price"
               data={detail.price}
               height={220}
+              syncId={windowSyncId}
+              xDataFormatter={formatWindowTime}
               yDataFormatter={(value) => formatNumber(value, 6)}
             />
             {/* Everything below is a positioning reading, and none of them is a
@@ -226,8 +277,23 @@ export default function OkxTickerDetail({
               stroke={neutral}
               referenceY={1}
               height={150}
+              syncId={windowSyncId}
+              xDataFormatter={formatWindowTime}
               yDataFormatter={(value) => value.toFixed(2)}
             />
+            <ChartSection
+              title={`Open interest, in ${symbol}`}
+              data={detail.openInterest}
+              stroke={neutral}
+              height={150}
+              syncId={windowSyncId}
+              xDataFormatter={formatWindowTime}
+              yDataFormatter={(value) => compactNumberFormatter(value)}
+              tooltipFormatter={(value) => formatNumber(value)}
+            />
+            {/* Last, and on its own: settlements are the exchange's schedule,
+                not the window, so this one covers a different stretch of time
+                from the three above and cannot share their cursor. */}
             <ChartSection
               title="Funding rate"
               note={`last ${detail.funding.length} settlements, in ‱`}
@@ -235,14 +301,8 @@ export default function OkxTickerDetail({
               stroke={neutral}
               referenceY={0}
               height={150}
+              xDataFormatter={(value) => format(value, FUNDING_TICK_FORMAT)}
               yDataFormatter={(value) => value.toFixed(1)}
-            />
-            <ChartSection
-              title={`Open interest, in ${symbol}`}
-              data={detail.openInterest}
-              stroke={neutral}
-              height={150}
-              yDataFormatter={(value) => compactNumberFormatter(value)}
             />
           </Stack>
         )}
