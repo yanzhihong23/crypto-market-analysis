@@ -28,15 +28,21 @@ const leadRank = (kind: SignalKind) => {
  * board to carry something that is absent from almost all of them — whereas the
  * chart has room, is the thing this is about, and costs no layout at all.
  *
- * Under the hover bar rather than over it: that bar is only blurred, so this
- * stays readable through it, and the buttons stay clickable.
+ * Above the card's hover bar, which is anchored to the other side of the chart
+ * but can still reach this corner: at the narrowest card width the buttons leave
+ * around 58px and this badge wants 72, more once the label is a comparison
+ * against the board. Whatever they end up sharing, the reading wins it — the bar
+ * would otherwise take the pointer for a stretch of a badge that still looked
+ * hoverable through its blur, and the tooltip would not open. The buttons are
+ * centred on a 100px chart and this sits at its top, so nothing is ever covered
+ * going the other way.
  */
 const pulseSx = {
   ...numericFont,
   position: 'absolute',
   top: 0,
   left: 0,
-  zIndex: 2,
+  zIndex: 4,
   px: 0.75,
   py: 0.125,
   borderRadius: '6px',

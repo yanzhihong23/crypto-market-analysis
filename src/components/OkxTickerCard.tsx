@@ -30,12 +30,19 @@ import SignalPulse from './SignalPulse'
  */
 const actionBarSx = {
   position: 'absolute',
-  inset: 0,
+  // Anchored to the right rather than spanning the chart. It used to be laid
+  // over the whole of it, which was invisible until the signal badge moved into
+  // the chart's top-left corner: the bar showed through its own blur, so the
+  // badge still looked hoverable, while the bar's box swallowed the pointer and
+  // the badge's tooltip could never open. Hugging its buttons leaves that corner
+  // alone without having to know how tall the badge is.
+  top: 0,
+  right: 0,
+  bottom: 0,
   px: 2,
   zIndex: 3,
   display: 'none',
   alignItems: 'center',
-  justifyContent: 'end',
   gap: 1,
   // The blur alone separates the button from the sparkline behind it; the white
   // wash that used to sit here inverted badly in the dark scheme.
