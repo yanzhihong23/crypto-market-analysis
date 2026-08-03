@@ -390,7 +390,6 @@ const theme = createTheme({
       styleOverrides: {
         root: ({ theme }) => ({
           background: theme.vars.palette.divider,
-          margin: '32px 0',
         }),
       },
     },

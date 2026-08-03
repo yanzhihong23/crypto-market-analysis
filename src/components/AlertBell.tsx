@@ -133,7 +133,7 @@ export default function AlertBell() {
       >
         <Stack
           sx={{
-            gap: 0.5,
+            gap: 1.5,
             px: 2,
             py: 1.5,
           }}
@@ -149,91 +149,96 @@ export default function AlertBell() {
             {t.alerts.what}
           </Typography>
 
-          <Stack
-            direction="row"
-            sx={{
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Typography
+          {/* The switches are their own group, spaced tighter than they are from
+              the paragraph, so the block reads as prose followed by controls. */}
+          <Stack sx={{ gap: 0.5 }}>
+            <Stack
+              direction="row"
               sx={{
-                fontSize: 14,
+                alignItems: 'center',
+                justifyContent: 'space-between',
               }}
             >
-              {t.alerts.desktopNotifications}
-            </Typography>
-            <Switch
-              size="small"
-              checked={notificationsEnabled}
-              disabled={denied || unsupported}
-              onChange={(_, checked) => void toggleNotifications(checked)}
-            />
-          </Stack>
-          {(denied || unsupported) && (
-            <Typography
-              sx={{
-                fontSize: 12,
-                color: 'text.secondary',
-              }}
-            >
-              {denied ? t.alerts.blocked : t.alerts.unsupported}
-            </Typography>
-          )}
+              <Typography
+                sx={{
+                  fontSize: 14,
+                }}
+              >
+                {t.alerts.desktopNotifications}
+              </Typography>
+              <Switch
+                size="small"
+                checked={notificationsEnabled}
+                disabled={denied || unsupported}
+                onChange={(_, checked) => void toggleNotifications(checked)}
+              />
+            </Stack>
+            {(denied || unsupported) && (
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  color: 'text.secondary',
+                }}
+              >
+                {denied ? t.alerts.blocked : t.alerts.unsupported}
+              </Typography>
+            )}
 
-          <Stack
-            direction="row"
-            sx={{
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Typography
+            <Stack
+              direction="row"
               sx={{
-                fontSize: 14,
+                alignItems: 'center',
+                justifyContent: 'space-between',
               }}
             >
-              {t.alerts.sound}
-            </Typography>
-            <Switch
-              size="small"
-              checked={soundEnabled}
-              onChange={(_, checked) => toggleSound(checked)}
-            />
-          </Stack>
+              <Typography
+                sx={{
+                  fontSize: 14,
+                }}
+              >
+                {t.alerts.sound}
+              </Typography>
+              <Switch
+                size="small"
+                checked={soundEnabled}
+                onChange={(_, checked) => toggleSound(checked)}
+              />
+            </Stack>
 
-          {/* A condition on the two above rather than a channel of its own, so it
-              sits under them and carries the note that used to state the rule. */}
-          <Stack
-            direction="row"
-            sx={{
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Typography
+            {/* A condition on the two above rather than a channel of its own, so
+                it sits under them and carries the note that used to state the
+                rule. */}
+            <Stack
+              direction="row"
               sx={{
-                fontSize: 14,
+                alignItems: 'center',
+                justifyContent: 'space-between',
               }}
             >
-              {t.alerts.onlyWhenAway}
-            </Typography>
-            <Switch
-              size="small"
-              checked={quietWhenPresent}
-              onChange={(_, checked) => setQuietWhenPresent(checked)}
-            />
+              <Typography
+                sx={{
+                  fontSize: 14,
+                }}
+              >
+                {t.alerts.onlyWhenAway}
+              </Typography>
+              <Switch
+                size="small"
+                checked={quietWhenPresent}
+                onChange={(_, checked) => setQuietWhenPresent(checked)}
+              />
+            </Stack>
+            {quietWhenPresent && (
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  color: 'text.secondary',
+                }}
+              >
+                {t.alerts.awayMeans}
+              </Typography>
+            )}
           </Stack>
-          {quietWhenPresent && (
-            <Typography
-              sx={{
-                fontSize: 12,
-                color: 'text.secondary',
-              }}
-            >
-              {t.alerts.awayMeans}
-            </Typography>
-          )}
         </Stack>
 
         <Divider />
