@@ -6,12 +6,7 @@ import StarIcon from '@mui/icons-material/Star'
 import StarBorderIcon from '@mui/icons-material/StarBorder'
 
 import useOkxTicker from '../hooks/useOkxTicker'
-import {
-  useFundingBaseline,
-  useFundingRate,
-  useRatio,
-} from '../hooks/useTickerField'
-import { deviationFrom, isFlagged } from '../utils/signals'
+import useOkxSignals from '../hooks/useOkxSignals'
 import { useTickerStore } from '../store/useTickerStore'
 import { removeOkxTicker } from '../store/okxRealtimeTicker'
 import { okxTickerActions } from '../okx/okxTickerActions'
@@ -25,6 +20,7 @@ import OkxMarketMetrics from './OkxMarketMetrics'
 import OkxLogoSymbol from './OkxLogoSymbol'
 import OkxTickerCardSkeleton from './OkxTickerCardSkeleton'
 import OkxTickerDetail from './OkxTickerDetail'
+import SignalPulse from './SignalPulse'
 
 /**
  * Over the sparkline rather than pinned to the card's bottom edge, which is
@@ -120,22 +116,17 @@ const CardActions = memo(function CardActions({
 
 function OkxTickerCard({ instId }: { instId: string }) {
   const t = useOkxTicker(instId)
-  const ratio = useRatio(instId)
-  const fundingRate = useFundingRate(instId)
-  const fundingBaseline = useFundingBaseline(instId)
+  const { signals, flag } = useOkxSignals(instId)
   const pinned = useTickerStore((state) => state.pinnedInstIds.includes(instId))
   // Opening the detail is deliberately a button rather than a click on the
   // card: the card already answers a double-click by pinning, and a single
   // click that opened a dialog would fire on the way to every one of those.
   const [detailOpen, setDetailOpen] = useState(false)
 
-  // The chips carry either reading on its own; the card only claims the ring
-  // when both have left their usual range, which is the case worth crossing the
-  // grid for.
-  const flagged = isFlagged({
-    ratioDeviation: ratio?.deviation,
-    fundingDeviation: deviationFrom(Number(fundingRate), fundingBaseline),
-  })
+  // A chip or the badge carries any single reading on its own; the card only
+  // claims the ring once two of the three kinds of reading agree, which is the
+  // case worth crossing the grid for.
+  const flagged = flag !== null
 
   // The placeholder ticker carries empty strings until the first message for
   // this instrument arrives, which may never happen for a delisted symbol.
@@ -222,6 +213,8 @@ function OkxTickerCard({ instId }: { instId: string }) {
           containing block rather than the card. */}
       <Box sx={{ position: 'relative' }}>
         <OkxKlineChart instId={instId} />
+
+        <SignalPulse signals={signals} />
 
         <CardActions
           pinned={pinned}

@@ -55,6 +55,12 @@ export enum OkxChannel {
   TICKERS = 'tickers',
   OPEN_INTEREST = 'open-interest',
   FUNDING_RATE = 'funding-rate',
+  /**
+   * Keyed by the underlying index rather than by the contract, so its messages
+   * arrive under `BTC-USDT` while everything else on this socket arrives under
+   * `BTC-USDT-SWAP`.
+   */
+  INDEX_TICKERS = 'index-tickers',
 }
 
 export enum OpenTime {
@@ -103,6 +109,18 @@ export interface OkxOpenInterest {
   oi: string
   oiCcy: string
   oiUsd: string
+  ts: string
+}
+
+/**
+ * @interface OkxIndexTicker
+ * @member {string} instId - 指数，如 BTC-USDT
+ * @member {string} idxPx - 最新指数价格
+ * @member {string} ts - 数据产生时间，Unix时间戳的毫秒数格式
+ */
+export interface OkxIndexTicker {
+  instId: string
+  idxPx: string
   ts: string
 }
 

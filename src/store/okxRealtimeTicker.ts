@@ -1,5 +1,7 @@
 import { OkxTickerFormatted } from '../types/okx'
 
+import { removeOkxSeries } from './okxRealtimeSeries'
+
 type Listener = () => void
 
 const tickers = new Map<string, OkxTickerFormatted>()
@@ -140,6 +142,10 @@ export const removeOkxTicker = (instId: string) => {
   percent.delete(instId)
   pendingPercent.delete(instId)
   openInterest.delete(instId)
+  // Everything realtime about this symbol goes at once, so a symbol added back
+  // later starts from nothing rather than from a five-minute-old buffer that
+  // brackets a window it was not on the board for.
+  removeOkxSeries(instId)
   notify(tickerListeners, instId)
   notify(percentListeners, instId)
   notify(openInterestListeners, instId)

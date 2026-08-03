@@ -54,8 +54,33 @@ interface TickerStore {
    * deviation the way the ratio is, because it moves between polls.
    */
   fundingBaseline: Record<string, Baseline | null>
-  setFundingBaseline: (instId: string, baseline: Baseline | null) => void
+  /**
+   * The shape of the steps between settlements, and the rate the last one
+   * charged. A rate that has sat at its high all month and a rate that has just
+   * tripled are different events, and the level alone tells them apart.
+   */
+  fundingShiftBaseline: Record<string, Baseline | null>
+  fundingPrev: Record<string, string>
+  /** All three come off one history, so all three go in on one write. */
+  setFundingBaseline: (
+    instId: string,
+    baseline: Baseline | null,
+    shiftBaseline: Baseline | null,
+    previous: string,
+  ) => void
   fundingBaselineAt: Record<string, number>
+  /**
+   * The spread of this instrument's own five-minute returns. The move itself is
+   * taken off the live buffer, which holds no history to compare against and
+   * has none to offer after a reload; this is the half that has to be fetched,
+   * and like the funding baseline it moves slowly enough to be polled rarely.
+   */
+  momentumBaseline: Record<string, Baseline | null>
+  momentumBaselineAt: Record<string, number>
+  setMomentumBaseline: (instId: string, baseline: Baseline | null) => void
+  /** The same, for five-minute open interest changes. */
+  oiChangeBaseline: Record<string, Baseline | null>
+  setOiChangeBaseline: (instId: string, baseline: Baseline | null) => void
   /**
    * Open interest as it stood when the current session opened, which is what
    * the live figure off the websocket is measured against. Stamped with the
@@ -103,7 +128,12 @@ export const useTickerStore = create<TickerStore>()(
             fundingRate: without(state.fundingRate),
             fundingTime: without(state.fundingTime),
             fundingBaseline: without(state.fundingBaseline),
+            fundingShiftBaseline: without(state.fundingShiftBaseline),
+            fundingPrev: without(state.fundingPrev),
             fundingBaselineAt: without(state.fundingBaselineAt),
+            momentumBaseline: without(state.momentumBaseline),
+            momentumBaselineAt: without(state.momentumBaselineAt),
+            oiChangeBaseline: without(state.oiChangeBaseline),
             openInterestOpen: without(state.openInterestOpen),
           }
         }),
@@ -130,14 +160,41 @@ export const useTickerStore = create<TickerStore>()(
           },
         })),
       fundingBaseline: {},
+      fundingShiftBaseline: {},
+      fundingPrev: {},
       fundingBaselineAt: {},
-      setFundingBaseline: (instId: string, baseline: Baseline | null) =>
+      setFundingBaseline: (
+        instId: string,
+        baseline: Baseline | null,
+        shiftBaseline: Baseline | null,
+        previous: string,
+      ) =>
         set((state) => ({
           fundingBaseline: { ...state.fundingBaseline, [instId]: baseline },
+          fundingShiftBaseline: {
+            ...state.fundingShiftBaseline,
+            [instId]: shiftBaseline,
+          },
+          fundingPrev: { ...state.fundingPrev, [instId]: previous },
           fundingBaselineAt: {
             ...state.fundingBaselineAt,
             [instId]: Date.now(),
           },
+        })),
+      momentumBaseline: {},
+      momentumBaselineAt: {},
+      setMomentumBaseline: (instId: string, baseline: Baseline | null) =>
+        set((state) => ({
+          momentumBaseline: { ...state.momentumBaseline, [instId]: baseline },
+          momentumBaselineAt: {
+            ...state.momentumBaselineAt,
+            [instId]: Date.now(),
+          },
+        })),
+      oiChangeBaseline: {},
+      setOiChangeBaseline: (instId: string, baseline: Baseline | null) =>
+        set((state) => ({
+          oiChangeBaseline: { ...state.oiChangeBaseline, [instId]: baseline },
         })),
       openInterestOpen: {},
       setOpenInterestOpen: (

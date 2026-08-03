@@ -17,10 +17,7 @@ const FLAT_OI_PERCENT = 0.5
 const FLAT_PRICE_PERCENT = 0.1
 
 export type FlowRead =
-  | 'longs-building'
-  | 'shorts-covering'
-  | 'shorts-building'
-  | 'longs-closing'
+  'longs-building' | 'shorts-covering' | 'shorts-building' | 'longs-closing'
 
 /**
  * Each says what the move is and what it is not, because the pair that shares a
@@ -53,4 +50,62 @@ export function flowRead(
 /** How the chip's tooltip says it. */
 export function describeFlow(read: FlowRead) {
   return FLOW_DESCRIPTIONS[read]
+}
+
+/**
+ * The same four quadrants over five minutes instead of a session, which is a
+ * different event and deserves different words.
+ *
+ * Over a session, open interest coming off while the price moves is positions
+ * being closed, and that is all it is. Over five minutes, with the price moving
+ * far enough to be worth flagging at all, it is positions being closed faster
+ * than their holders chose to: a rally on collapsing open interest is shorts
+ * buying back at whatever it costs, and a slide on collapsing open interest is
+ * longs being liquidated into it. Those two are the only readings on this board
+ * that identify a move as forced rather than intended, which is what makes them
+ * worth the buffer they cost — a forced move is the one that tends to snap back.
+ */
+export type SqueezeRead =
+  'longs-building' | 'short-squeeze' | 'shorts-building' | 'long-liquidation'
+
+const SQUEEZE_DESCRIPTIONS: Record<SqueezeRead, string> = {
+  'longs-building': 'new longs paying up',
+  'short-squeeze': 'shorts squeezed out of the move',
+  'shorts-building': 'new shorts pressing it down',
+  'long-liquidation': 'longs liquidated into the fall',
+}
+
+/**
+ * The window is short enough that the floors from the session read would reject
+ * everything: open interest rarely moves half a percent in five minutes even
+ * when it is moving hard. The price side has no floor here at all, because the
+ * only caller has already established that the move is unusual for this
+ * instrument and a second, absolute opinion about it would overrule that.
+ *
+ * Exported because the detector that decides whether a five-minute open
+ * interest move is unusual has to hold it to the same floor this does. Two
+ * numbers that must agree, kept as one.
+ */
+export const MIN_SHORT_OI_PERCENT = 0.15
+
+export function squeezeRead(
+  pricePercent: number,
+  oiPercent: number,
+): SqueezeRead | null {
+  if (!Number.isFinite(pricePercent) || !Number.isFinite(oiPercent)) return null
+  if (Math.abs(oiPercent) < MIN_SHORT_OI_PERCENT) return null
+
+  if (pricePercent > 0) {
+    return oiPercent > 0 ? 'longs-building' : 'short-squeeze'
+  }
+  return oiPercent > 0 ? 'shorts-building' : 'long-liquidation'
+}
+
+export function describeSqueeze(read: SqueezeRead) {
+  return SQUEEZE_DESCRIPTIONS[read]
+}
+
+/** Whether the quadrant is one of the two where the exit was not voluntary. */
+export function isForcedExit(read: SqueezeRead) {
+  return read === 'short-squeeze' || read === 'long-liquidation'
 }

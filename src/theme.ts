@@ -51,18 +51,20 @@ export interface MarketPalette {
 }
 
 /**
- * Positioning signals: a long/short ratio under 1, a funding rate under zero.
- * Amber rather than red, because neither is a price move — red would say the
- * market is down when what is actually happening is that the crowd is short.
- * This is the one exception to red-and-green-only; it earns it by being rare
- * and by never appearing on a number that also has a direction.
+ * A reading that has left the range its instrument normally keeps it in: a
+ * crowded ratio, a funding rate off its usual level, a five-minute move or a
+ * volume bar unlike this symbol's others. Amber rather than red, because none of
+ * them is a price move in the sense the price is — red would say the market is
+ * down when what is actually happening is that the crowd is short. This is the
+ * one exception to red-and-green-only; it earns it by being rare and by never
+ * appearing on a number that already has a direction of its own.
  */
 export interface SignalPalette {
   /** Chip text. Deep enough in the light scheme to carry 12px on `surface`. */
   main: string
   /** Chip fill */
   surface: string
-  /** Card ring, for when both signals fire on the same card */
+  /** Card ring, for when two kinds of reading fire on the same card */
   border: string
 }
 

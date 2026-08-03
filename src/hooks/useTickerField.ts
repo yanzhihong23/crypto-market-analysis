@@ -86,6 +86,62 @@ export function useFundingBaseline(instId: string) {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
 
+export function useFundingShiftBaseline(instId: string) {
+  const read = useCallback(
+    (state: ReturnType<typeof useTickerStore.getState>) =>
+      state.fundingShiftBaseline[instId],
+    [instId],
+  )
+  const subscribe = useCallback(
+    (listener: () => void) => subscribeInstField(read)(listener),
+    [read],
+  )
+  const getSnapshot = useCallback(() => getInstFieldSnapshot(read), [read])
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
+export function useFundingPrev(instId: string) {
+  const read = useCallback(
+    (state: ReturnType<typeof useTickerStore.getState>) =>
+      state.fundingPrev[instId],
+    [instId],
+  )
+  const subscribe = useCallback(
+    (listener: () => void) => subscribeInstField(read)(listener),
+    [read],
+  )
+  const getSnapshot = useCallback(() => getInstFieldSnapshot(read), [read])
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
+export function useMomentumBaseline(instId: string) {
+  const read = useCallback(
+    (state: ReturnType<typeof useTickerStore.getState>) =>
+      state.momentumBaseline[instId],
+    [instId],
+  )
+  const subscribe = useCallback(
+    (listener: () => void) => subscribeInstField(read)(listener),
+    [read],
+  )
+  const getSnapshot = useCallback(() => getInstFieldSnapshot(read), [read])
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
+export function useOiChangeBaseline(instId: string) {
+  const read = useCallback(
+    (state: ReturnType<typeof useTickerStore.getState>) =>
+      state.oiChangeBaseline[instId],
+    [instId],
+  )
+  const subscribe = useCallback(
+    (listener: () => void) => subscribeInstField(read)(listener),
+    [read],
+  )
+  const getSnapshot = useCallback(() => getInstFieldSnapshot(read), [read])
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
 export function useOpenInterestOpen(instId: string) {
   const read = useCallback(
     (state: ReturnType<typeof useTickerStore.getState>) =>

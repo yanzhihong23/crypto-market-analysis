@@ -29,11 +29,24 @@ export default function useOkxFundingBaselineUpdater() {
       const res = await fetchOkxFundingRateHistory({ instId })
       if (!res?.length) return
 
-      // Stored in the same unit the card shows, so the deviation is taken on
-      // the number the user is looking at rather than the raw fraction.
+      // Stored in the same unit the card shows, so every deviation is taken on
+      // the number the user is looking at rather than the raw fraction. The
+      // realised rate is what was actually charged; the quoted one is what it
+      // was heading for when the row was written.
+      const rates = res.map(
+        (row) => Number(row.realizedRate || row.fundingRate) * 10000,
+      )
+
+      // Newest first, so a step is a row minus the one that settled before it.
+      const steps = rates
+        .slice(0, -1)
+        .map((rate, index) => rate - rates[index + 1])
+
       setFundingBaseline(
         instId,
-        baselineOf(res.map((row) => Number(row.fundingRate) * 10000)),
+        baselineOf(rates),
+        baselineOf(steps),
+        rates[0].toFixed(1),
       )
     },
     [setFundingBaseline],

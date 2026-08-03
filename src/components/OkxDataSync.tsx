@@ -4,6 +4,7 @@ import useOkxInstrumentsUpdater from '../hooks/useOkxInstrumentsUpdater'
 import useOkxKlinesUpdater from '../hooks/useOkxKlinesUpdater'
 import useOkxRatioUpdater from '../hooks/useOkxRatioUpdater'
 import useOkxFundingBaselineUpdater from '../hooks/useOkxFundingBaselineUpdater'
+import useOkxMomentumBaselineUpdater from '../hooks/useOkxMomentumBaselineUpdater'
 import useOkxOpenInterestUpdater from '../hooks/useOkxOpenInterestUpdater'
 import useOkxAlerts from '../hooks/useOkxAlerts'
 import { useOkxTickers } from '../hooks/useOkxTickers'
@@ -15,6 +16,7 @@ export default function OkxDataSync() {
   useOkxKlinesUpdater()
   const { updateRatioByInstId } = useOkxRatioUpdater()
   const { updateFundingBaselineByInstId } = useOkxFundingBaselineUpdater()
+  const { updateMomentumBaselineByInstId } = useOkxMomentumBaselineUpdater()
   const { updateOpenInterestOpenByInstId } = useOkxOpenInterestUpdater()
   useOkxAlerts()
 
@@ -23,6 +25,7 @@ export default function OkxDataSync() {
       await add(instId)
       await updateRatioByInstId(instId)
       await updateFundingBaselineByInstId(instId)
+      await updateMomentumBaselineByInstId(instId)
       await updateOpenInterestOpenByInstId(instId)
     }
     okxTickerActions.remove = remove
@@ -31,6 +34,7 @@ export default function OkxDataSync() {
     remove,
     updateRatioByInstId,
     updateFundingBaselineByInstId,
+    updateMomentumBaselineByInstId,
     updateOpenInterestOpenByInstId,
   ])
 

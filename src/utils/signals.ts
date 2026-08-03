@@ -1,13 +1,17 @@
 /**
- * Positioning readings — the long/short ratio and the funding rate — are worth
- * flagging when they leave the range they normally sit in, on either side. A
- * crowded short and a crowded long are both crowded; a fixed band would have to
- * call one of them normal.
+ * What counts as unusual, and what combination of unusual is worth crossing the
+ * grid for.
  *
- * "Normal" is per instrument and cannot be a constant: BTC's account ratio
- * lives around 2 while a small cap can sit under 1 for weeks, so the same
- * threshold would either scream on one or never fire on the other. Each reading
- * is measured against its own recent history instead.
+ * Every reading on the board is measured against its own recent history rather
+ * than against a fixed band, because "normal" is per instrument and cannot be a
+ * constant: BTC's account ratio lives around 2 while a small cap can sit under
+ * 1 for weeks, and a five-minute move of one percent is a headline on the first
+ * and a quiet afternoon on the second. One threshold would either scream on one
+ * or never fire on the other.
+ *
+ * Which readings exist and how each is taken belongs to the module that owns
+ * it. This file owns the statistics they share, the bar they are all held to,
+ * and the rule that decides when enough of them agree.
  */
 
 /** Samples of history needed before a mean and a spread mean anything. */
@@ -69,21 +73,21 @@ export function isAnomalous(deviation?: number | null) {
 }
 
 /**
- * Both positioning readings out of their usual range at once. Either one alone
- * gets its chip marked; this is the bar for claiming the card's ring and for
- * being worth interrupting someone who is not looking at the page.
+ * The same bar for a reading that measures a change rather than a level, which
+ * additionally has to be a change worth naming.
  *
- * Defined here rather than at either call site so the ring and the alert can
- * never disagree about what they are reporting.
+ * A symbol that has barely moved for hours has a sigma small enough that one
+ * tick clears three of them, so sigma alone hands the quiet end of the board
+ * every flag on the screen. The floor is in whatever unit the change is quoted
+ * in and is the caller's to choose, because a tenth of a percent means one
+ * thing on a price and another on an open interest.
  */
-export function isFlagged({
-  ratioDeviation,
-  fundingDeviation,
-}: {
-  ratioDeviation?: number | null
-  fundingDeviation?: number | null
-}) {
-  return isAnomalous(ratioDeviation) && isAnomalous(fundingDeviation)
+export function isAnomalousChange(
+  deviation: number | null | undefined,
+  change: number,
+  floor: number,
+) {
+  return isAnomalous(deviation) && Math.abs(change) >= floor
 }
 
 /**
@@ -98,4 +102,133 @@ export function formatDeviation(deviation: number) {
 
 export function describeDeviation(deviation: number) {
   return `${formatDeviation(deviation)} its recent range`
+}
+
+/** Magnitude only, for a detail that already carries its own direction. */
+export function formatSigmas(deviation: number) {
+  return `${Math.abs(deviation).toFixed(1)}σ`
+}
+
+/**
+ * What a reading is about.
+ *
+ * The ring rule works in families rather than in individual readings, because
+ * two readings inside a family are usually one event described twice: a new 24h
+ * high on a bar whose range has just expanded is a single move, and letting
+ * that pair claim the ring would ring every trending symbol on the board.
+ * Across families they are genuinely separate questions — what the price did,
+ * whether anyone was behind it, and what the book was holding beforehand.
+ */
+export type SignalFamily = 'price' | 'flow' | 'positioning'
+
+export type SignalKind =
+  // Price: what just happened to the quote.
+  | 'momentum'
+  | 'volatility'
+  | 'breakout'
+  | 'rejection'
+  | 'strength'
+  // Flow: whether anyone put anything behind it.
+  | 'volume'
+  | 'open-interest'
+  // Positioning: what the book was holding, and paying, going in.
+  | 'ratio'
+  | 'funding'
+  | 'funding-shift'
+  | 'basis'
+
+const SIGNAL_FAMILY: Record<SignalKind, SignalFamily> = {
+  momentum: 'price',
+  volatility: 'price',
+  breakout: 'price',
+  rejection: 'price',
+  strength: 'price',
+  volume: 'flow',
+  'open-interest': 'flow',
+  ratio: 'positioning',
+  funding: 'positioning',
+  'funding-shift': 'positioning',
+  basis: 'positioning',
+}
+
+export function signalFamily(kind: SignalKind) {
+  return SIGNAL_FAMILY[kind]
+}
+
+export interface Signal {
+  kind: SignalKind
+  /**
+   * Distance from this instrument's own normal, in sigmas. Null for the
+   * readings that are shapes rather than levels: a new 24h high is not
+   * two-point-something of anything.
+   */
+  deviation: number | null
+  /** Chip-sized, for a 236px card: the reading and nothing else. */
+  label: string
+  /**
+   * One line, for a tooltip and for the alert list. Both strings are written by
+   * the detector rather than derived by whatever renders them: it is the only
+   * thing that knows what unit the number is in, and a stored alert has to still
+   * read correctly long after the series behind it has rolled off.
+   */
+  detail: string
+}
+
+export interface FlagState {
+  /** Which families are firing. Two is the bar. */
+  families: SignalFamily[]
+  /** Ordered for reading: family by family, largest reading first inside each. */
+  reasons: Signal[]
+  /** The combination in words, for a notification title and the alert list. */
+  headline: string
+}
+
+/** Also the order reasons are listed in, so a headline and its detail agree. */
+const FAMILY_ORDER: SignalFamily[] = ['price', 'flow', 'positioning']
+
+const FAMILY_HEADLINES: Record<string, string> = {
+  'price+flow': 'Move with flow behind it',
+  'price+positioning': 'Move into a crowded book',
+  'flow+positioning': 'Flow against a crowded book',
+  'price+flow+positioning': 'Move, flow and positioning at once',
+  positioning: 'Positioning stretched on two readings',
+}
+
+/**
+ * Whether the card claims the ring, and what to say if it does.
+ *
+ * Two families, so that no single metric can ring a card on its own — every one
+ * of these readings fires on its own often enough that a board obeying any of
+ * them alone would be a board of rings. The exception is positioning, which
+ * counts twice within itself: what the crowd holds and what it pays to hold it
+ * are separately sourced and disagree often, so their agreeing is an event.
+ * That exception is also the original bar this board shipped with, and the ring
+ * it draws has not changed meaning.
+ */
+export function flagStateOf(signals: Signal[]): FlagState | null {
+  if (signals.length < 2) return null
+
+  const families = FAMILY_ORDER.filter((family) =>
+    signals.some((signal) => SIGNAL_FAMILY[signal.kind] === family),
+  )
+  const positioningReadings = signals.filter(
+    (signal) => SIGNAL_FAMILY[signal.kind] === 'positioning',
+  ).length
+
+  if (families.length < 2 && positioningReadings < 2) return null
+
+  const reasons = [...signals].sort((a, b) => {
+    const byFamily =
+      FAMILY_ORDER.indexOf(SIGNAL_FAMILY[a.kind]) -
+      FAMILY_ORDER.indexOf(SIGNAL_FAMILY[b.kind])
+    if (byFamily !== 0) return byFamily
+    return Math.abs(b.deviation ?? 0) - Math.abs(a.deviation ?? 0)
+  })
+
+  return {
+    families,
+    reasons,
+    headline:
+      FAMILY_HEADLINES[families.join('+')] ?? 'Several readings out of range',
+  }
 }

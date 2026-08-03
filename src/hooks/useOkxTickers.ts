@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 
-import { OkxChannel, OkxFundingRate } from '../types/okx'
+import { OkxChannel, OkxFundingRate, OkxIndexTicker } from '../types/okx'
 import { OkxOpenInterest } from '../types/okx'
 import { OkxTicker } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
@@ -10,6 +10,12 @@ import {
   setOkxPercent,
   updateOkxTicker,
 } from '../store/okxRealtimeTicker'
+import {
+  indexInstIdOf,
+  recordOkxOpenInterest,
+  recordOkxPrice,
+  setOkxIndexPrice,
+} from '../store/okxRealtimeSeries'
 import {
   markFeedMessage,
   resetFeed,
@@ -26,7 +32,7 @@ interface TickerResponse {
     channel: OkxChannel
     instId: string
   }
-  data: OkxTicker[] | OkxOpenInterest[] | OkxFundingRate[]
+  data: OkxTicker[] | OkxOpenInterest[] | OkxFundingRate[] | OkxIndexTicker[]
 }
 
 export const useOkxTickers = () => {
@@ -48,6 +54,9 @@ export const useOkxTickers = () => {
       { channel: OkxChannel.TICKERS, instId },
       { channel: OkxChannel.OPEN_INTEREST, instId },
       { channel: OkxChannel.FUNDING_RATE, instId },
+      // The contract's own price says nothing about what it is worth; the gap to
+      // the index it settles against is the premium being paid for the leverage.
+      { channel: OkxChannel.INDEX_TICKERS, instId: indexInstIdOf(instId) },
     ]
   }
 
@@ -131,9 +140,17 @@ export const useOkxTickers = () => {
       if (res.arg.channel === OkxChannel.TICKERS) {
         const ticker = res.data[0] as OkxTicker
         updateOkxTicker(ticker.instId, formatTickerRef.current({ ticker }))
+        // The card only ever needed the newest price; a five-minute move needs
+        // to know what it was five minutes ago, and this is the only place that
+        // sees each one before it is overwritten.
+        recordOkxPrice(ticker.instId, Number(ticker.last), Number(ticker.ts))
       } else if (res.arg.channel === OkxChannel.OPEN_INTEREST) {
-        const { oi } = res.data[0] as OkxOpenInterest
+        const { oi, ts } = res.data[0] as OkxOpenInterest
         setOkxOpenInterest(instId, oi)
+        recordOkxOpenInterest(instId, Number(oi), Number(ts))
+      } else if (res.arg.channel === OkxChannel.INDEX_TICKERS) {
+        const { idxPx } = res.data[0] as OkxIndexTicker
+        setOkxIndexPrice(instId, Number(idxPx))
       } else if (res.arg.channel === OkxChannel.FUNDING_RATE) {
         const { fundingRate, fundingTime } = res.data[0] as OkxFundingRate
         setFundingRef.current(

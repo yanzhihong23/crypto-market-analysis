@@ -27,10 +27,11 @@ function TickerContainer({
   /** No data yet, so the card claims no direction. */
   pending?: boolean
   /**
-   * Every positioning signal on this card is firing at once, which is rarer and
-   * more worth crossing the grid for than either one alone. It takes over the
-   * ring; direction still reads off the stroke and the fill, so nothing is lost
-   * when a strong mover is also the one the crowd is short.
+   * Two different kinds of reading on this card are out of range at once — what
+   * the price did and whether anything was behind it, say — which is rarer and
+   * more worth crossing the grid for than any one of them alone. It takes over
+   * the ring; direction still reads off the stroke and the fill, so nothing is
+   * lost when a strong mover is also the one the crowd is short.
    */
   flagged?: boolean
   /** Toggles the pin. Double-click rather than a control, so the card front

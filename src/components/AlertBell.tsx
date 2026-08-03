@@ -20,7 +20,6 @@ import {
   notificationPermission,
   requestNotificationPermission,
 } from '../utils/alarm'
-import { formatDeviation } from '../utils/signals'
 import { numericFont } from '../fonts'
 
 export default function AlertBell() {
@@ -140,8 +139,9 @@ export default function AlertBell() {
           >
             {/* Says what the list is a list of, so an empty one reads as
                 nothing having happened rather than as nothing working. */}
-            When a symbol's long/short ratio and funding rate both leave their
-            usual range at once.
+            When two of a symbol's readings leave their usual range at once —
+            what the price did, whether volume and open interest were behind it,
+            and what the book was already holding.
           </Typography>
 
           <Stack
@@ -263,20 +263,26 @@ export default function AlertBell() {
                     {formatDistanceToNowStrict(alert.at, { addSuffix: true })}
                   </Typography>
                 </Stack>
-                <Typography
-                  sx={[
-                    {
-                      fontSize: 12,
-                      color: 'text.secondary',
-                    },
-                    ...(Array.isArray(numericFont)
-                      ? numericFont
-                      : [numericFont]),
-                  ]}
-                >
-                  L/S {formatDeviation(alert.ratioDeviation)} · funding{' '}
-                  {formatDeviation(alert.fundingDeviation)}
-                </Typography>
+                {/* The headline says what kind of event it was and the readings
+                    say what it was made of, which is the difference between an
+                    entry you can act on and a row of sigmas. */}
+                <Typography sx={{ fontSize: 13 }}>{alert.headline}</Typography>
+                {alert.reasons.map((reason) => (
+                  <Typography
+                    key={reason.kind}
+                    sx={[
+                      {
+                        fontSize: 12,
+                        color: 'text.secondary',
+                      },
+                      ...(Array.isArray(numericFont)
+                        ? numericFont
+                        : [numericFont]),
+                    ]}
+                  >
+                    {reason.detail}
+                  </Typography>
+                ))}
               </Stack>
             ))}
           </Box>

@@ -17,10 +17,11 @@ export const metricChipSx = {
 }
 
 /**
- * The same chip once its reading crosses into short-crowded territory: a L/S
- * ratio below 1, or a funding rate below zero. Amber keeps it out of the price
- * red/green, and the weight bump is what makes it findable while scanning a
- * grid rather than only once you are already looking at the card.
+ * The same chip once its reading has left the range that instrument normally
+ * keeps it in, whichever side it left on. Amber keeps it out of the price
+ * red/green — none of these readings has a direction in the sense the price
+ * does — and the weight bump is what makes it findable while scanning a grid
+ * rather than only once you are already looking at the card.
  */
 export const signalChipSx = {
   ...metricChipSx,

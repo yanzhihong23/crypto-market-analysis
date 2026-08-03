@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { fetchOkxOpenInterestHistory } from '../apis'
 import { useTickerStore } from '../store/useTickerStore'
 import { sessionStartMs } from '../utils/session'
+import { baselineOf } from '../utils/signals'
 
 /**
  * The session open only moves when the session does, so this is a slow poll.
@@ -12,9 +13,22 @@ import { sessionStartMs } from '../utils/session'
 const POLL_INTERVAL_MS = 1000 * 60 * 30
 const STALE_AFTER_MS = 1000 * 60 * 30
 
+/** Percent moves bar to bar, off a series that arrives newest first. */
+const changesOf = (values: number[]) =>
+  values
+    .slice(0, -1)
+    .map((value, index) => {
+      const previous = values[index + 1]
+      return previous > 0 ? ((value - previous) / previous) * 100 : NaN
+    })
+    .filter((value) => Number.isFinite(value))
+
 export default function useOkxOpenInterestUpdater() {
   const setOpenInterestOpen = useTickerStore(
     (state) => state.setOpenInterestOpen,
+  )
+  const setOiChangeBaseline = useTickerStore(
+    (state) => state.setOiChangeBaseline,
   )
   const openTime = useTickerStore((state) => state.openTime)
 
@@ -35,17 +49,34 @@ export default function useOkxOpenInterestUpdater() {
       }
 
       const res = await fetchOkxOpenInterestHistory({ instId })
-      if (!res?.length) return
+      if (res?.length) {
+        // Newest first. The open is the last bar that had already closed when
+        // the session started; anything after it is inside the window being
+        // measured.
+        const start = sessionStartMs(session)
+        const openRow =
+          res.find(([ts]) => Number(ts) <= start) ?? res[res.length - 1]
 
-      // Newest first. The open is the last bar that had already closed when the
-      // session started; anything after it is inside the window being measured.
-      const start = sessionStartMs(session)
-      const openRow =
-        res.find(([ts]) => Number(ts) <= start) ?? res[res.length - 1]
+        setOpenInterestOpen(instId, openRow[1], session)
+      }
 
-      setOpenInterestOpen(instId, openRow[1], session)
+      // A second series off the same endpoint at the resolution the live buffer
+      // measures in. The session figure above answers "is this new money"; this
+      // one answers "is this fast", which is the half that separates positions
+      // being closed from positions being taken out.
+      const short = await fetchOkxOpenInterestHistory({
+        instId,
+        period: '5m',
+        limit: 100,
+      })
+      setOiChangeBaseline(
+        instId,
+        short?.length
+          ? baselineOf(changesOf(short.map((row) => Number(row[1]))))
+          : null,
+      )
     },
-    [setOpenInterestOpen],
+    [setOpenInterestOpen, setOiChangeBaseline],
   )
 
   const updateAll = useCallback(async () => {
