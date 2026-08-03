@@ -4,6 +4,7 @@ import { useInterval } from 'usehooks-ts'
 
 import { fetchBinanceRatio, Ratio } from '../apis'
 import { getPeriodPattern } from '../utils'
+import { useMessages } from '../i18n'
 
 import BaseAreaChart from './BaseAreaChart'
 
@@ -13,6 +14,7 @@ export default function RatioTrendChart(props: {
   syncId?: string
 }) {
   const [data, setData] = useState<Ratio[]>([])
+  const t = useMessages()
 
   const initData = useCallback(async () => {
     if (!props.symbol) return
@@ -43,7 +45,7 @@ export default function RatioTrendChart(props: {
       data={data}
       xKey="time"
       yKey="ratio"
-      label="Long Short Account Ratio"
+      label={t.chart.ratioTrend}
       syncId={props.syncId}
     />
   )

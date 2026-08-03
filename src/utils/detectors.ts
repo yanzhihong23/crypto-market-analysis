@@ -8,9 +8,15 @@
  * Each detector also writes its own sentence. The tooltip that explains a chip
  * and the line in the alert list are the same sentence, and a stored alert has
  * to still read correctly long after the series behind it has rolled off.
+ *
+ * A detector formats its own numbers and hands them to the dictionary, which
+ * decides where in the sentence they go. That split is what makes a language
+ * that puts the direction in front of the number possible without the detector
+ * knowing anything about it.
  */
 
 import { OkxKline } from '../types/okx'
+import type { Messages } from '../i18n/en'
 
 import {
   MIN_SHORT_OI_PERCENT,
@@ -79,22 +85,26 @@ const MIN_FUNDING_SHIFT = 1
  * moves. Measured off the live buffer rather than a candle so it lands within
  * seconds of the move instead of at the end of the bar containing it.
  */
-export function momentumSignal({
-  pricePercent,
-  baseline,
-}: {
-  pricePercent?: number | null
-  baseline?: Baseline | null
-}): Signal | null {
+export function momentumSignal(
+  {
+    pricePercent,
+    baseline,
+  }: {
+    pricePercent?: number | null
+    baseline?: Baseline | null
+  },
+  t: Messages,
+): Signal | null {
   if (pricePercent == null) return null
   const deviation = deviationFrom(pricePercent, baseline)
   if (!isAnomalousChange(deviation, pricePercent, MIN_MOVE_PERCENT)) return null
 
+  const move = formatPercent(pricePercent)
   return {
     kind: 'momentum',
     deviation,
-    label: `5m ${formatPercent(pricePercent)}`,
-    detail: `5m ${formatPercent(pricePercent)} · ${formatSigmas(deviation!)}`,
+    label: t.signal.momentum(move),
+    detail: t.signal.momentumDetail(move, formatSigmas(deviation!, t)),
   }
 }
 
@@ -107,11 +117,14 @@ export function momentumSignal({
  * Only ever an expansion. A bar three sigma *narrower* than usual is a quiet
  * afternoon, and the board has no use for being told about one.
  */
-export function volatilitySignal({
-  stats,
-}: {
-  stats?: KlineStats | null
-}): Signal | null {
+export function volatilitySignal(
+  {
+    stats,
+  }: {
+    stats?: KlineStats | null
+  },
+  t: Messages,
+): Signal | null {
   if (!stats?.closed || !stats.range) return null
 
   const range = barRangePercent(stats.closed)
@@ -121,11 +134,12 @@ export function volatilitySignal({
   if (!isAnomalous(deviation) || deviation! < 0) return null
   if (range < stats.range.mean * SURGE_MULTIPLE) return null
 
+  const rangeLabel = `${range.toFixed(2)}%`
   return {
     kind: 'volatility',
     deviation,
-    label: `range ${range.toFixed(2)}%`,
-    detail: `bar range ${range.toFixed(2)}% · ${formatSigmas(deviation!)}`,
+    label: t.signal.volatility(rangeLabel),
+    detail: t.signal.volatilityDetail(rangeLabel, formatSigmas(deviation!, t)),
   }
 }
 
@@ -134,15 +148,18 @@ export function volatilitySignal({
  * where the price is, not a distance from anywhere, and dressing it up as one
  * would invent a number.
  */
-export function breakoutSignal({
-  last,
-  high24h,
-  low24h,
-}: {
-  last: number
-  high24h: number
-  low24h: number
-}): Signal | null {
+export function breakoutSignal(
+  {
+    last,
+    high24h,
+    low24h,
+  }: {
+    last: number
+    high24h: number
+    low24h: number
+  },
+  t: Messages,
+): Signal | null {
   if (!(last > 0) || !(high24h > 0) || !(low24h > 0)) return null
   if (((high24h - low24h) / last) * 100 < MIN_BREAKOUT_RANGE_PERCENT)
     return null
@@ -151,16 +168,16 @@ export function breakoutSignal({
     return {
       kind: 'breakout',
       deviation: null,
-      label: '24h high',
-      detail: 'at its 24h high',
+      label: t.signal.breakoutHigh,
+      detail: t.signal.breakoutHighDetail,
     }
   }
   if (last <= low24h) {
     return {
       kind: 'breakout',
       deviation: null,
-      label: '24h low',
-      detail: 'at its 24h low',
+      label: t.signal.breakoutLow,
+      detail: t.signal.breakoutLowDetail,
     }
   }
   return null
@@ -172,11 +189,14 @@ export function breakoutSignal({
  * to the breakout above it — which is why it is worth carrying even though it
  * never claims a ring on its own.
  */
-export function rejectionSignal({
-  stats,
-}: {
-  stats?: KlineStats | null
-}): Signal | null {
+export function rejectionSignal(
+  {
+    stats,
+  }: {
+    stats?: KlineStats | null
+  },
+  t: Messages,
+): Signal | null {
   if (!stats?.closed || !stats.range) return null
 
   const bar = stats.closed
@@ -196,16 +216,16 @@ export function rejectionSignal({
     return {
       kind: 'rejection',
       deviation: null,
-      label: 'upper wick',
-      detail: `rejected from the high, ${Math.round(upper * 100)}% wick`,
+      label: t.signal.upperWick,
+      detail: t.signal.upperWickDetail(Math.round(upper * 100)),
     }
   }
   if (lower >= WICK_SHARE) {
     return {
       kind: 'rejection',
       deviation: null,
-      label: 'lower wick',
-      detail: `bought off the low, ${Math.round(lower * 100)}% wick`,
+      label: t.signal.lowerWick,
+      detail: t.signal.lowerWickDetail(Math.round(lower * 100)),
     }
   }
   return null
@@ -217,15 +237,18 @@ export function rejectionSignal({
  * up two percent" and "this one is". Measured in the same sigma the momentum is,
  * because the excess is a return and that is the spread returns have here.
  */
-export function strengthSignal({
-  pricePercent,
-  boardPercent,
-  baseline,
-}: {
-  pricePercent?: number | null
-  boardPercent?: number | null
-  baseline?: Baseline | null
-}): Signal | null {
+export function strengthSignal(
+  {
+    pricePercent,
+    boardPercent,
+    baseline,
+  }: {
+    pricePercent?: number | null
+    boardPercent?: number | null
+    baseline?: Baseline | null
+  },
+  t: Messages,
+): Signal | null {
   if (pricePercent == null || boardPercent == null || !baseline) return null
 
   const excess = pricePercent - boardPercent
@@ -235,11 +258,12 @@ export function strengthSignal({
   const deviation = excess / baseline.sigma
   if (!isAnomalousChange(deviation, excess, MIN_MOVE_PERCENT)) return null
 
+  const excessLabel = formatPercent(excess)
   return {
     kind: 'strength',
     deviation,
-    label: `${formatPercent(excess)} vs board`,
-    detail: `${formatPercent(excess)} against the board · ${formatSigmas(deviation)}`,
+    label: t.signal.strength(excessLabel),
+    detail: t.signal.strengthDetail(excessLabel, formatSigmas(deviation, t)),
   }
 }
 
@@ -248,13 +272,16 @@ export function strengthSignal({
  * readings need: a move on no volume is a thin book being walked, and it comes
  * back as easily as it went.
  */
-export function volumeSignal({
-  stats,
-  now = Date.now(),
-}: {
-  stats?: KlineStats | null
-  now?: number
-}): Signal | null {
+export function volumeSignal(
+  {
+    stats,
+    now = Date.now(),
+  }: {
+    stats?: KlineStats | null
+    now?: number
+  },
+  t: Messages,
+): Signal | null {
   if (!stats?.volume) return null
 
   // The forming bar where it is far enough along to extrapolate, so a surge is
@@ -270,11 +297,12 @@ export function volumeSignal({
   const multiple = volume / stats.volume.mean
   if (multiple < SURGE_MULTIPLE) return null
 
+  const multipleLabel = multiple.toFixed(1)
   return {
     kind: 'volume',
     deviation,
-    label: `${multiple.toFixed(1)}× volume`,
-    detail: `volume ${multiple.toFixed(1)}× its usual · ${formatSigmas(deviation!)}`,
+    label: t.signal.volume(multipleLabel),
+    detail: t.signal.volumeDetail(multipleLabel, formatSigmas(deviation!, t)),
   }
 }
 
@@ -283,15 +311,18 @@ export function volumeSignal({
  * out. The quadrant is in the detail rather than in a second signal because it
  * is not a separate observation — it is this one read together with the price.
  */
-export function openInterestSignal({
-  oiPercent,
-  pricePercent,
-  baseline,
-}: {
-  oiPercent?: number | null
-  pricePercent?: number | null
-  baseline?: Baseline | null
-}): Signal | null {
+export function openInterestSignal(
+  {
+    oiPercent,
+    pricePercent,
+    baseline,
+  }: {
+    oiPercent?: number | null
+    pricePercent?: number | null
+    baseline?: Baseline | null
+  },
+  t: Messages,
+): Signal | null {
   if (oiPercent == null) return null
 
   const deviation = deviationFrom(oiPercent, baseline)
@@ -300,45 +331,55 @@ export function openInterestSignal({
 
   const read =
     pricePercent == null ? null : squeezeRead(pricePercent, oiPercent)
-  const detail = `OI ${formatPercent(oiPercent)} in 5m · ${formatSigmas(deviation!)}`
+  const change = formatPercent(oiPercent)
+  const detail = t.signal.openInterestDetail(
+    change,
+    formatSigmas(deviation!, t),
+  )
 
   return {
     kind: 'open-interest',
     deviation,
-    label: `OI ${formatPercent(oiPercent)} 5m`,
-    detail: read ? `${detail} · ${describeSqueeze(read)}` : detail,
+    label: t.signal.openInterest(change),
+    detail: read ? `${detail} · ${describeSqueeze(read, t)}` : detail,
   }
 }
 
 /** The long/short account ratio, whose deviation is computed where it is polled. */
-export function ratioSignal({
-  deviation,
-}: {
-  deviation?: number | null
-}): Signal | null {
+export function ratioSignal(
+  {
+    deviation,
+  }: {
+    deviation?: number | null
+  },
+  t: Messages,
+): Signal | null {
   if (!isAnomalous(deviation)) return null
   return {
     kind: 'ratio',
     deviation: deviation!,
-    label: `L/S ${formatSigmas(deviation!)}`,
-    detail: `L/S ${formatDeviation(deviation!)}`,
+    label: t.signal.ratio(formatSigmas(deviation!, t)),
+    detail: t.signal.ratioDetail(formatDeviation(deviation!, t)),
   }
 }
 
-export function fundingSignal({
-  rate,
-  baseline,
-}: {
-  rate?: string | number | null
-  baseline?: Baseline | null
-}): Signal | null {
+export function fundingSignal(
+  {
+    rate,
+    baseline,
+  }: {
+    rate?: string | number | null
+    baseline?: Baseline | null
+  },
+  t: Messages,
+): Signal | null {
   const deviation = deviationFrom(Number(rate), baseline)
   if (!isAnomalous(deviation)) return null
   return {
     kind: 'funding',
     deviation,
-    label: `funding ${formatSigmas(deviation!)}`,
-    detail: `funding ${formatDeviation(deviation!)}`,
+    label: t.signal.funding(formatSigmas(deviation!, t)),
+    detail: t.signal.fundingDetail(formatDeviation(deviation!, t)),
   }
 }
 
@@ -348,15 +389,18 @@ export function fundingSignal({
  * questions: a rate that has sat at its high all month is a crowded trade, and a
  * rate that has just tripled is a crowd arriving.
  */
-export function fundingShiftSignal({
-  rate,
-  previous,
-  baseline,
-}: {
-  rate?: string | number | null
-  previous?: string | number | null
-  baseline?: Baseline | null
-}): Signal | null {
+export function fundingShiftSignal(
+  {
+    rate,
+    previous,
+    baseline,
+  }: {
+    rate?: string | number | null
+    previous?: string | number | null
+    baseline?: Baseline | null
+  },
+  t: Messages,
+): Signal | null {
   const current = Number(rate)
   const last = Number(previous)
   if (!Number.isFinite(current) || !Number.isFinite(last)) return null
@@ -369,8 +413,8 @@ export function fundingShiftSignal({
   return {
     kind: 'funding-shift',
     deviation,
-    label: `funding ${moved}`,
-    detail: `funding moved ${moved} since it last settled`,
+    label: t.signal.fundingShift(moved),
+    detail: t.signal.fundingShiftDetail(moved),
   }
 }
 
@@ -380,23 +424,27 @@ export function fundingShiftSignal({
  * the same on the short side; either way it is the one reading here that is
  * about the contract rather than about the asset.
  */
-export function basisSignal({
-  last,
-  indexPrice,
-}: {
-  last: number
-  indexPrice?: number
-}): Signal | null {
+export function basisSignal(
+  {
+    last,
+    indexPrice,
+  }: {
+    last: number
+    indexPrice?: number
+  },
+  t: Messages,
+): Signal | null {
   if (!(last > 0) || !indexPrice || !(indexPrice > 0)) return null
 
   const basis = ((last - indexPrice) / indexPrice) * 100
   if (Math.abs(basis) < MAX_BASIS_PERCENT) return null
 
+  const basisLabel = formatPercent(basis, 2)
   return {
     kind: 'basis',
     deviation: null,
-    label: `${formatPercent(basis, 2)} vs spot`,
-    detail: `${formatPercent(basis, 2)} ${basis > 0 ? 'over' : 'under'} spot`,
+    label: t.signal.basis(basisLabel),
+    detail: t.signal.basisDetail(basisLabel, basis > 0),
   }
 }
 
@@ -436,43 +484,61 @@ export interface SignalInput {
  * reading in. Nothing here weighs them — `flagStateOf` does that — so a caller
  * that only wants to colour one chip can look for one kind and ignore the rest.
  */
-export function collectSignals(input: SignalInput): Signal[] {
+export function collectSignals(input: SignalInput, t: Messages): Signal[] {
   const stats = klineStatsOf(input.klines)
 
   return [
-    momentumSignal({
-      pricePercent: input.pricePercent,
-      baseline: input.momentumBaseline,
-    }),
-    volatilitySignal({ stats }),
-    breakoutSignal({
-      last: input.last,
-      high24h: input.high24h,
-      low24h: input.low24h,
-    }),
-    rejectionSignal({ stats }),
-    strengthSignal({
-      pricePercent: input.pricePercent,
-      boardPercent: input.boardPercent,
-      baseline: input.momentumBaseline,
-    }),
-    volumeSignal({ stats, now: input.now }),
-    openInterestSignal({
-      oiPercent: input.oiPercent,
-      pricePercent: input.pricePercent,
-      baseline: input.oiChangeBaseline,
-    }),
-    ratioSignal({ deviation: input.ratioDeviation }),
-    fundingSignal({
-      rate: input.fundingRate,
-      baseline: input.fundingBaseline,
-    }),
-    fundingShiftSignal({
-      rate: input.fundingRate,
-      previous: input.fundingPrev,
-      baseline: input.fundingShiftBaseline,
-    }),
-    basisSignal({ last: input.last, indexPrice: input.indexPrice }),
+    momentumSignal(
+      {
+        pricePercent: input.pricePercent,
+        baseline: input.momentumBaseline,
+      },
+      t,
+    ),
+    volatilitySignal({ stats }, t),
+    breakoutSignal(
+      {
+        last: input.last,
+        high24h: input.high24h,
+        low24h: input.low24h,
+      },
+      t,
+    ),
+    rejectionSignal({ stats }, t),
+    strengthSignal(
+      {
+        pricePercent: input.pricePercent,
+        boardPercent: input.boardPercent,
+        baseline: input.momentumBaseline,
+      },
+      t,
+    ),
+    volumeSignal({ stats, now: input.now }, t),
+    openInterestSignal(
+      {
+        oiPercent: input.oiPercent,
+        pricePercent: input.pricePercent,
+        baseline: input.oiChangeBaseline,
+      },
+      t,
+    ),
+    ratioSignal({ deviation: input.ratioDeviation }, t),
+    fundingSignal(
+      {
+        rate: input.fundingRate,
+        baseline: input.fundingBaseline,
+      },
+      t,
+    ),
+    fundingShiftSignal(
+      {
+        rate: input.fundingRate,
+        previous: input.fundingPrev,
+        baseline: input.fundingShiftBaseline,
+      },
+      t,
+    ),
+    basisSignal({ last: input.last, indexPrice: input.indexPrice }, t),
   ].filter((signal): signal is Signal => signal !== null)
 }
 

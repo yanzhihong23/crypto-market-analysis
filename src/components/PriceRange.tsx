@@ -2,6 +2,7 @@ import { Box, Stack, Tooltip, Typography } from '@mui/material'
 import { memo, useCallback, type CSSProperties } from 'react'
 
 import { numericFont } from '../fonts'
+import { useMessages } from '../i18n'
 
 const MARKER_WIDTH = 3
 
@@ -31,6 +32,8 @@ function PriceRange({
   reference?: string
   up?: boolean
 }) {
+  const t = useMessages()
+
   const positionOf = useCallback(
     (value: string | undefined) => {
       const lo = Number(low)
@@ -128,7 +131,7 @@ function PriceRange({
         }}
       >
         {openPosition !== null && position !== null && (
-          <Tooltip title={`Open ${open}`} arrow>
+          <Tooltip title={t.priceRange.open(open!)} arrow>
             <Box
               style={changeOffset(openPosition, position)}
               sx={{
@@ -145,7 +148,7 @@ function PriceRange({
           </Tooltip>
         )}
         {referencePosition !== null && (
-          <Tooltip title={`Weighted average ${reference}`} arrow>
+          <Tooltip title={t.priceRange.weightedAverage(reference!)} arrow>
             <Box
               style={offset(referencePosition)}
               sx={{

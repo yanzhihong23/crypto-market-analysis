@@ -14,6 +14,8 @@ import {
 } from 'recharts'
 import type { LabelProps, TickItem } from 'recharts'
 
+import { useMessages } from '../i18n'
+
 /**
  * Recharts does not export the type; this is the shape of the callback form,
  * narrowed to the one field of the source chart's state a caller here needs.
@@ -77,6 +79,7 @@ export default function BaseAreaChart({
 }) {
   const [isUp, setIsUp] = useState(true)
   const theme = useTheme()
+  const t = useMessages()
   // Unique per instance: a fixed id makes every chart on the page resolve to
   // the first one's <defs>.
   const gradientId = `area-${useId().replace(/:/g, '')}`
@@ -189,9 +192,12 @@ export default function BaseAreaChart({
               ? (value, name) => {
                   const n = Number(value)
                   if (name === volumeKey) {
-                    return [volumeFormatter ? volumeFormatter(n) : n, 'Vol']
+                    return [
+                      volumeFormatter ? volumeFormatter(n) : n,
+                      t.chart.volume,
+                    ]
                   }
-                  return [valueFormatter ? valueFormatter(n) : n, 'Price']
+                  return [valueFormatter ? valueFormatter(n) : n, t.chart.price]
                 }
               : valueFormatter
                 ? (value) => valueFormatter(Number(value))

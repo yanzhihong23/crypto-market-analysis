@@ -2,13 +2,16 @@ import { Stack, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
 
 import { FullTicker } from '../types'
-import { compactNumberFormatter } from '../utils'
 import { numericFont } from '../fonts'
+import { useCompactNumber, useMessages } from '../i18n'
 
 const Description = ({ label, value }: { label: string; value: string }) => {
+  const t = useMessages()
+
   return (
     <Typography sx={{ fontSize: 18, color: 'text.secondary' }}>
-      {label}:{' '}
+      {label}
+      {t.common.colon}
       <Typography
         component="span"
         sx={{
@@ -34,6 +37,8 @@ export default function Ticker({ symbol }: { symbol: string }) {
     m: boolean // is the buyer the maker, i.e. the taker sold into the bid
   }>()
   const [ticker, setTicker] = useState<FullTicker>()
+  const t = useMessages()
+  const compact = useCompactNumber()
 
   useEffect(() => {
     const socket = new WebSocket(
@@ -104,7 +109,7 @@ export default function Ticker({ symbol }: { symbol: string }) {
               ...numericFont,
             }}
           >
-            {aggTrade?.p ?? '-'}
+            {aggTrade?.p ?? t.common.missing}
           </Typography>
           <Typography
             sx={{
@@ -115,7 +120,7 @@ export default function Ticker({ symbol }: { symbol: string }) {
               ...numericFont,
             }}
           >
-            {aggTrade?.q ?? '-'}
+            {aggTrade?.q ?? t.common.missing}
           </Typography>
         </Stack>
         <Typography
@@ -133,17 +138,23 @@ export default function Ticker({ symbol }: { symbol: string }) {
         </Typography>
       </Stack>
       <Stack spacing={2} sx={{}}>
-        <Description label="24h High" value={ticker?.h ?? '-'} />
-        <Description label="24h Low" value={ticker?.l ?? '-'} />
+        <Description
+          label={t.binance.high24h}
+          value={ticker?.h ?? t.common.missing}
+        />
+        <Description
+          label={t.binance.low24h}
+          value={ticker?.l ?? t.common.missing}
+        />
       </Stack>
       <Stack spacing={2}>
         <Description
-          label={`Volume(${aggTrade?.s.split('USDT')[0]})`}
-          value={compactNumberFormatter(Number(ticker?.v))}
+          label={t.binance.volumeBase(aggTrade?.s.split('USDT')[0] ?? '')}
+          value={compact(Number(ticker?.v))}
         />
         <Description
-          label="Volume(USDT)"
-          value={compactNumberFormatter(Number(ticker?.q))}
+          label={t.binance.volumeQuote}
+          value={compact(Number(ticker?.q))}
         />
       </Stack>
     </Stack>

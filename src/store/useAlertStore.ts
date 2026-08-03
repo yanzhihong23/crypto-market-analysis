@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 import { Signal, formatDeviation, formatSigmas } from '../utils/signals'
+import { currentMessages } from '../i18n'
 
 export interface Alert {
   id: string
@@ -82,6 +83,10 @@ export const useAlertStore = create<AlertStore>()(
         }
         if (version >= 1) return persisted as AlertStore
 
+        // Rewritten in the language in force at the upgrade, which is the only
+        // one available: the old entries stored two deviations and no words.
+        const t = currentMessages()
+
         return {
           ...state,
           alerts: (state.alerts ?? []).map(
@@ -89,19 +94,23 @@ export const useAlertStore = create<AlertStore>()(
               id,
               instId,
               at,
-              headline: 'Positioning stretched on two readings',
+              headline: t.headline.positioning,
               reasons: [
                 {
                   kind: 'ratio',
                   deviation: ratioDeviation,
-                  label: `L/S ${formatSigmas(ratioDeviation)}`,
-                  detail: `L/S ${formatDeviation(ratioDeviation)}`,
+                  label: t.signal.ratio(formatSigmas(ratioDeviation, t)),
+                  detail: t.signal.ratioDetail(
+                    formatDeviation(ratioDeviation, t),
+                  ),
                 },
                 {
                   kind: 'funding',
                   deviation: fundingDeviation,
-                  label: `funding ${formatSigmas(fundingDeviation)}`,
-                  detail: `funding ${formatDeviation(fundingDeviation)}`,
+                  label: t.signal.funding(formatSigmas(fundingDeviation, t)),
+                  detail: t.signal.fundingDetail(
+                    formatDeviation(fundingDeviation, t),
+                  ),
                 },
               ],
             }),

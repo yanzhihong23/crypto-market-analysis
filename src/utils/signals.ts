@@ -12,7 +12,14 @@
  * Which readings exist and how each is taken belongs to the module that owns
  * it. This file owns the statistics they share, the bar they are all held to,
  * and the rule that decides when enough of them agree.
+ *
+ * The functions that put a reading into words take the dictionary as their last
+ * argument. It is passed rather than read from a store because these are also
+ * called from the alert pass, which is not a render and has to be able to ask
+ * for the language in force at the moment an alert fires.
  */
+
+import type { Messages } from '../i18n/en'
 
 /** Samples of history needed before a mean and a spread mean anything. */
 const MIN_SAMPLES = 20
@@ -91,22 +98,24 @@ export function isAnomalousChange(
 }
 
 /**
- * How the chip's tooltip says it, e.g. "2.4σ above its recent range". The sign
- * is the whole point — above means the crowd is longer, or paying more, than it
- * has been, and below means the opposite.
+ * How the chip's tooltip says it, e.g. "2.4σ above". The sign is the whole
+ * point — above means the crowd is longer, or paying more, than it has been,
+ * and below means the opposite.
  */
-export function formatDeviation(deviation: number) {
-  const side = deviation > 0 ? 'above' : 'below'
-  return `${Math.abs(deviation).toFixed(1)}σ ${side}`
+export function formatDeviation(deviation: number, t: Messages) {
+  return t.signal.deviation(Math.abs(deviation).toFixed(1), deviation > 0)
 }
 
-export function describeDeviation(deviation: number) {
-  return `${formatDeviation(deviation)} its recent range`
+export function describeDeviation(deviation: number, t: Messages) {
+  return t.signal.describeDeviation(
+    Math.abs(deviation).toFixed(1),
+    deviation > 0,
+  )
 }
 
 /** Magnitude only, for a detail that already carries its own direction. */
-export function formatSigmas(deviation: number) {
-  return `${Math.abs(deviation).toFixed(1)}σ`
+export function formatSigmas(deviation: number, t: Messages) {
+  return t.signal.sigmas(Math.abs(deviation).toFixed(1))
 }
 
 /**
@@ -186,14 +195,6 @@ export interface FlagState {
 /** Also the order reasons are listed in, so a headline and its detail agree. */
 const FAMILY_ORDER: SignalFamily[] = ['price', 'flow', 'positioning']
 
-const FAMILY_HEADLINES: Record<string, string> = {
-  'price+flow': 'Move with flow behind it',
-  'price+positioning': 'Move into a crowded book',
-  'flow+positioning': 'Flow against a crowded book',
-  'price+flow+positioning': 'Move, flow and positioning at once',
-  positioning: 'Positioning stretched on two readings',
-}
-
 /**
  * Whether the card claims the ring, and what to say if it does.
  *
@@ -205,7 +206,7 @@ const FAMILY_HEADLINES: Record<string, string> = {
  * That exception is also the original bar this board shipped with, and the ring
  * it draws has not changed meaning.
  */
-export function flagStateOf(signals: Signal[]): FlagState | null {
+export function flagStateOf(signals: Signal[], t: Messages): FlagState | null {
   if (signals.length < 2) return null
 
   const families = FAMILY_ORDER.filter((family) =>
@@ -225,10 +226,13 @@ export function flagStateOf(signals: Signal[]): FlagState | null {
     return Math.abs(b.deviation ?? 0) - Math.abs(a.deviation ?? 0)
   })
 
+  // Widened to look the combination up by the joined key, which the dictionary
+  // spells out one entry at a time so a translation cannot miss one.
+  const headlines: Record<string, string> = t.headline
+
   return {
     families,
     reasons,
-    headline:
-      FAMILY_HEADLINES[families.join('+')] ?? 'Several readings out of range',
+    headline: headlines[families.join('+')] ?? t.headline.other,
   }
 }

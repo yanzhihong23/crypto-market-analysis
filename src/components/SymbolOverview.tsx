@@ -2,6 +2,8 @@ import { Box, IconButton } from '@mui/material'
 import RemoveIcon from '@mui/icons-material/Remove'
 import { v4 as uuid } from 'uuid'
 
+import { useMessages } from '../i18n'
+
 import RatioTrendChart from './RatioTrendChart'
 import SymbolSelect from './SymbolSelect'
 import PeriodSelect from './PeriodSelect'
@@ -25,6 +27,8 @@ function SymbolOverview({
   onRemove?: () => void
 }) {
   const syncId = uuid()
+  const t = useMessages()
+
   return (
     <Box
       sx={{
@@ -39,7 +43,11 @@ function SymbolOverview({
         <SymbolSelect value={symbol} onChange={onSymbolChange} />
         <PeriodSelect value={period} onChange={onPeriodChange} />
         {!mobile && (
-          <IconButton size="large" aria-label="delete" onClick={onRemove}>
+          <IconButton
+            size="large"
+            aria-label={t.overview.remove}
+            onClick={onRemove}
+          >
             <RemoveIcon />
           </IconButton>
         )}

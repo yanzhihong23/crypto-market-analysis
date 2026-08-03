@@ -2,12 +2,14 @@ import { Stack } from '@mui/material'
 
 import { SortBy } from '../types/binance'
 import { useBinanceTickerStore } from '../store/useBinanceTickerStore'
+import { useMessages } from '../i18n'
+import type { Messages } from '../i18n/en'
 
 import SegmentedToggle, { SegmentedOption } from './SegmentedToggle'
 
-const SORT_OPTIONS: SegmentedOption<SortBy>[] = [
-  { value: SortBy.VOLUME, label: 'Volume' },
-  { value: SortBy.PERCENT, label: 'Change' },
+const sortOptions = (t: Messages): SegmentedOption<SortBy>[] => [
+  { value: SortBy.VOLUME, label: t.binance.sortVolume },
+  { value: SortBy.PERCENT, label: t.binance.sortChange },
 ]
 
 /**
@@ -17,6 +19,7 @@ const SORT_OPTIONS: SegmentedOption<SortBy>[] = [
 export default function BinanceTickerActionBar() {
   const sortBy = useBinanceTickerStore((state) => state.sortBy)
   const setSortBy = useBinanceTickerStore((state) => state.setSortBy)
+  const t = useMessages()
 
   return (
     <Stack
@@ -29,9 +32,9 @@ export default function BinanceTickerActionBar() {
       }}
     >
       <SegmentedToggle
-        label="Sort by"
+        label={t.toolbar.sortBy}
         value={sortBy}
-        options={SORT_OPTIONS}
+        options={sortOptions(t)}
         onChange={setSortBy}
       />
     </Stack>

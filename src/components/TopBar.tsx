@@ -10,6 +10,7 @@ import MobileNavMenu from './MobileNavMenu'
 import FeedStatus from './FeedStatus'
 import AlertBell from './AlertBell'
 import ColorSchemeToggle from './ColorSchemeToggle'
+import LanguageToggle from './LanguageToggle'
 
 export default function TopBar() {
   const [time, setTime] = useState('')
@@ -94,6 +95,7 @@ export default function TopBar() {
             {time}
           </Typography>
           <AlertBell />
+          <LanguageToggle />
           <ColorSchemeToggle />
           <MobileNavMenu />
         </Stack>

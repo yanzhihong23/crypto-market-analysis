@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router'
 import { Box } from '@mui/material'
 
 import TopBar from '../components/TopBar'
+import { useMessages } from '../i18n'
 const Charts = lazy(() => import('../pages/Charts'))
 const BinancePerpetualMarket = lazy(
   () => import('../pages/BinancePerpetualMarket'),
@@ -10,8 +11,10 @@ const BinancePerpetualMarket = lazy(
 const OkxPerpetual = lazy(() => import('../pages/OkxPerpetual'))
 
 export default function Pages() {
+  const t = useMessages()
+
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>{t.common.loading}</div>}>
       <Router>
         <TopBar />
         {/* 16px on a phone, matching the app bar, so the logo and the content

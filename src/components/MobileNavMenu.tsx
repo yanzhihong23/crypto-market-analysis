@@ -13,6 +13,8 @@ import CloseIcon from '@mui/icons-material/CloseRounded'
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
 
+import { useMessages } from '../i18n'
+
 import { NAV_ITEMS } from './navItems'
 
 /**
@@ -24,6 +26,7 @@ export default function MobileNavMenu() {
   const [open, setOpen] = useState(false)
   const location = useLocation()
   const theme = useTheme()
+  const t = useMessages()
 
   // Unmounted rather than hidden: a drawer left open while the viewport grows
   // past the breakpoint would outlive the button that opens it.
@@ -34,7 +37,7 @@ export default function MobileNavMenu() {
     <>
       <IconButton
         size="small"
-        aria-label="Open navigation"
+        aria-label={t.navMenu.open}
         onClick={() => setOpen(true)}
       >
         <MenuIcon sx={{ fontSize: 22 }} />
@@ -64,7 +67,7 @@ export default function MobileNavMenu() {
         >
           <IconButton
             size="small"
-            aria-label="Close navigation"
+            aria-label={t.navMenu.close}
             onClick={() => setOpen(false)}
           >
             <CloseIcon sx={{ fontSize: 22 }} />
@@ -95,7 +98,7 @@ export default function MobileNavMenu() {
                 }}
               >
                 <ListItemText
-                  primary={item.label}
+                  primary={t.nav[item.key]}
                   slotProps={{
                     primary: {
                       sx: {

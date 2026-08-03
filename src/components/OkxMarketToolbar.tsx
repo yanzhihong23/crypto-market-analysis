@@ -2,24 +2,27 @@ import { Stack } from '@mui/material'
 
 import { OpenTime, SortBy } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
+import { useMessages } from '../i18n'
+import type { Messages } from '../i18n/en'
 
 import SegmentedToggle, { SegmentedOption } from './SegmentedToggle'
 
-// Gainers and losers are separate segments rather than one Change segment with
-// a direction: the sort ran descending only, so the worst movers of the day
-// were the one thing the board could not be asked for.
-const SORT_OPTIONS: SegmentedOption<SortBy>[] = [
-  { value: SortBy.DEFAULT, label: 'Default' },
-  { value: SortBy.GAINERS, label: 'Gainers' },
-  { value: SortBy.LOSERS, label: 'Losers' },
-  { value: SortBy.VOLUME, label: 'Volume' },
-  { value: SortBy.RATIO, label: 'L/S' },
+// Built per language rather than held as a constant, so the segments are named
+// in whichever one is on. Gainers and losers are separate segments rather than
+// one Change segment with a direction: the sort ran descending only, so the
+// worst movers of the day were the one thing the board could not be asked for.
+const sortOptions = (t: Messages): SegmentedOption<SortBy>[] => [
+  { value: SortBy.DEFAULT, label: t.toolbar.sortDefault },
+  { value: SortBy.GAINERS, label: t.toolbar.sortGainers },
+  { value: SortBy.LOSERS, label: t.toolbar.sortLosers },
+  { value: SortBy.VOLUME, label: t.toolbar.sortVolume },
+  { value: SortBy.RATIO, label: t.toolbar.sortRatio },
 ]
 
-const OPEN_TIME_OPTIONS: SegmentedOption<OpenTime>[] = [
-  { value: OpenTime.OPEN24H, label: '24H' },
-  { value: OpenTime.UTC0, label: 'UTC+0' },
-  { value: OpenTime.UTC8, label: 'UTC+8' },
+const openTimeOptions = (t: Messages): SegmentedOption<OpenTime>[] => [
+  { value: OpenTime.OPEN24H, label: t.toolbar.open24h },
+  { value: OpenTime.UTC0, label: t.toolbar.openUtc0 },
+  { value: OpenTime.UTC8, label: t.toolbar.openUtc8 },
 ]
 
 export default function OkxMarketToolbar() {
@@ -27,6 +30,7 @@ export default function OkxMarketToolbar() {
   const sortBy = useTickerStore((state) => state.sortBy)
   const setOpenTime = useTickerStore((state) => state.setOpenTime)
   const setSortBy = useTickerStore((state) => state.setSortBy)
+  const t = useMessages()
 
   return (
     <Stack
@@ -41,15 +45,15 @@ export default function OkxMarketToolbar() {
       }}
     >
       <SegmentedToggle
-        label="Sort by"
+        label={t.toolbar.sortBy}
         value={sortBy}
-        options={SORT_OPTIONS}
+        options={sortOptions(t)}
         onChange={setSortBy}
       />
       <SegmentedToggle
-        label="Open"
+        label={t.toolbar.openTime}
         value={openTime}
-        options={OPEN_TIME_OPTIONS}
+        options={openTimeOptions(t)}
         onChange={setOpenTime}
       />
     </Stack>

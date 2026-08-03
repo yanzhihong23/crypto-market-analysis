@@ -4,6 +4,7 @@ import { format } from 'date-fns/format'
 
 import { fetchBinanceKlines } from '../apis'
 import { getPeriodPattern } from '../utils'
+import { useMessages } from '../i18n'
 
 import BaseAreaChart from './BaseAreaChart'
 
@@ -15,6 +16,7 @@ export default function RatioTrendChart(props: {
   const [data, setData] = useState<{ openTime: string; closePrice: number }[]>(
     [],
   )
+  const t = useMessages()
 
   const initData = useCallback(async () => {
     if (!props.symbol) return
@@ -46,7 +48,7 @@ export default function RatioTrendChart(props: {
       data={data}
       xKey="openTime"
       yKey="closePrice"
-      label="Kline"
+      label={t.chart.kline}
       syncId={props.syncId}
     />
   )

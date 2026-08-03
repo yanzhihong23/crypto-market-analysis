@@ -2,11 +2,13 @@ import { useCallback } from 'react'
 
 import { useTickerStore } from '../store/useTickerStore'
 import { OkxTicker, OkxTickerFormatted } from '../types/okx'
-import { compactNumberFormatter, formatNumber } from '../utils'
+import { formatNumber } from '../utils'
+import { useCompactNumber } from '../i18n'
 
 export default function useOkxTickerFormat() {
   const instruments = useTickerStore((state) => state.instruments)
   const openTime = useTickerStore((state) => state.openTime)
+  const compact = useCompactNumber()
 
   const formatTicker = useCallback(
     ({ ticker }: { ticker: OkxTicker }): OkxTickerFormatted => {
@@ -16,7 +18,7 @@ export default function useOkxTickerFormat() {
       const open = Number(ticker[openTime])
       const change = +ticker.last - open
       const percent = ((change / open) * 100).toFixed(2)
-      const vol = compactNumberFormatter(+ticker.volCcy24h * +ticker.last)
+      const vol = compact(+ticker.volCcy24h * +ticker.last)
       let dif = new Intl.NumberFormat('en-US', {
         maximumFractionDigits: 6,
       }).format(change)
@@ -35,7 +37,7 @@ export default function useOkxTickerFormat() {
         lastSz: lastSz.toString(),
       }
     },
-    [instruments, openTime],
+    [instruments, openTime, compact],
   )
 
   return { formatTicker }

@@ -1,6 +1,8 @@
 import { SxProps, Tab, Tabs, Box, styled } from '@mui/material'
 import { Link, useLocation } from 'react-router'
 
+import { useMessages } from '../i18n'
+
 import { NAV_ITEMS } from './navItems'
 
 const StyledTab = styled(Tab)<{ component?: React.ElementType; to?: string }>(
@@ -15,6 +17,7 @@ const StyledTab = styled(Tab)<{ component?: React.ElementType; to?: string }>(
 
 export default function NavMenu({ sx }: { sx?: SxProps }) {
   const location = useLocation()
+  const t = useMessages()
 
   // Anything off that list selects nothing rather than itself: Tabs logs an
   // error over a value none of its children carry, and an unknown path holds
@@ -31,7 +34,7 @@ export default function NavMenu({ sx }: { sx?: SxProps }) {
         {NAV_ITEMS.map((item) => (
           <StyledTab
             key={item.path}
-            label={item.label}
+            label={t.nav[item.key]}
             value={item.path}
             component={Link}
             to={item.path}

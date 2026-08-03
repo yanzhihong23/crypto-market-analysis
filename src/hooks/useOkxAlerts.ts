@@ -10,6 +10,7 @@ import {
 import { beep, isAway, showNotification } from '../utils/alarm'
 import { collectSignals } from '../utils/detectors'
 import { flagStateOf } from '../utils/signals'
+import { currentMessages } from '../i18n'
 
 /**
  * How long a symbol stays quiet after firing. A reading sitting right on the
@@ -56,12 +57,17 @@ export default function useOkxAlerts() {
       // One sort for the pass rather than one per symbol: the median is the same
       // number for every instrument being measured against it.
       const boardPercent = boardMedianPricePercent(instIds)
+      // Read once per pass rather than subscribed to: an entry is written in
+      // whatever language was in force when it fired, and switching afterwards
+      // does not rewrite what already happened.
+      const t = currentMessages()
 
       for (const instId of instIds) {
         const signals = collectSignals(
           readSignalInput(instId, { boardPercent, now }),
+          t,
         )
-        const flag = flagStateOf(signals)
+        const flag = flagStateOf(signals, t)
         const isNow = flag !== null
 
         // A symbol nobody has looked at yet has no edge to have crossed. This

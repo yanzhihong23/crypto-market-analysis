@@ -1,20 +1,24 @@
 import { Avatar, Chip, Stack, Tooltip, Typography } from '@mui/material'
 
 import { FullTicker } from '../types'
-import { compactNumberFormatter, formatNumber } from '../utils'
+import { formatNumber } from '../utils'
 import { useBinanceTickerStore } from '../store/useBinanceTickerStore'
 import { numericFont } from '../fonts'
 import { describeDeviation, isAnomalous } from '../utils/signals'
+import { useCompactNumber, useMessages } from '../i18n'
 
 import TickerContainer from './TickerContainer'
 import PriceRange from './PriceRange'
 import { metricChipSx, signalChipSx } from './metricChipSx'
 
+// `t` is the ticker on this card, so the dictionary goes by another name here.
 export default function BinanceTickerCard({ t }: { t: FullTicker }) {
   const ratio = useBinanceTickerStore((state) => state.ratio[t.s]?.value)
   const ratioDeviation = useBinanceTickerStore(
     (state) => state.ratio[t.s]?.deviation,
   )
+  const copy = useMessages()
+  const compact = useCompactNumber()
   const up = +t.p > 0
   const priceColor = up ? 'market.up' : 'market.down'
   // No funding rate on this feed, so the card never earns the flagged ring the
@@ -22,8 +26,8 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
   const ratioUnusual = isAnomalous(ratioDeviation)
   const ratioTitle =
     ratioUnusual && ratioDeviation != null
-      ? `Long/Short Ratio — ${describeDeviation(ratioDeviation)}`
-      : 'Long/Short Ratio'
+      ? `${copy.binance.ratio} — ${describeDeviation(ratioDeviation, copy)}`
+      : copy.binance.ratio
 
   return (
     <TickerContainer up={up} changePercent={+t.P}>
@@ -74,7 +78,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
               ...numericFont,
             }}
           >
-            {compactNumberFormatter(+t.Q)}
+            {compact(+t.Q)}
           </Typography>
         </Typography>
       </Stack>
@@ -96,19 +100,19 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
         }}
       >
         <Stack direction="row" sx={{ alignItems: 'center', gap: 0.75 }}>
-          <Tooltip title="Quote Volume" arrow>
+          <Tooltip title={copy.metrics.quoteVolume} arrow>
             <Chip
               size="small"
-              aria-label="Quote volume"
+              aria-label={copy.metrics.quoteVolumeAria}
               sx={metricChipSx}
-              label={compactNumberFormatter(+t.q)}
+              label={compact(+t.q)}
             />
           </Tooltip>
           {!!ratio && (
             <Tooltip title={ratioTitle} arrow>
               <Chip
                 size="small"
-                aria-label="Long/short ratio"
+                aria-label={copy.metrics.ratioAria}
                 sx={ratioUnusual ? signalChipSx : metricChipSx}
                 label={formatNumber(Number(ratio), 2)}
               />

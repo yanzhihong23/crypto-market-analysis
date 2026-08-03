@@ -1,6 +1,8 @@
 import { Stack, Typography } from '@mui/material'
 import ShowChartIcon from '@mui/icons-material/ShowChart'
 
+import { useMessages } from '../i18n'
+
 import AddTickerButton from './AddTickerButton'
 
 /**
@@ -8,6 +10,8 @@ import AddTickerButton from './AddTickerButton'
  * anything was still working.
  */
 export default function EmptyWatchlist() {
+  const t = useMessages()
+
   return (
     <Stack
       sx={{
@@ -29,7 +33,7 @@ export default function EmptyWatchlist() {
           fontWeight: 600,
         }}
       >
-        No tickers yet
+        {t.watchlist.emptyTitle}
       </Typography>
       <Typography
         sx={{
@@ -38,7 +42,7 @@ export default function EmptyWatchlist() {
           mb: 1,
         }}
       >
-        Add a perpetual to start streaming prices.
+        {t.watchlist.emptyBody}
       </Typography>
       <AddTickerButton variant="standalone" />
     </Stack>

@@ -21,6 +21,7 @@ import {
   requestNotificationPermission,
 } from '../utils/alarm'
 import { numericFont } from '../fonts'
+import { useDateLocale, useMessages } from '../i18n'
 
 export default function AlertBell() {
   const alerts = useAlertStore((state) => state.alerts)
@@ -35,6 +36,8 @@ export default function AlertBell() {
   )
   const soundEnabled = useAlertStore((state) => state.soundEnabled)
   const setSoundEnabled = useAlertStore((state) => state.setSoundEnabled)
+  const t = useMessages()
+  const dateLocale = useDateLocale()
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const [permission, setPermission] = useState(notificationPermission)
@@ -82,10 +85,10 @@ export default function AlertBell() {
 
   return (
     <>
-      <Tooltip title="Alerts" arrow>
+      <Tooltip title={t.alerts.title} arrow>
         <IconButton
           size="small"
-          aria-label={unseen ? `Alerts, ${unseen} new` : 'Alerts'}
+          aria-label={unseen ? t.alerts.titleUnseen(unseen) : t.alerts.title}
           onClick={open}
           sx={{ color: 'text.secondary' }}
         >
@@ -139,9 +142,7 @@ export default function AlertBell() {
           >
             {/* Says what the list is a list of, so an empty one reads as
                 nothing having happened rather than as nothing working. */}
-            When two of a symbol's readings leave their usual range at once —
-            what the price did, whether volume and open interest were behind it,
-            and what the book was already holding.
+            {t.alerts.what}
           </Typography>
 
           <Stack
@@ -156,7 +157,7 @@ export default function AlertBell() {
                 fontSize: 14,
               }}
             >
-              Desktop notifications
+              {t.alerts.desktopNotifications}
             </Typography>
             <Switch
               size="small"
@@ -172,9 +173,7 @@ export default function AlertBell() {
                 color: 'text.secondary',
               }}
             >
-              {denied
-                ? 'Blocked for this site in your browser settings.'
-                : 'This browser does not support notifications.'}
+              {denied ? t.alerts.blocked : t.alerts.unsupported}
             </Typography>
           )}
 
@@ -190,7 +189,7 @@ export default function AlertBell() {
                 fontSize: 14,
               }}
             >
-              Sound
+              {t.alerts.sound}
             </Typography>
             <Switch
               size="small"
@@ -204,7 +203,7 @@ export default function AlertBell() {
               color: 'text.secondary',
             }}
           >
-            Both stay quiet while this window is the one in front.
+            {t.alerts.quietWhenPresent}
           </Typography>
         </Stack>
 
@@ -220,7 +219,7 @@ export default function AlertBell() {
               textAlign: 'center',
             }}
           >
-            Nothing has fired yet
+            {t.alerts.empty}
           </Typography>
         ) : (
           <Box sx={{ maxHeight: 280, overflowY: 'auto' }}>
@@ -260,7 +259,10 @@ export default function AlertBell() {
                         : [numericFont]),
                     ]}
                   >
-                    {formatDistanceToNowStrict(alert.at, { addSuffix: true })}
+                    {formatDistanceToNowStrict(alert.at, {
+                      addSuffix: true,
+                      locale: dateLocale,
+                    })}
                   </Typography>
                 </Stack>
                 {/* The headline says what kind of event it was and the readings
@@ -304,7 +306,7 @@ export default function AlertBell() {
                 onClick={clear}
                 sx={{ color: 'text.secondary', fontSize: 13 }}
               >
-                Clear
+                {t.common.clear}
               </Button>
             </Stack>
           </>

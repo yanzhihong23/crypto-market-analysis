@@ -11,6 +11,7 @@ import { useTickerStore } from '../store/useTickerStore'
 import { removeOkxTicker } from '../store/okxRealtimeTicker'
 import { okxTickerActions } from '../okx/okxTickerActions'
 import { numericFont } from '../fonts'
+import { useMessages } from '../i18n'
 
 import OkxKlineChart from './OkxKlineChart'
 import TickerContainer from './TickerContainer'
@@ -67,6 +68,8 @@ const CardActions = memo(function CardActions({
   onTogglePin: () => void
   onRemove: () => void
 }) {
+  const t = useMessages()
+
   // The action bar sits on top of the card, so a click on any of its buttons
   // would otherwise reach the card's own double-click handler as well.
   const stopDoubleClick = useCallback((event: MouseEvent) => {
@@ -80,10 +83,10 @@ const CardActions = memo(function CardActions({
       sx={actionBarSx}
       onDoubleClick={stopDoubleClick}
     >
-      <Tooltip title="Open charts" arrow>
+      <Tooltip title={t.card.openCharts} arrow>
         <IconButton
           size="small"
-          aria-label="Open charts"
+          aria-label={t.card.openCharts}
           onClick={onOpenDetail}
           sx={{ color: 'text.secondary' }}
         >
@@ -92,10 +95,10 @@ const CardActions = memo(function CardActions({
       </Tooltip>
       {/* The pin is reachable by double-clicking the card, which nothing on the
           card announces; this is where that gesture is discoverable. */}
-      <Tooltip title={pinned ? 'Unpin' : 'Pin to front'} arrow>
+      <Tooltip title={pinned ? t.card.unpin : t.card.pin} arrow>
         <IconButton
           size="small"
-          aria-label={pinned ? 'Unpin ticker' : 'Pin ticker to front'}
+          aria-label={pinned ? t.card.unpinAria : t.card.pinAria}
           onClick={onTogglePin}
           sx={{ color: pinned ? 'primary.main' : 'text.secondary' }}
         >
@@ -107,10 +110,10 @@ const CardActions = memo(function CardActions({
           on a card that is already coloured by direction; on hover it is
           unambiguous, because nothing else on the card responds to a cursor
           sitting on it. */}
-      <Tooltip title="Remove from watchlist" arrow>
+      <Tooltip title={t.card.remove} arrow>
         <IconButton
           size="small"
-          aria-label="Remove ticker from watchlist"
+          aria-label={t.card.removeAria}
           onClick={onRemove}
           sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
         >

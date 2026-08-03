@@ -1,6 +1,7 @@
 import { readSignalInput } from '../store/okxSignalInput'
 import { collectSignals } from '../utils/detectors'
 import { flagStateOf } from '../utils/signals'
+import { useMessages } from '../i18n'
 
 import { useOkxSeriesChange } from './useOkxSeries'
 import {
@@ -28,8 +29,14 @@ import {
  * dependency list this wide would cost. The result is a fresh array every render
  * as a consequence, so it is a thing to read, not a thing to put in a
  * dependency list.
+ *
+ * That also means the sentences come out in whatever language is current
+ * without anything having to invalidate them: switching language is a render,
+ * and a render is when these are written.
  */
 export default function useOkxSignals(instId: string) {
+  const t = useMessages()
+
   useKlineData(instId)
   useRatio(instId)
   useFundingRate(instId)
@@ -40,6 +47,6 @@ export default function useOkxSignals(instId: string) {
   useOiChangeBaseline(instId)
   useOkxSeriesChange(instId)
 
-  const signals = collectSignals(readSignalInput(instId))
-  return { signals, flag: flagStateOf(signals) }
+  const signals = collectSignals(readSignalInput(instId), t)
+  return { signals, flag: flagStateOf(signals, t) }
 }

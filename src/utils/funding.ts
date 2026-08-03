@@ -4,6 +4,8 @@
  * of reading the number.
  */
 
+import type { Messages } from '../i18n/en'
+
 /**
  * Inside this, the settlement is close enough that holding through it is a
  * decision being made now rather than later, and the countdown earns a place on
@@ -26,9 +28,9 @@ export function isImminent(remaining: number | null) {
 }
 
 /** `2h13m` or `12m`, rounded up so it never reads 0m before it has settled. */
-export function formatCountdown(remaining: number) {
+export function formatCountdown(remaining: number, t: Messages) {
   // Split after rounding, or the last half-minute of an hour reads "60m".
   const minutes = Math.ceil(remaining / MINUTE_MS)
-  if (minutes < 60) return `${minutes}m`
-  return `${Math.floor(minutes / 60)}h${minutes % 60}m`
+  if (minutes < 60) return t.funding.countdownMinutes(minutes)
+  return t.funding.countdownHours(Math.floor(minutes / 60), minutes % 60)
 }

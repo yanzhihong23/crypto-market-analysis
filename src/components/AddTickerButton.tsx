@@ -18,6 +18,7 @@ import { useTickerStore } from '../store/useTickerStore'
 import { okxTickerActions } from '../okx/okxTickerActions'
 import { OkxInstrument } from '../types/okx'
 import { numericFont } from '../fonts'
+import { useMessages } from '../i18n'
 
 import SymbolAvatar from './SymbolAvatar'
 
@@ -46,6 +47,7 @@ export default function AddTickerButton({
   const instruments = useTickerStore((state) => state.instruments)
   const instIds = useTickerStore((state) => state.instIds)
   const setInstIds = useTickerStore((state) => state.setInstIds)
+  const t = useMessages()
 
   const [open, setOpen] = useState(false)
   const [newInstId, setNewInstId] = useState<string>('')
@@ -68,7 +70,7 @@ export default function AddTickerButton({
   return (
     <>
       <ButtonBase
-        aria-label="Add ticker"
+        aria-label={t.addTicker.action}
         onClick={() => setOpen(true)}
         sx={(theme) => ({
           flexDirection: 'column',
@@ -96,7 +98,7 @@ export default function AddTickerButton({
         })}
       >
         <AddIcon sx={{ fontSize: 20 }} />
-        Add ticker
+        {t.addTicker.action}
       </ButtonBase>
 
       <Dialog
@@ -114,7 +116,7 @@ export default function AddTickerButton({
         }}
       >
         <DialogTitle sx={{ fontSize: 16, fontWeight: 600, px: 3, pt: 2.5 }}>
-          Add ticker
+          {t.addTicker.action}
         </DialogTitle>
         <DialogContent sx={{ px: 3, pb: 0 }}>
           <Autocomplete
@@ -123,7 +125,10 @@ export default function AddTickerButton({
             options={filteredInstruments}
             filterOptions={filterOptions}
             getOptionLabel={(option) => option.instId}
-            noOptionsText="No matching perpetual"
+            noOptionsText={t.addTicker.noOptions}
+            clearText={t.common.clear}
+            openText={t.common.open}
+            closeText={t.common.close}
             onChange={(_, value) => {
               setNewInstId(value?.instId ?? '')
             }}
@@ -131,7 +136,7 @@ export default function AddTickerButton({
               <TextField
                 {...params}
                 autoFocus
-                placeholder="Search a symbol, e.g. SOL"
+                placeholder={t.addTicker.placeholder}
                 sx={(theme) => ({
                   // Same radius and focus treatment as the selects elsewhere,
                   // instead of the default outlined field's squarer corner.
@@ -198,7 +203,7 @@ export default function AddTickerButton({
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, pt: 2.5, gap: 1 }}>
           <Button size="small" onClick={close} sx={{ color: 'text.secondary' }}>
-            Cancel
+            {t.common.cancel}
           </Button>
           <Button
             size="small"
@@ -215,7 +220,7 @@ export default function AddTickerButton({
               },
             })}
           >
-            Add
+            {t.common.add}
           </Button>
         </DialogActions>
       </Dialog>

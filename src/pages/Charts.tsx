@@ -4,9 +4,11 @@ import { useLocalStorage } from 'usehooks-ts'
 
 import SymbolOverview from '../components/SymbolOverview'
 import useMobile from '../hooks/useMobile'
+import { useMessages } from '../i18n'
 
 export default function Charts() {
   const mobile = useMobile()
+  const t = useMessages()
   const [overviews, setOverviews] = useLocalStorage<
     { symbol: string; period: string }[]
   >('overviews', [
@@ -71,7 +73,7 @@ export default function Charts() {
       {!mobile && overviews.length < 4 ? (
         <Fab
           color="primary"
-          aria-label="add"
+          aria-label={t.overview.add}
           sx={{ position: 'fixed', bottom: 50, right: 50 }}
           onClick={onAdd}
         >

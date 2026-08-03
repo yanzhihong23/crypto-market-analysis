@@ -19,18 +19,20 @@ import useOkxTickerDetail, {
   FUNDING_TICK_FORMAT,
   type SeriesPoint,
 } from '../hooks/useOkxTickerDetail'
-import { compactNumberFormatter, formatNumber } from '../utils'
+import { formatNumber } from '../utils'
 import { numericFont } from '../fonts'
+import { useCompactNumber, useMessages } from '../i18n'
+import type { Messages } from '../i18n/en'
 
 import BaseAreaChart, { type SyncMethod } from './BaseAreaChart'
 import SegmentedToggle, { SegmentedOption } from './SegmentedToggle'
 import SymbolAvatar from './SymbolAvatar'
 import OkxMarketMetrics from './OkxMarketMetrics'
 
-const WINDOW_OPTIONS: SegmentedOption<DetailWindow>[] = [
-  { value: DetailWindow.DAY, label: '24H' },
-  { value: DetailWindow.THREE_DAYS, label: '3D' },
-  { value: DetailWindow.MONTH, label: '30D' },
+const windowOptions = (t: Messages): SegmentedOption<DetailWindow>[] => [
+  { value: DetailWindow.DAY, label: t.detail.window24h },
+  { value: DetailWindow.THREE_DAYS, label: t.detail.window3d },
+  { value: DetailWindow.MONTH, label: t.detail.window30d },
 ]
 
 /**
@@ -89,6 +91,8 @@ function ChartSection({
   tooltipFormatter?: (value: number) => string
   volumeFormatter?: (value: number) => string
 }) {
+  const t = useMessages()
+
   return (
     <Box>
       <Stack direction="row" sx={{ alignItems: 'baseline', gap: 1, mb: 0.5 }}>
@@ -124,7 +128,7 @@ function ChartSection({
             textAlign: 'center',
           }}
         >
-          The exchange has no history for this one
+          {t.detail.empty}
         </Typography>
       )}
     </Box>
@@ -157,6 +161,8 @@ export default function OkxTickerDetail({
   // Nothing is fetched until the dialog is open, so a board of thirty cards
   // does not carry thirty sets of history it will never show.
   const detail = useOkxTickerDetail(instId, detailWindow, open)
+  const t = useMessages()
+  const compact = useCompactNumber()
   // Per dialog: two of these open at once would otherwise hand each other a
   // cursor for a symbol the other is not showing.
   const windowSyncId = useId()
@@ -220,7 +226,7 @@ export default function OkxTickerDetail({
         </Stack>
 
         <IconButton
-          aria-label="Close"
+          aria-label={t.common.close}
           onClick={onClose}
           sx={{ color: 'text.secondary' }}
         >
@@ -241,9 +247,9 @@ export default function OkxTickerDetail({
       >
         <OkxMarketMetrics instId={instId} />
         <SegmentedToggle
-          label="Window"
+          label={t.detail.window}
           value={detailWindow}
-          options={WINDOW_OPTIONS}
+          options={windowOptions(t)}
           onChange={setDetailWindow}
         />
       </Stack>
@@ -262,26 +268,26 @@ export default function OkxTickerDetail({
               textAlign: 'center',
             }}
           >
-            Could not reach the exchange for this symbol's history
+            {t.detail.failed}
           </Typography>
         ) : (
           <Stack sx={{ gap: 2.5 }}>
             <ChartSection
-              title="Price"
-              note="bars are coin volume"
+              title={t.detail.price}
+              note={t.detail.priceNote}
               data={detail.price}
               height={220}
               syncId={windowSyncId}
               volumeKey="volume"
               xDataFormatter={formatWindowTime}
               yDataFormatter={(value) => formatNumber(value, 6)}
-              volumeFormatter={(value) => compactNumberFormatter(value)}
+              volumeFormatter={compact}
             />
             {/* Everything below is a positioning reading, and none of them is a
                 price move, so none of them takes the price's red and green. */}
             <ChartSection
-              title="Long/short account ratio"
-              note="1 is an even crowd"
+              title={t.detail.ratio}
+              note={t.detail.ratioNote}
               data={detail.ratio}
               stroke={neutral}
               referenceY={1}
@@ -291,21 +297,21 @@ export default function OkxTickerDetail({
               yDataFormatter={(value) => value.toFixed(2)}
             />
             <ChartSection
-              title={`Open interest, in ${symbol}`}
+              title={t.detail.openInterest(symbol)}
               data={detail.openInterest}
               stroke={neutral}
               height={150}
               syncId={windowSyncId}
               xDataFormatter={formatWindowTime}
-              yDataFormatter={(value) => compactNumberFormatter(value)}
+              yDataFormatter={compact}
               tooltipFormatter={(value) => formatNumber(value)}
             />
             {/* Last, and on its own: settlements are the exchange's schedule,
                 not the window, so this one covers a different stretch of time
                 from the three above and cannot share their cursor. */}
             <ChartSection
-              title="Funding rate"
-              note={`last ${detail.funding.length} settlements, in ‱`}
+              title={t.detail.funding}
+              note={t.detail.fundingNote(detail.funding.length)}
               data={detail.funding}
               stroke={neutral}
               referenceY={0}

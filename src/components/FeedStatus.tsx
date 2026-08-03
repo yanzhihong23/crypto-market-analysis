@@ -6,6 +6,7 @@ import {
   useConnectionStore,
 } from '../store/useConnectionStore'
 import { numericFont } from '../fonts'
+import { useMessages } from '../i18n'
 
 /** Past this, the feed is up but has stopped saying anything. */
 const STALE_AFTER_MS = 10_000
@@ -21,6 +22,7 @@ const STALE_AFTER_MS = 10_000
 export default function FeedStatus() {
   const status = useConnectionStore((state) => state.status)
   const [staleFor, setStaleFor] = useState(0)
+  const t = useMessages()
 
   useEffect(() => {
     if (status !== 'live') {
@@ -43,20 +45,13 @@ export default function FeedStatus() {
   const healthy = status === 'live' && !stale
 
   const label = {
-    connecting: 'Connecting',
-    reconnecting: 'Reconnecting',
-    live: stale ? `Stale ${Math.round(staleFor / 1000)}s` : 'Live',
+    connecting: t.feed.connecting,
+    reconnecting: t.feed.reconnecting,
+    live: stale ? t.feed.stale(Math.round(staleFor / 1000)) : t.feed.live,
   }[status]
 
   return (
-    <Tooltip
-      title={
-        healthy
-          ? 'Receiving live updates'
-          : 'The price feed is not currently up to date'
-      }
-      arrow
-    >
+    <Tooltip title={healthy ? t.feed.healthyTitle : t.feed.staleTitle} arrow>
       <Stack
         direction="row"
         role="status"
