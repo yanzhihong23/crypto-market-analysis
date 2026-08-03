@@ -18,8 +18,7 @@ export function notificationsSupported() {
 }
 
 export function notificationPermission():
-  | NotificationPermission
-  | 'unsupported' {
+  NotificationPermission | 'unsupported' {
   return notificationsSupported() ? Notification.permission : 'unsupported'
 }
 
