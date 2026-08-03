@@ -90,11 +90,15 @@ export default function useOkxAlerts() {
           reasons: flag.reasons,
         })
 
-        // Interrupting someone who is already looking at the board would only
-        // repeat what the card's ring has already said.
-        if (!isAway()) continue
+        const { notificationsEnabled, soundEnabled, quietWhenPresent } =
+          useAlertStore.getState()
 
-        const { notificationsEnabled, soundEnabled } = useAlertStore.getState()
+        // Interrupting someone who is already looking at the board would only
+        // repeat what the card's ring has already said — unless they have said
+        // the ring is not enough, which is the case for a board left on a
+        // monitor nobody is reading.
+        if (quietWhenPresent && !isAway()) continue
+
         if (notificationsEnabled) {
           showNotification(
             `${instId.split('-')[0]} — ${flag.headline}`,

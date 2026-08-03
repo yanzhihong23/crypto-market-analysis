@@ -46,6 +46,15 @@ interface AlertStore {
   setNotificationsEnabled: (enabled: boolean) => void
   soundEnabled: boolean
   setSoundEnabled: (enabled: boolean) => void
+  /**
+   * Whether the two channels above hold their fire while the window is the one
+   * in front. On by default, which is how they behaved before this was a choice:
+   * being pinged about a card you are already watching is noise. Off is for a
+   * board on a second monitor, where nothing is watching it closely enough for
+   * the ring on the card to count as having been told.
+   */
+  quietWhenPresent: boolean
+  setQuietWhenPresent: (quiet: boolean) => void
 }
 
 export const useAlertStore = create<AlertStore>()(
@@ -66,6 +75,9 @@ export const useAlertStore = create<AlertStore>()(
         set({ notificationsEnabled }),
       soundEnabled: false,
       setSoundEnabled: (soundEnabled: boolean) => set({ soundEnabled }),
+      quietWhenPresent: true,
+      setQuietWhenPresent: (quietWhenPresent: boolean) =>
+        set({ quietWhenPresent }),
     }),
     {
       name: 'alerts',

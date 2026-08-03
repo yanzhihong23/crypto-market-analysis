@@ -36,6 +36,10 @@ export default function AlertBell() {
   )
   const soundEnabled = useAlertStore((state) => state.soundEnabled)
   const setSoundEnabled = useAlertStore((state) => state.setSoundEnabled)
+  const quietWhenPresent = useAlertStore((state) => state.quietWhenPresent)
+  const setQuietWhenPresent = useAlertStore(
+    (state) => state.setQuietWhenPresent,
+  )
   const t = useMessages()
   const dateLocale = useDateLocale()
 
@@ -197,14 +201,39 @@ export default function AlertBell() {
               onChange={(_, checked) => toggleSound(checked)}
             />
           </Stack>
-          <Typography
+
+          {/* A condition on the two above rather than a channel of its own, so it
+              sits under them and carries the note that used to state the rule. */}
+          <Stack
+            direction="row"
             sx={{
-              fontSize: 12,
-              color: 'text.secondary',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
           >
-            {t.alerts.quietWhenPresent}
-          </Typography>
+            <Typography
+              sx={{
+                fontSize: 14,
+              }}
+            >
+              {t.alerts.onlyWhenAway}
+            </Typography>
+            <Switch
+              size="small"
+              checked={quietWhenPresent}
+              onChange={(_, checked) => setQuietWhenPresent(checked)}
+            />
+          </Stack>
+          {quietWhenPresent && (
+            <Typography
+              sx={{
+                fontSize: 12,
+                color: 'text.secondary',
+              }}
+            >
+              {t.alerts.awayMeans}
+            </Typography>
+          )}
         </Stack>
 
         <Divider />

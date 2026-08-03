@@ -77,7 +77,9 @@ export const en = {
     blocked: 'Blocked for this site in your browser settings.',
     unsupported: 'This browser does not support notifications.',
     sound: 'Sound',
-    quietWhenPresent: 'Both stay quiet while this window is the one in front.',
+    /** Gates both channels above, so it reads as a condition on them. */
+    onlyWhenAway: 'Only when I am away',
+    awayMeans: 'Away is this window not being the one in front.',
     empty: 'Nothing has fired yet',
   },
 

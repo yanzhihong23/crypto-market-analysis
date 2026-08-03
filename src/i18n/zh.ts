@@ -63,7 +63,8 @@ export const zh: Messages = {
     blocked: '已在浏览器设置中对本站禁用。',
     unsupported: '当前浏览器不支持通知。',
     sound: '提示音',
-    quietWhenPresent: '当前窗口在最前时，两者都保持静默。',
+    onlyWhenAway: '仅在离开时提醒',
+    awayMeans: '离开指当前窗口不在最前。',
     empty: '暂无触发记录',
   },
 
