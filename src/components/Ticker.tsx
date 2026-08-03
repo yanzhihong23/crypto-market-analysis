@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react'
 
 import { FullTicker } from '../types'
 import { numericFont } from '../fonts'
-import { useCompactNumber, useMessages } from '../i18n'
+import { compactNumberFormatter } from '../utils'
+import { useMessages } from '../i18n'
 
 const Description = ({ label, value }: { label: string; value: string }) => {
   const t = useMessages()
@@ -38,7 +39,6 @@ export default function Ticker({ symbol }: { symbol: string }) {
   }>()
   const [ticker, setTicker] = useState<FullTicker>()
   const t = useMessages()
-  const compact = useCompactNumber()
 
   useEffect(() => {
     const socket = new WebSocket(
@@ -150,11 +150,11 @@ export default function Ticker({ symbol }: { symbol: string }) {
       <Stack spacing={2}>
         <Description
           label={t.binance.volumeBase(aggTrade?.s.split('USDT')[0] ?? '')}
-          value={compact(Number(ticker?.v))}
+          value={compactNumberFormatter(Number(ticker?.v))}
         />
         <Description
           label={t.binance.volumeQuote}
-          value={compact(Number(ticker?.q))}
+          value={compactNumberFormatter(Number(ticker?.q))}
         />
       </Stack>
     </Stack>

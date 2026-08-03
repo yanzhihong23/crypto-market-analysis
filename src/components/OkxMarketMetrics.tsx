@@ -14,7 +14,8 @@ import useOkxSignals from '../hooks/useOkxSignals'
 import { formatCountdown, isImminent, msUntilFunding } from '../utils/funding'
 import { describeFlow, flowRead } from '../utils/openInterest'
 import { signalOf } from '../utils/detectors'
-import { useCompactNumber, useMessages } from '../i18n'
+import { compactNumberFormatter } from '../utils'
+import { useMessages } from '../i18n'
 
 import { metricChipSx, signalChipSx } from './metricChipSx'
 
@@ -28,13 +29,12 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
   const pricePercent = useOkxPercent(instId)
   const { signals } = useOkxSignals(instId)
   const t = useMessages()
-  const compact = useCompactNumber()
 
   // Each of these arrives on its own channel, so a card can hold two real
   // values and one gap. Formatting an absent value used to print NaN and
   // "undefined‱" straight onto the card.
   const volumeLabel = Number.isFinite(Number(volCcyQuote))
-    ? compact(Number(volCcyQuote))
+    ? compactNumberFormatter(Number(volCcyQuote))
     : t.common.missing
   const ratioLabel = `${ratio?.value ?? t.common.missing}`
 

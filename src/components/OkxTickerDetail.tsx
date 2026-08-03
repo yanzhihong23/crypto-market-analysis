@@ -19,9 +19,9 @@ import useOkxTickerDetail, {
   FUNDING_TICK_FORMAT,
   type SeriesPoint,
 } from '../hooks/useOkxTickerDetail'
-import { formatNumber } from '../utils'
+import { compactNumberFormatter, formatNumber } from '../utils'
 import { numericFont } from '../fonts'
-import { useCompactNumber, useMessages } from '../i18n'
+import { useMessages } from '../i18n'
 import type { Messages } from '../i18n/en'
 
 import BaseAreaChart, { type SyncMethod } from './BaseAreaChart'
@@ -162,7 +162,6 @@ export default function OkxTickerDetail({
   // does not carry thirty sets of history it will never show.
   const detail = useOkxTickerDetail(instId, detailWindow, open)
   const t = useMessages()
-  const compact = useCompactNumber()
   // Per dialog: two of these open at once would otherwise hand each other a
   // cursor for a symbol the other is not showing.
   const windowSyncId = useId()
@@ -281,7 +280,7 @@ export default function OkxTickerDetail({
               volumeKey="volume"
               xDataFormatter={formatWindowTime}
               yDataFormatter={(value) => formatNumber(value, 6)}
-              volumeFormatter={compact}
+              volumeFormatter={(value) => compactNumberFormatter(value)}
             />
             {/* Everything below is a positioning reading, and none of them is a
                 price move, so none of them takes the price's red and green. */}
@@ -303,7 +302,7 @@ export default function OkxTickerDetail({
               height={150}
               syncId={windowSyncId}
               xDataFormatter={formatWindowTime}
-              yDataFormatter={compact}
+              yDataFormatter={(value) => compactNumberFormatter(value)}
               tooltipFormatter={(value) => formatNumber(value)}
             />
             {/* Last, and on its own: settlements are the exchange's schedule,

@@ -1,13 +1,11 @@
-import { useMemo } from 'react'
 import { enUS, zhCN } from 'date-fns/locale'
 import type { Locale as DateFnsLocale } from 'date-fns'
 
 import { useLocaleStore } from '../store/useLocaleStore'
-import { compactNumberFormatter } from '../utils'
 
 import { en, Messages } from './en'
 import { zh } from './zh'
-import { Locale, browserLocale, compactLocale } from './locale'
+import { Locale, browserLocale } from './locale'
 
 export type { Messages } from './en'
 
@@ -51,17 +49,4 @@ export function useSetLocale() {
 export function useDateLocale(): DateFnsLocale {
   const locale = useLocale()
   return DATE_LOCALES[locale]
-}
-
-/**
- * Compact volumes in the active language, bound once per language rather than
- * threaded through the dozen call sites that print one.
- */
-export function useCompactNumber() {
-  const locale = useLocale()
-  return useMemo(() => {
-    const tag = compactLocale(locale)
-    return (value: number, minimumFractionDigits?: number) =>
-      compactNumberFormatter(value, tag, minimumFractionDigits)
-  }, [locale])
 }

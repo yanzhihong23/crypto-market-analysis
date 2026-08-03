@@ -41,22 +41,3 @@ export function browserLocale(): Locale {
 export function htmlLang(locale: Locale) {
   return locale === 'zh' ? 'zh-CN' : 'en'
 }
-
-/**
- * The locale the compact number formatter is asked for, which is the only
- * number on the board whose shape is a language question: English groups by
- * thousands and Chinese by ten thousands, so one board reads `4.1B` where the
- * other reads `41亿` — the scale a Chinese-language exchange quotes in.
- *
- * `en-GB` on the English side because that is the tag this board was already
- * passing, and a language switch should not restyle the language that was
- * already there. Current CLDR gives it the same abbreviations as `en-US`;
- * older data lowercases them (`4.1bn`), which is a difference this keeps on
- * whichever side of it the reader was already seeing.
- *
- * Plain notation needs no equivalent. Both locales group in threes and both
- * point the decimal, so `formatNumber` is the same function in either language.
- */
-export function compactLocale(locale: Locale) {
-  return locale === 'zh' ? 'zh-CN' : 'en-GB'
-}

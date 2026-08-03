@@ -22,12 +22,6 @@ export function getPeriodPattern(period: string) {
 
 /**
  * Formats a number to a more readable format.
- *
- * Not language-dependent, unlike the compact formatter below: both languages
- * this board speaks group in threes and point the decimal, so plain notation
- * comes out the same either way and a locale here would be one to keep in step
- * for nothing.
- *
  * @param num - The number to format.
  * @returns The formatted number.
  */
@@ -41,20 +35,19 @@ export function formatNumber(num: number, digits?: number) {
 /**
  * Formats a number to a compact format.
  *
- * The locale is a required argument rather than a default, because a default
- * would silently print English on a Chinese board. Callers get it bound to the
- * active language from `useCompactNumber`.
+ * Stays English on a Chinese board, which is the one deliberate exception to the
+ * translation: Chinese groups by ten thousands, so `4.2b` reads `42亿` there, and
+ * the wider label wraps a card's four chips onto a second line. The row fits on
+ * one only because these abbreviations are this short.
  *
  * @param val - The number to format.
- * @param locale - A BCP 47 tag, from `compactLocale`.
  * @returns The formatted number.
  */
 export function compactNumberFormatter(
   val: number,
-  locale: string,
   minimumFractionDigits?: number,
 ) {
-  return new Intl.NumberFormat(locale, {
+  return new Intl.NumberFormat('en-GB', {
     notation: 'compact',
     compactDisplay: 'short',
     minimumFractionDigits,

@@ -3,8 +3,12 @@ import { format } from 'date-fns/format'
 import { useInterval } from 'usehooks-ts'
 
 import { fetchBinanceOpenInterestHist } from '../apis'
-import { formatNumber, getPeriodPattern } from '../utils'
-import { useCompactNumber, useMessages } from '../i18n'
+import {
+  compactNumberFormatter,
+  formatNumber,
+  getPeriodPattern,
+} from '../utils'
+import { useMessages } from '../i18n'
 
 import BaseAreaChart from './BaseAreaChart'
 
@@ -17,7 +21,6 @@ export default function RatioTrendChart(props: {
     [],
   )
   const t = useMessages()
-  const compact = useCompactNumber()
 
   const initData = useCallback(async () => {
     if (!props.symbol) return
@@ -48,7 +51,7 @@ export default function RatioTrendChart(props: {
       data={data}
       xKey="time"
       yKey="sumOpenInterest"
-      yDataFormatter={(val: number) => compact(val, 1)}
+      yDataFormatter={(val: number) => compactNumberFormatter(val, 1)}
       tooltipFormatter={(val: number) => formatNumber(val)}
       label={t.chart.openInterestHist}
       syncId={props.syncId}

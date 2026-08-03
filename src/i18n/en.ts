@@ -126,7 +126,10 @@ export const en = {
     fundingAria: 'Funding rate',
     openInterest: 'Open Interest',
     openInterestAria: 'Open interest change',
-    /** The session change, on a chip narrow enough to need the abbreviation. */
+    /**
+     * The session change, on a chip narrow enough to need the abbreviation —
+     * which is why it stays `OI` in Chinese too.
+     */
     openInterestChange: (change: string) => `OI ${change}`,
     settlesIn: (countdown: string) => `settles in ${countdown}`,
   },

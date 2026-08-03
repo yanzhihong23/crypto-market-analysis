@@ -110,7 +110,9 @@ export const zh: Messages = {
     fundingAria: '资金费率',
     openInterest: '持仓量',
     openInterestAria: '持仓量变化',
-    openInterestChange: (change) => `持仓 ${change}`,
+    // `OI` in either language: the chip row only fits on one line because this
+    // label is this short, and the tooltip spells out 持仓量 anyway.
+    openInterestChange: (change) => `OI ${change}`,
     settlesIn: (countdown) => `${countdown}后结算`,
   },
 

@@ -1,11 +1,11 @@
 import { Avatar, Chip, Stack, Tooltip, Typography } from '@mui/material'
 
 import { FullTicker } from '../types'
-import { formatNumber } from '../utils'
+import { compactNumberFormatter, formatNumber } from '../utils'
 import { useBinanceTickerStore } from '../store/useBinanceTickerStore'
 import { numericFont } from '../fonts'
 import { describeDeviation, isAnomalous } from '../utils/signals'
-import { useCompactNumber, useMessages } from '../i18n'
+import { useMessages } from '../i18n'
 
 import TickerContainer from './TickerContainer'
 import PriceRange from './PriceRange'
@@ -18,7 +18,6 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
     (state) => state.ratio[t.s]?.deviation,
   )
   const copy = useMessages()
-  const compact = useCompactNumber()
   const up = +t.p > 0
   const priceColor = up ? 'market.up' : 'market.down'
   // No funding rate on this feed, so the card never earns the flagged ring the
@@ -78,7 +77,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
               ...numericFont,
             }}
           >
-            {compact(+t.Q)}
+            {compactNumberFormatter(+t.Q)}
           </Typography>
         </Typography>
       </Stack>
@@ -105,7 +104,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
               size="small"
               aria-label={copy.metrics.quoteVolumeAria}
               sx={metricChipSx}
-              label={compact(+t.q)}
+              label={compactNumberFormatter(+t.q)}
             />
           </Tooltip>
           {!!ratio && (
