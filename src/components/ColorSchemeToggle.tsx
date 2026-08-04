@@ -24,11 +24,16 @@ export default function ColorSchemeToggle() {
 
   return (
     <Tooltip title={title} arrow>
-      <IconButton size="small" aria-label={title} onClick={() => setMode(next)}>
+      <IconButton
+        size="small"
+        aria-label={title}
+        onClick={() => setMode(next)}
+        sx={{ color: 'text.secondary' }}
+      >
         {resolved === 'dark' ? (
-          <LightModeIcon fontSize="small" />
+          <LightModeIcon sx={{ fontSize: 20 }} />
         ) : (
-          <DarkModeIcon fontSize="small" />
+          <DarkModeIcon sx={{ fontSize: 20 }} />
         )}
       </IconButton>
     </Tooltip>

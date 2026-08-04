@@ -39,6 +39,7 @@ export default function MobileNavMenu() {
         size="small"
         aria-label={t.navMenu.open}
         onClick={() => setOpen(true)}
+        sx={{ color: 'text.secondary' }}
       >
         <MenuIcon sx={{ fontSize: 22 }} />
       </IconButton>

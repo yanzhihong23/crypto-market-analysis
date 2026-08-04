@@ -1,4 +1,4 @@
-import { AppBar, Box, Stack, Toolbar, Typography } from '@mui/material'
+import { AppBar, Box, Divider, Stack, Toolbar, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 
@@ -70,34 +70,50 @@ export default function TopBar() {
 
         <NavMenu sx={{ display: { xs: 'none', md: 'block' } }} />
 
+        {/* Two kinds of thing sat here at one rhythm: a readout you look at and
+            switches you press. Same gap between all five, so nothing said where
+            reading stopped and clicking started. They are grouped and ruled
+            apart now, and the clock is sized as what it is — a caption on the
+            feed's state, not the loudest text in the bar. */}
         <Stack
           direction="row"
           sx={{
             alignItems: 'center',
-            gap: { xs: 1, md: 2 },
+            gap: { xs: 1, md: 1.5 },
             ml: 'auto',
           }}
         >
-          <FeedStatus />
-          <Typography
-            sx={[
-              {
-                fontSize: 16,
-                fontWeight: 500,
-                color: 'text.secondary',
-                // A phone already prints the time an inch above this one, and
-                // the row needs the width more than it needs to repeat it.
-                display: { xs: 'none', sm: 'block' },
-              },
-              ...(Array.isArray(numericFont) ? numericFont : [numericFont]),
-            ]}
-          >
-            {time}
-          </Typography>
-          <AlertBell />
-          <LanguageToggle />
-          <ColorSchemeToggle />
-          <MobileNavMenu />
+          <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
+            <FeedStatus />
+            <Typography
+              sx={[
+                {
+                  fontSize: 13,
+                  color: 'text.secondary',
+                  // A phone already prints the time an inch above this one, and
+                  // the row needs the width more than it needs to repeat it.
+                  display: { xs: 'none', sm: 'block' },
+                },
+                ...(Array.isArray(numericFont) ? numericFont : [numericFont]),
+              ]}
+            >
+              {time}
+            </Typography>
+          </Stack>
+
+          {/* Below `sm` the clock is gone and the dot can be too, which would
+              leave the rule opening the group on nothing. */}
+          <Divider
+            orientation="vertical"
+            sx={{ height: 18, display: { xs: 'none', sm: 'block' } }}
+          />
+
+          <Stack direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
+            <AlertBell />
+            <LanguageToggle />
+            <ColorSchemeToggle />
+            <MobileNavMenu />
+          </Stack>
         </Stack>
       </Toolbar>
     </AppBar>
