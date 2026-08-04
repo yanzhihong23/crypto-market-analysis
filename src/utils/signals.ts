@@ -159,6 +159,7 @@ export type SignalKind =
   | 'volume'
   | 'taker'
   | 'open-interest'
+  | 'liquidation'
   // Positioning: what the book was holding, paying, and charging going in.
   | 'ratio'
   | 'divergence'
@@ -177,6 +178,10 @@ const SIGNAL_FAMILY: Record<SignalKind, SignalFamily> = {
   volume: 'flow',
   taker: 'flow',
   'open-interest': 'flow',
+  // Flow, and the only kind of it nobody chose: what the exchange closed out is
+  // still volume and still open interest leaving, arriving through a door the
+  // holder does not control.
+  liquidation: 'flow',
   ratio: 'positioning',
   divergence: 'positioning',
   funding: 'positioning',

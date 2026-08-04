@@ -2,6 +2,7 @@ import { OkxTickerFormatted } from '../types/okx'
 
 import { removeOkxSeries } from './okxRealtimeSeries'
 import { removeOkxSpread } from './okxRealtimeSpread'
+import { removeOkxLiquidation } from './okxRealtimeLiquidation'
 
 type Listener = () => void
 
@@ -148,6 +149,7 @@ export const removeOkxTicker = (instId: string) => {
   // brackets a window it was not on the board for.
   removeOkxSeries(instId)
   removeOkxSpread(instId)
+  removeOkxLiquidation(instId)
   notify(tickerListeners, instId)
   notify(percentListeners, instId)
   notify(openInterestListeners, instId)

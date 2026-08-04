@@ -61,6 +61,14 @@ export enum OkxChannel {
    * `BTC-USDT-SWAP`.
    */
   INDEX_TICKERS = 'index-tickers',
+  /**
+   * Every swap on the exchange, on one subscription. The odd one out on this
+   * socket in two ways: it is subscribed once for the whole board rather than
+   * per instrument, and its messages carry no `instId` on the arg — which
+   * instrument each liquidation belongs to is inside the payload, because one
+   * message can carry several.
+   */
+  LIQUIDATION_ORDERS = 'liquidation-orders',
 }
 
 export enum OpenTime {
@@ -122,6 +130,35 @@ export interface OkxIndexTicker {
   instId: string
   idxPx: string
   ts: string
+}
+
+/**
+ * One position closed out by the exchange.
+ *
+ * @interface OkxLiquidationDetail
+ * @member {string} posSide - 被强平的持仓方向，long 或 short
+ * @member {string} side - 强平单的方向，buy 或 sell，与 posSide 相反
+ * @member {string} sz - 强平数量，按张为单位，与持仓量同一单位
+ * @member {string} bkPx - 破产价格
+ * @member {string} ts - 强平发生时间，Unix时间戳的毫秒数格式
+ */
+export interface OkxLiquidationDetail {
+  posSide: 'long' | 'short'
+  side: string
+  sz: string
+  bkPx: string
+  ts: string
+}
+
+/**
+ * @interface OkxLiquidationOrder
+ * @member {string} instId - 产品ID，在这个频道里只在消息体内出现
+ * @member {OkxLiquidationDetail[]} details - 这一条消息携带的全部强平
+ */
+export interface OkxLiquidationOrder {
+  instType: string
+  instId: string
+  details: OkxLiquidationDetail[]
 }
 
 /**

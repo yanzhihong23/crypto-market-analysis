@@ -72,7 +72,7 @@ export const en = {
     titleUnseen: (unseen: number) => `Alerts, ${unseen} new`,
     // Says what the list is a list of, so an empty one reads as nothing having
     // happened rather than as nothing working.
-    what: "When two of a symbol's readings leave their usual range at once — what the price did, whether the volume, the side crossing the spread and open interest were behind it, and what the book was already holding and charging.",
+    what: "When two of a symbol's readings leave their usual range at once — what the price did, whether the volume, the side crossing the spread, open interest and forced closures were behind it, and what the book was already holding and charging.",
     desktopNotifications: 'Desktop notifications',
     blocked: 'Blocked for this site in your browser settings.',
     unsupported: 'This browser does not support notifications.',
@@ -261,6 +261,15 @@ export const en = {
       `${share} ${buying ? 'buys' : 'sells'}`,
     takerDetail: (share: string, buying: boolean, sigmas: string) =>
       `${share} of takers ${buying ? 'buying' : 'selling'} · ${sigmas}`,
+
+    /**
+     * A share of open interest, not a sigma: most windows on most instruments
+     * hold no liquidation at all, so there is no history to be unusual against.
+     */
+    liquidation: (share: string, longs: boolean) =>
+      `${share} ${longs ? 'longs' : 'shorts'} liquidated`,
+    liquidationDetail: (share: string, longs: boolean) =>
+      `${share} of open interest liquidated in 5m, mostly ${longs ? 'longs' : 'shorts'}`,
 
     openInterest: (change: string) => `OI ${change} 5m`,
     openInterestDetail: (change: string, sigmas: string) =>

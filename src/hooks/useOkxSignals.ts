@@ -5,6 +5,8 @@ import { useMessages } from '../i18n'
 
 import { useOkxSeriesChange } from './useOkxSeries'
 import { useOkxSpreadRead } from './useOkxSpread'
+import { useOkxLiquidationRead } from './useOkxLiquidation'
+import { useOkxOpenInterest } from './useOkxOpenInterest'
 import {
   useCoil,
   useDivergence,
@@ -54,6 +56,8 @@ export default function useOkxSignals(instId: string) {
   useOiChangeBaseline(instId)
   useOkxSeriesChange(instId)
   useOkxSpreadRead(instId)
+  useOkxLiquidationRead(instId)
+  useOkxOpenInterest(instId)
 
   const signals = collectSignals(readSignalInput(instId), t)
   return { signals, flag: flagStateOf(signals, t) }

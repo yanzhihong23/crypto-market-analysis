@@ -58,7 +58,7 @@ export const zh: Messages = {
   alerts: {
     title: '提醒',
     titleUnseen: (unseen) => `提醒，${unseen} 条未读`,
-    what: '当一个品种有两类指标同时偏离常态时提醒：价格做了什么、成交量与主动成交方向及持仓量是否跟上，以及盘口原本持有什么、开价多少。',
+    what: '当一个品种有两类指标同时偏离常态时提醒：价格做了什么、成交量与主动成交方向、持仓量与强平是否跟上，以及盘口原本持有什么、开价多少。',
     desktopNotifications: '桌面通知',
     blocked: '已在浏览器设置中对本站禁用。',
     unsupported: '当前浏览器不支持通知。',
@@ -208,6 +208,10 @@ export const zh: Messages = {
     taker: (share, buying) => `${buying ? '买' : '卖'}盘 ${share}`,
     takerDetail: (share, buying, sigmas) =>
       `主动成交 ${share} 为${buying ? '买' : '卖'} · ${sigmas}`,
+
+    liquidation: (share, longs) => `强平${longs ? '多' : '空'} ${share}`,
+    liquidationDetail: (share, longs) =>
+      `5 分钟内 ${share} 的持仓量被强平，以${longs ? '多头' : '空头'}为主`,
 
     openInterest: (change) => `持仓 ${change} 5分钟`,
     openInterestDetail: (change, sigmas) =>

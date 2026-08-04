@@ -17,8 +17,12 @@ import {
   getOkxSeriesChange,
   indexInstIdOf,
 } from './okxRealtimeSeries'
+import { getOkxLiquidation } from './okxRealtimeLiquidation'
 import { getOkxSpread } from './okxRealtimeSpread'
-import { getOkxTickerSnapshot } from './okxRealtimeTicker'
+import {
+  getOkxOpenInterestSnapshot,
+  getOkxTickerSnapshot,
+} from './okxRealtimeTicker'
 import { useTickerStore } from './useTickerStore'
 
 export function readSignalInput(
@@ -40,6 +44,11 @@ export function readSignalInput(
     klines: state.klineData[instId],
     pricePercent: change?.pricePercent,
     oiPercent: change?.oiPercent,
+    liquidation: getOkxLiquidation(instId),
+    // The live figure off the socket rather than the session open the chip is
+    // drawn against: what was closed out is being sized against what is open
+    // now, not against what was open this morning.
+    openInterest: Number(getOkxOpenInterestSnapshot(instId)),
     // Taken over the board when the caller has not already done it once for the
     // whole pass, which is the difference between a sort per symbol and one sort.
     boardPercent: boardPercent ?? boardMedianPricePercent(state.instIds),

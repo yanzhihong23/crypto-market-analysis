@@ -81,6 +81,7 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
   const fundingSignal = signalOf(signals, 'funding')
   const fundingShiftSignal = signalOf(signals, 'funding-shift')
   const oiSignal = signalOf(signals, 'open-interest')
+  const liquidationSignal = signalOf(signals, 'liquidation')
 
   const chipTitle = (name: string, ...parts: (string | null | undefined)[]) =>
     [name, ...parts].filter(Boolean).join(' — ')
@@ -133,10 +134,16 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
   // Two windows on one chip: the number is the change across the session, and
   // the five-minute reading underneath it is what says whether that change is
   // happening right now and whose positions are going.
+  // The liquidation line goes last, under the quadrant read that has been
+  // inferring it: that one says what the price and the open interest together
+  // look like, and this one says what the exchange actually did. When both are
+  // there they should agree, and when they do not the observed one is the one to
+  // believe.
   const oiTitle = chipTitle(
     t.metrics.openInterest,
     flow ? describeFlow(flow, t) : null,
     oiSignal?.detail,
+    liquidationSignal?.detail,
   )
 
   return (
@@ -180,7 +187,7 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
         <Chip
           size="small"
           aria-label={t.metrics.openInterestAria}
-          sx={oiSignal ? signalChipSx : metricChipSx}
+          sx={oiSignal || liquidationSignal ? signalChipSx : metricChipSx}
           label={oiLabel}
         />
       </Tooltip>

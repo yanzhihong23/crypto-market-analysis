@@ -100,6 +100,26 @@ const MIN_FUNDING_SHIFT = 1
 const MIN_TAKER_IMBALANCE = 0.15
 
 /**
+ * How much of an instrument's open interest has to be closed out from under its
+ * holders inside five minutes before the forcing is the story.
+ *
+ * A fixed band, and it earns one the way the basis does: liquidated contracts
+ * over open contracts is already per instrument, has a real zero, and means the
+ * same thing on BTC as on a small cap. There is also nothing to build a baseline
+ * from — most five-minute windows on most instruments contain no liquidation at
+ * all, so a sigma taken over them is a sigma of zeros and the first contract
+ * closed out would read as infinitely unusual.
+ *
+ * Twenty-three hours of BTC, ETH, SOL, XRP, DOGE and SUI — 127 instrument-hours,
+ * in a market quiet enough that three minutes of the whole exchange went by
+ * without a single one — puts a window this size at one per symbol per fourteen
+ * hours. The busiest window in that stretch was 0.22%. In the conditions this
+ * reading is actually for it will fire on half the board at once, which is the
+ * point of it.
+ */
+const MIN_LIQUIDATED_SHARE = 0.05
+
+/**
  * How far down its own session a stretch has to sit before it is a coil. The
  * bottom tenth, which is a looser bar than the three sigmas everything else is
  * held to and has to be: this is a percentile of a series that always has a
@@ -434,6 +454,49 @@ export function takerFlowSignal(
 }
 
 /**
+ * Positions closed out by the exchange rather than by the people holding them.
+ *
+ * The reading the squeeze quadrant has been guessing at. That one infers forcing
+ * from the price and the open interest pointing opposite ways, which is a fair
+ * inference and still an inference — open interest falls when people take profit
+ * too. This is the exchange naming the positions and the side, and it is the
+ * difference between "this looks like longs getting out" and "these longs did
+ * not get out, they were taken out".
+ *
+ * Measured against open interest so the number travels: five hundred contracts
+ * is a rounding error on BTC and the whole book on a small cap.
+ */
+export function liquidationSignal(
+  {
+    liquidation,
+    openInterest,
+  }: {
+    liquidation?: { long: number; short: number } | null
+    openInterest?: number | null
+  },
+  t: Messages,
+): Signal | null {
+  if (!liquidation || !openInterest || !(openInterest > 0)) return null
+
+  const total = liquidation.long + liquidation.short
+  const share = (total / openInterest) * 100
+  if (share < MIN_LIQUIDATED_SHARE) return null
+
+  // Which side was carried out, not which side was bigger by a hair: the pair is
+  // reported as one event and the dominant side is what it is about.
+  const longs = liquidation.long >= liquidation.short
+  const shareLabel = `${share.toFixed(2)}%`
+  return {
+    kind: 'liquidation',
+    // No sigma: this is a share of a known quantity, not a distance from a
+    // history nothing here keeps.
+    deviation: null,
+    label: t.signal.liquidation(shareLabel, longs),
+    detail: t.signal.liquidationDetail(shareLabel, longs),
+  }
+}
+
+/**
  * Open interest moving unusually fast, and which side it says is being taken
  * out. The quadrant is in the detail rather than in a second signal because it
  * is not a separate observation — it is this one read together with the price.
@@ -679,6 +742,10 @@ export interface SignalInput {
   pricePercent?: number | null
   /** Five-minute open interest move, in percent. */
   oiPercent?: number | null
+  /** Contracts closed out by the exchange in the last five minutes, by side. */
+  liquidation?: { long: number; short: number } | null
+  /** Open contracts, which is what the above is only meaningful against. */
+  openInterest?: number | null
   /** The middle of the board's five-minute moves, to net the market out. */
   boardPercent?: number | null
   momentumBaseline?: Baseline | null
@@ -749,6 +816,13 @@ export function collectSignals(input: SignalInput, t: Messages): Signal[] {
       {
         imbalance: input.takerImbalance,
         deviation: input.takerDeviation,
+      },
+      t,
+    ),
+    liquidationSignal(
+      {
+        liquidation: input.liquidation,
+        openInterest: input.openInterest,
       },
       t,
     ),

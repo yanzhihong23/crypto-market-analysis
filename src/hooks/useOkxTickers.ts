@@ -1,6 +1,11 @@
 import { useEffect, useRef, useCallback } from 'react'
 
-import { OkxChannel, OkxFundingRate, OkxIndexTicker } from '../types/okx'
+import {
+  OkxChannel,
+  OkxFundingRate,
+  OkxIndexTicker,
+  OkxLiquidationOrder,
+} from '../types/okx'
 import { OkxOpenInterest } from '../types/okx'
 import { OkxTicker } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
@@ -17,6 +22,7 @@ import {
   setOkxIndexPrice,
 } from '../store/okxRealtimeSeries'
 import { recordOkxSpread } from '../store/okxRealtimeSpread'
+import { recordOkxLiquidation } from '../store/okxRealtimeLiquidation'
 import {
   markFeedMessage,
   resetFeed,
@@ -31,9 +37,29 @@ const RECONNECT_DELAY_MS = 3000
 interface TickerResponse {
   arg: {
     channel: OkxChannel
+    /** Absent on the liquidation channel, which is subscribed for all swaps. */
     instId: string
   }
-  data: OkxTicker[] | OkxOpenInterest[] | OkxFundingRate[] | OkxIndexTicker[]
+  data:
+    | OkxTicker[]
+    | OkxOpenInterest[]
+    | OkxFundingRate[]
+    | OkxIndexTicker[]
+    | OkxLiquidationOrder[]
+}
+
+/**
+ * The whole exchange's liquidations, on one subscription rather than one per
+ * instrument — the channel offers no per-instrument form, and would not be worth
+ * one anyway: a symbol can go a day without a single liquidation, and the
+ * messages that matter arrive for everything at once.
+ *
+ * The cost of taking the whole exchange is a filter on the way in, which is the
+ * next thing down.
+ */
+const LIQUIDATION_ARG = {
+  channel: OkxChannel.LIQUIDATION_ORDERS,
+  instType: 'SWAP',
 }
 
 export const useOkxTickers = () => {
@@ -117,7 +143,14 @@ export const useOkxTickers = () => {
       ws.send(
         JSON.stringify({
           op: 'subscribe',
-          args: generateSubscribeArgsByInstIds(initialInstIds),
+          // The liquidation feed rides along on the same socket and is not part
+          // of the per-instrument set, so it is subscribed here and never
+          // unsubscribed — adding or removing a symbol does not change what this
+          // channel sends, only which of it we keep.
+          args: [
+            ...generateSubscribeArgsByInstIds(initialInstIds),
+            LIQUIDATION_ARG,
+          ],
         }),
       )
     }
@@ -137,6 +170,32 @@ export const useOkxTickers = () => {
       if (!res.data) return
 
       const instId = res.arg.instId
+
+      if (res.arg.channel === OkxChannel.LIQUIDATION_ORDERS) {
+        // The only channel here whose instrument is in the payload rather than
+        // on the arg, and the only one that arrives for symbols nobody is
+        // watching: this is the whole exchange, so it is filtered down to the
+        // board before anything is kept.
+        const watched = new Set(useTickerStore.getState().instIds)
+        for (const order of res.data as OkxLiquidationOrder[]) {
+          // A row without an instrument is a back-reference. The exchange's
+          // serialiser collapses a repeated object into `{"$ref": "$.data[0]"}`
+          // — fifteen of the sixteen rows on a REST reply for one underlying
+          // are that — and whatever it points at is another row of this same
+          // message, which is already being counted. Skipping them is what
+          // keeps a liquidation from being counted twice, not a gap.
+          if (!order?.instId || !watched.has(order.instId)) continue
+          for (const detail of order.details ?? []) {
+            recordOkxLiquidation(
+              order.instId,
+              Number(detail.sz),
+              detail.posSide === 'long',
+              Number(detail.ts),
+            )
+          }
+        }
+        return
+      }
 
       if (res.arg.channel === OkxChannel.TICKERS) {
         const ticker = res.data[0] as OkxTicker
