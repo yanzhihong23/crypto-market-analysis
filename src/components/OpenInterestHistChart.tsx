@@ -51,6 +51,7 @@ export default function RatioTrendChart(props: {
       data={data}
       xKey="time"
       yKey="sumOpenInterest"
+      valueName={t.chart.openInterest}
       yDataFormatter={(val: number) => compactNumberFormatter(val, 1)}
       tooltipFormatter={(val: number) => formatNumber(val)}
       label={t.chart.openInterestHist}

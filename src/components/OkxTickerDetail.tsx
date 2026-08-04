@@ -15,6 +15,7 @@ import { format } from 'date-fns'
 
 import useOkxTicker from '../hooks/useOkxTicker'
 import useOkxTickerDetail, {
+  DETAIL_TOOLTIP_FORMAT,
   DetailWindow,
   FUNDING_TICK_FORMAT,
   type SeriesPoint,
@@ -72,7 +73,9 @@ function ChartSection({
   height,
   syncId,
   volumeKey,
+  valueName,
   xDataFormatter,
+  xTooltipFormatter,
   yDataFormatter,
   tooltipFormatter,
   volumeFormatter,
@@ -86,7 +89,9 @@ function ChartSection({
   /** Passed by the charts that share the window, and so share a cursor. */
   syncId?: string
   volumeKey?: string
+  valueName?: string
   xDataFormatter: (value: number) => string
+  xTooltipFormatter?: (value: number) => string
   yDataFormatter?: (value: number) => string
   tooltipFormatter?: (value: number) => string
   volumeFormatter?: (value: number) => string
@@ -109,12 +114,14 @@ function ChartSection({
           xKey="time"
           yKey="value"
           volumeKey={volumeKey}
+          valueName={valueName}
           height={height}
           stroke={stroke}
           referenceY={referenceY}
           syncId={syncId}
           syncMethod={syncByTime}
           xDataFormatter={xDataFormatter}
+          xTooltipFormatter={xTooltipFormatter}
           yDataFormatter={yDataFormatter}
           tooltipFormatter={tooltipFormatter}
           volumeFormatter={volumeFormatter}
@@ -169,6 +176,11 @@ export default function OkxTickerDetail({
   const [symbol, ...rest] = instId.split('-')
   const neutral = theme.vars.palette.primary.main
   const formatWindowTime = (value: number) => format(value, detail.tickFormat)
+  const formatTooltipTime = (value: number) =>
+    format(value, DETAIL_TOOLTIP_FORMAT)
+  // A tooltip reads one figure rather than a scale, so it can afford the unit
+  // the axis has to leave to the heading.
+  const inCoin = (value: string) => `${value} ${symbol}`
 
   return (
     <Dialog
@@ -279,8 +291,9 @@ export default function OkxTickerDetail({
               syncId={windowSyncId}
               volumeKey="volume"
               xDataFormatter={formatWindowTime}
+              xTooltipFormatter={formatTooltipTime}
               yDataFormatter={(value) => formatNumber(value, 6)}
-              volumeFormatter={(value) => compactNumberFormatter(value)}
+              volumeFormatter={(value) => inCoin(compactNumberFormatter(value))}
             />
             {/* Everything below is a positioning reading, and none of them is a
                 price move, so none of them takes the price's red and green. */}
@@ -292,7 +305,9 @@ export default function OkxTickerDetail({
               referenceY={1}
               height={150}
               syncId={windowSyncId}
+              valueName={t.chart.ratio}
               xDataFormatter={formatWindowTime}
+              xTooltipFormatter={formatTooltipTime}
               yDataFormatter={(value) => value.toFixed(2)}
             />
             <ChartSection
@@ -301,9 +316,11 @@ export default function OkxTickerDetail({
               stroke={neutral}
               height={150}
               syncId={windowSyncId}
+              valueName={t.chart.openInterest}
               xDataFormatter={formatWindowTime}
+              xTooltipFormatter={formatTooltipTime}
               yDataFormatter={(value) => compactNumberFormatter(value)}
-              tooltipFormatter={(value) => formatNumber(value)}
+              tooltipFormatter={(value) => inCoin(formatNumber(value))}
             />
             {/* Last, and on its own: settlements are the exchange's schedule,
                 not the window, so this one covers a different stretch of time
@@ -315,8 +332,15 @@ export default function OkxTickerDetail({
               stroke={neutral}
               referenceY={0}
               height={150}
+              valueName={t.chart.funding}
               xDataFormatter={(value) => format(value, FUNDING_TICK_FORMAT)}
               yDataFormatter={(value) => value.toFixed(1)}
+              // Signed, like the rate on the card: which side is paying is most
+              // of what a funding reading says, and around zero the sign is the
+              // only thing that carries it.
+              tooltipFormatter={(value) =>
+                `${value > 0 ? '+' : ''}${value.toFixed(2)}‱`
+              }
             />
           </Stack>
         )}

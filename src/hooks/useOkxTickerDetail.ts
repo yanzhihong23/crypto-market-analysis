@@ -74,6 +74,13 @@ const FUNDING_SETTLEMENTS = 30
 /** Settlements are far enough apart to name by the hour they landed on. */
 export const FUNDING_TICK_FORMAT = 'MM-dd HH:mm'
 
+/**
+ * A tooltip names one moment, so it has to say which day as well as which hour
+ * — the axis formats above leave the date out on the short windows, where it is
+ * a repetition across every tick but the one thing missing from a single point.
+ */
+export const DETAIL_TOOLTIP_FORMAT = 'MM-dd HH:mm'
+
 export interface SeriesPoint {
   // Recharts is addressed by key name, so the chart's prop type is an index
   // signature; the named fields are what this app's charts actually use.

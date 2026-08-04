@@ -141,6 +141,9 @@ export const zh: Messages = {
   chart: {
     volume: '成交量',
     price: '价格',
+    ratio: '多空账户比',
+    openInterest: '持仓量',
+    funding: '资金费率',
     kline: 'K线',
     ratioTrend: '多空账户比',
     openInterestHist: '持仓量历史',

@@ -34,9 +34,11 @@ export default function BaseAreaChart({
   syncId,
   syncMethod,
   xDataFormatter,
+  xTooltipFormatter,
   yDataFormatter,
   tooltipFormatter,
   volumeFormatter,
+  valueName,
   stroke,
   referenceY,
   width = '99%',
@@ -49,8 +51,16 @@ export default function BaseAreaChart({
   volumeKey?: string
   label?: string
   /** For an x value that is not already what the axis should read, e.g. a raw
-   * timestamp. It labels the tooltip too, so the two never disagree. */
+   * timestamp. It labels the tooltip too, unless `xTooltipFormatter` says
+   * otherwise. */
   xDataFormatter?: (val: number) => string
+  /**
+   * How the tooltip names the moment, when the axis's own reading leaves out
+   * what a single point needs. Axis labels only have to say what changes across
+   * the window, so a day of quarter-hour candles is ticked `22:00` — which is
+   * an hour, not a date, the moment the cursor is on one of them.
+   */
+  xTooltipFormatter?: (val: number) => string
   yDataFormatter?: (val: number) => string
   /**
    * How the tooltip reads a value, when the axis's own reading is too coarse
@@ -60,6 +70,12 @@ export default function BaseAreaChart({
   tooltipFormatter?: (val: number) => string
   /** How the tooltip reads volume when `volumeKey` is set. */
   volumeFormatter?: (val: number) => string
+  /**
+   * What the tooltip calls the series. Without one it falls back to the data
+   * key, and a chart of open interest reads `value : 31,881.69` — the shape of
+   * the row this app happens to hand recharts, not the reading.
+   */
+  valueName?: string
   /**
    * Overrides the red/green the series would otherwise take from its own
    * direction. Anything that is not a price has to pass one: on this palette
@@ -89,8 +105,13 @@ export default function BaseAreaChart({
       ? theme.vars.palette.market.upChart
       : theme.vars.palette.market.downChart)
   const axisColor = theme.vars.palette.text.secondary
-  const volumeColor = theme.vars.palette.surface.marker
+  // Not `surface.marker`, which is pitched to stay visible on the subtle fill
+  // and all but vanishes on the chart's own background — and recharts colours
+  // the tooltip's volume row by this same value, where a hairline grey is not
+  // a colour a number can be read in.
+  const volumeColor = theme.vars.palette.text.secondary
   const valueFormatter = tooltipFormatter ?? yDataFormatter
+  const labelFormatter = xTooltipFormatter ?? xDataFormatter
   // Axes are chrome, not data. At the inherited size a sub-cent price needs
   // more than a fifth of a small chart's width just to print its own scale.
   const tickStyle = { fill: axisColor, fontSize: 11 }
@@ -180,29 +201,23 @@ export default function BaseAreaChart({
         )}
         <Tooltip
           labelFormatter={
-            xDataFormatter
-              ? (label) => xDataFormatter(Number(label))
+            labelFormatter
+              ? (label) => labelFormatter(Number(label))
               : undefined
           }
           // Left to itself the tooltip prints the number as it came off the
           // wire, and a figure the exchange computed in floating point reads
           // as `31872.945100000143`.
-          formatter={
-            volumeKey
-              ? (value, name) => {
-                  const n = Number(value)
-                  if (name === volumeKey) {
-                    return [
-                      volumeFormatter ? volumeFormatter(n) : n,
-                      t.chart.volume,
-                    ]
-                  }
-                  return [valueFormatter ? valueFormatter(n) : n, t.chart.price]
-                }
-              : valueFormatter
-                ? (value) => valueFormatter(Number(value))
-                : undefined
-          }
+          formatter={(value, name) => {
+            const n = Number(value)
+            if (volumeKey && name === volumeKey) {
+              return [volumeFormatter ? volumeFormatter(n) : n, t.chart.volume]
+            }
+            return [
+              valueFormatter ? valueFormatter(n) : n,
+              valueName ?? (volumeKey ? t.chart.price : name),
+            ]
+          }}
           wrapperStyle={{ border: 'none' }}
           contentStyle={{
             border: `1px solid ${theme.vars.palette.surface.border}`,

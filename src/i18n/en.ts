@@ -162,6 +162,15 @@ export const en = {
     /** Series names in a shared tooltip, so both want to be short. */
     volume: 'Vol',
     price: 'Price',
+    /**
+     * The rest of the tooltip names, for the charts that carry one series
+     * each. Shorter than the heading above them — the heading has room to say
+     * which unit the series is counted in, and the tooltip puts that on the
+     * number instead.
+     */
+    ratio: 'L/S ratio',
+    openInterest: 'Open interest',
+    funding: 'Funding',
     kline: 'Kline',
     ratioTrend: 'Long Short Account Ratio',
     openInterestHist: 'Open Interest Hist',

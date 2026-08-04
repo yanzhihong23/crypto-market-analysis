@@ -48,6 +48,7 @@ export default function RatioTrendChart(props: {
       data={data}
       xKey="openTime"
       yKey="closePrice"
+      valueName={t.chart.price}
       label={t.chart.kline}
       syncId={props.syncId}
     />

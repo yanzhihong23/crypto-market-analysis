@@ -45,6 +45,7 @@ export default function RatioTrendChart(props: {
       data={data}
       xKey="time"
       yKey="ratio"
+      valueName={t.chart.ratio}
       label={t.chart.ratioTrend}
       syncId={props.syncId}
     />
