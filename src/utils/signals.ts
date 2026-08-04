@@ -64,6 +64,23 @@ export function baselineOf(values: number[]): Baseline | null {
   return { mean, sigma }
 }
 
+/**
+ * The middle of a set of readings, or null when there are none. Used where a
+ * mean would be dragged around by the one sample that went mad, which is the
+ * usual case whenever the thing being summarised is a volume or a spread.
+ */
+export function medianOf(values: number[]) {
+  const sorted = values
+    .filter((value) => Number.isFinite(value))
+    .sort((a, b) => a - b)
+  if (!sorted.length) return null
+
+  const middle = Math.floor(sorted.length / 2)
+  return sorted.length % 2
+    ? sorted[middle]
+    : (sorted[middle - 1] + sorted[middle]) / 2
+}
+
 /** Signed distance from normal, in standard deviations. */
 export function deviationFrom(value: number, baseline?: Baseline | null) {
   if (!baseline || !Number.isFinite(value)) return null
@@ -137,14 +154,16 @@ export type SignalKind =
   | 'breakout'
   | 'rejection'
   | 'strength'
-  // Flow: whether anyone put anything behind it.
+  // Flow: whether anyone put anything behind it, and which side they were on.
   | 'volume'
+  | 'taker'
   | 'open-interest'
-  // Positioning: what the book was holding, and paying, going in.
+  // Positioning: what the book was holding, paying, and charging going in.
   | 'ratio'
   | 'funding'
   | 'funding-shift'
   | 'basis'
+  | 'spread'
 
 const SIGNAL_FAMILY: Record<SignalKind, SignalFamily> = {
   momentum: 'price',
@@ -153,11 +172,18 @@ const SIGNAL_FAMILY: Record<SignalKind, SignalFamily> = {
   rejection: 'price',
   strength: 'price',
   volume: 'flow',
+  taker: 'flow',
   'open-interest': 'flow',
   ratio: 'positioning',
   funding: 'positioning',
   'funding-shift': 'positioning',
   basis: 'positioning',
+  // The spread is the state of the book rather than an event in it, which is
+  // what this family already collects: what the crowd holds, what it pays to
+  // hold it, and what it costs to get out. It is also the only one here that is
+  // a condition rather than a consequence, so it is the one whose agreeing with
+  // the others says the most.
+  spread: 'positioning',
 }
 
 export function signalFamily(kind: SignalKind) {

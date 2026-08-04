@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import useOkxInstrumentsUpdater from '../hooks/useOkxInstrumentsUpdater'
 import useOkxKlinesUpdater from '../hooks/useOkxKlinesUpdater'
 import useOkxRatioUpdater from '../hooks/useOkxRatioUpdater'
+import useOkxTakerFlowUpdater from '../hooks/useOkxTakerFlowUpdater'
 import useOkxFundingBaselineUpdater from '../hooks/useOkxFundingBaselineUpdater'
 import useOkxMomentumBaselineUpdater from '../hooks/useOkxMomentumBaselineUpdater'
 import useOkxOpenInterestUpdater from '../hooks/useOkxOpenInterestUpdater'
@@ -15,6 +16,7 @@ export default function OkxDataSync() {
   const { add, remove } = useOkxTickers()
   useOkxKlinesUpdater()
   const { updateRatioByInstId } = useOkxRatioUpdater()
+  const { updateTakerFlowByInstId } = useOkxTakerFlowUpdater()
   const { updateFundingBaselineByInstId } = useOkxFundingBaselineUpdater()
   const { updateMomentumBaselineByInstId } = useOkxMomentumBaselineUpdater()
   const { updateOpenInterestOpenByInstId } = useOkxOpenInterestUpdater()
@@ -24,6 +26,7 @@ export default function OkxDataSync() {
     okxTickerActions.add = async (instId: string) => {
       await add(instId)
       await updateRatioByInstId(instId)
+      await updateTakerFlowByInstId(instId)
       await updateFundingBaselineByInstId(instId)
       await updateMomentumBaselineByInstId(instId)
       await updateOpenInterestOpenByInstId(instId)
@@ -33,6 +36,7 @@ export default function OkxDataSync() {
     add,
     remove,
     updateRatioByInstId,
+    updateTakerFlowByInstId,
     updateFundingBaselineByInstId,
     updateMomentumBaselineByInstId,
     updateOpenInterestOpenByInstId,

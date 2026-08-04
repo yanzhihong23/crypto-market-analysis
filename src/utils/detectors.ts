@@ -43,6 +43,15 @@ const formatPercent = (value: number, digits = 2) =>
   `${value > 0 ? '+' : ''}${value.toFixed(digits)}%`
 
 /**
+ * Two significant figures rather than a fixed decimal place, because a spread
+ * spans three orders of magnitude across one board: BTC quotes a sixtieth of a
+ * basis point and a thin small cap quotes several. One decimal prints the whole
+ * liquid end of the board as `0.0bp`, and four decimals carry three meaningless
+ * digits on the thin end.
+ */
+const formatBps = (bps: number) => `${Number(bps.toPrecision(2))}bp`
+
+/**
  * A five-minute move under this is noise whatever its own history says. Without
  * it a coin that has not moved in three hours reports three sigma off a single
  * tick, and the quiet end of the board takes every slot in the alert list.
@@ -79,6 +88,15 @@ const MAX_BASIS_PERCENT = 0.15
 
 /** In the unit the card shows funding in, so a shift reads off the same scale. */
 const MIN_FUNDING_SHIFT = 1
+
+/**
+ * How lopsided the market orders have to be before the tilt is worth naming,
+ * whatever this instrument's own history says about it. A signed share of 0.15
+ * is a 57/43 split — below that the side that "won" the bar won it by a margin
+ * nobody would trade on, and an instrument whose flow is habitually balanced has
+ * a sigma small enough to call one.
+ */
+const MIN_TAKER_IMBALANCE = 0.15
 
 /**
  * The five-minute move, against the spread of this instrument's own five-minute
@@ -307,6 +325,48 @@ export function volumeSignal(
 }
 
 /**
+ * Which side was crossing the spread, when one side of it was doing far more of
+ * the crossing than usually does.
+ *
+ * This is the reading the volume one has always been missing. A bar three times
+ * its usual size says the same thing whoever was behind it, and the board's only
+ * way of guessing was to look at what the price did next — which is the question,
+ * not the answer. Two-thirds of a bar's market orders landing on one side is the
+ * answer, and it is measured rather than inferred.
+ *
+ * Symmetric around zero on purpose: the imbalance has a real zero of its own —
+ * an even fight — so the baseline it is held against describes how lopsided this
+ * instrument's flow usually gets in either direction.
+ */
+export function takerFlowSignal(
+  {
+    imbalance,
+    deviation,
+  }: {
+    imbalance?: number | null
+    deviation?: number | null
+  },
+  t: Messages,
+): Signal | null {
+  if (imbalance == null || !Number.isFinite(imbalance)) return null
+  if (!isAnomalousChange(deviation, imbalance, MIN_TAKER_IMBALANCE)) return null
+
+  // Back to the share of the side that won it, which is the way anybody who
+  // trades reads this: 0.44 either way is 72% of the flow on one side.
+  const share = `${Math.round(((1 + Math.abs(imbalance)) / 2) * 100)}%`
+  return {
+    kind: 'taker',
+    deviation: deviation!,
+    label: t.signal.taker(share, imbalance > 0),
+    detail: t.signal.takerDetail(
+      share,
+      imbalance > 0,
+      formatSigmas(deviation!, t),
+    ),
+  }
+}
+
+/**
  * Open interest moving unusually fast, and which side it says is being taken
  * out. The quadrant is in the detail rather than in a second signal because it
  * is not a separate observation — it is this one read together with the price.
@@ -449,6 +509,57 @@ export function basisSignal(
 }
 
 /**
+ * The book charging far more than it usually does to cross it.
+ *
+ * Every other reading here reports something that has happened. This one reports
+ * the condition it would happen into: a spread that has tripled is market makers
+ * standing back, and it is why the next ordinary-sized order prints a candle
+ * instead of a tick. It is also the earliest of them — the quotes widen while
+ * the price is still where it was.
+ *
+ * Only ever a widening, on the same grounds the bar range is. A book quoting
+ * tighter than usual is a good afternoon to trade in and not news.
+ */
+export function spreadSignal(
+  {
+    bps,
+    baseline,
+  }: {
+    bps?: number | null
+    baseline?: Baseline | null
+  },
+  t: Messages,
+): Signal | null {
+  if (bps == null || !baseline) return null
+
+  const deviation = deviationFrom(bps, baseline)
+  if (!isAnomalous(deviation) || deviation! < 0) return null
+
+  // The floor the volume surge carries, and here it is the test doing the work
+  // rather than a backstop to the one above. A liquid book quotes exactly one
+  // tick for hours at a stretch, so almost all of its measured spread is the mid
+  // drifting under a fixed gap — over seventeen minutes of BTC the sigma came
+  // out at a hundred-thousandth of the mean. Three of a sigma that small is met
+  // by anything at all; being half again as wide as this book usually quotes is
+  // the part that means the makers have stepped back.
+  const multiple = bps / baseline.mean
+  if (multiple < SURGE_MULTIPLE) return null
+
+  const spread = formatBps(bps)
+  return {
+    kind: 'spread',
+    // No sigma, for the same reason a breakout carries none: on a series that
+    // sits on one value most of the time the count is a number in the hundreds
+    // that describes the yardstick rather than the event. The multiple is what
+    // a tick-quantised reading can honestly say about itself, and it is the same
+    // thing the volume surge says.
+    deviation: null,
+    label: t.signal.spread(spread),
+    detail: t.signal.spreadDetail(spread, multiple.toFixed(1)),
+  }
+}
+
+/**
  * Everything one instrument can be seen through at one moment. Flat and plain on
  * purpose: whoever assembles it — a card rendering, or the pass that walks the
  * whole board looking for something to announce — hands over the same shape, so
@@ -470,6 +581,13 @@ export interface SignalInput {
   oiChangeBaseline?: Baseline | null
   /** Already a deviation: the ratio arrives with its own history. */
   ratioDeviation?: number | null
+  /** Signed share of the bar's market orders, +1 all buying, -1 all selling. */
+  takerImbalance?: number | null
+  /** Also already a deviation: the split is polled with its own history. */
+  takerDeviation?: number | null
+  /** Best ask over best bid as a share of the mid, in basis points. */
+  spreadBps?: number | null
+  spreadBaseline?: Baseline | null
   fundingRate?: string
   fundingBaseline?: Baseline | null
   fundingShiftBaseline?: Baseline | null
@@ -514,6 +632,13 @@ export function collectSignals(input: SignalInput, t: Messages): Signal[] {
       t,
     ),
     volumeSignal({ stats, now: input.now }, t),
+    takerFlowSignal(
+      {
+        imbalance: input.takerImbalance,
+        deviation: input.takerDeviation,
+      },
+      t,
+    ),
     openInterestSignal(
       {
         oiPercent: input.oiPercent,
@@ -539,6 +664,7 @@ export function collectSignals(input: SignalInput, t: Messages): Signal[] {
       t,
     ),
     basisSignal({ last: input.last, indexPrice: input.indexPrice }, t),
+    spreadSignal({ bps: input.spreadBps, baseline: input.spreadBaseline }, t),
   ].filter((signal): signal is Signal => signal !== null)
 }
 

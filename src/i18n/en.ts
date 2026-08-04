@@ -72,7 +72,7 @@ export const en = {
     titleUnseen: (unseen: number) => `Alerts, ${unseen} new`,
     // Says what the list is a list of, so an empty one reads as nothing having
     // happened rather than as nothing working.
-    what: "When two of a symbol's readings leave their usual range at once — what the price did, whether volume and open interest were behind it, and what the book was already holding.",
+    what: "When two of a symbol's readings leave their usual range at once — what the price did, whether the volume, the side crossing the spread and open interest were behind it, and what the book was already holding and charging.",
     desktopNotifications: 'Desktop notifications',
     blocked: 'Blocked for this site in your browser settings.',
     unsupported: 'This browser does not support notifications.',
@@ -134,6 +134,14 @@ export const en = {
      */
     openInterestChange: (change: string) => `OI ${change}`,
     settlesIn: (countdown: string) => `settles in ${countdown}`,
+    /**
+     * The side of the last five minutes of market orders, on the volume chip's
+     * tooltip. Carried whenever it is known rather than only when it is
+     * unusual: how much traded and who was doing it are one question, and the
+     * chip already answers the first half.
+     */
+    takerFlow: (share: string, buying: boolean) =>
+      `takers ${share} ${buying ? 'buying' : 'selling'}`,
   },
 
   priceRange: {
@@ -240,6 +248,11 @@ export const en = {
     volumeDetail: (multiple: string, sigmas: string) =>
       `volume ${multiple}× its usual · ${sigmas}`,
 
+    taker: (share: string, buying: boolean) =>
+      `${share} ${buying ? 'buys' : 'sells'}`,
+    takerDetail: (share: string, buying: boolean, sigmas: string) =>
+      `${share} of takers ${buying ? 'buying' : 'selling'} · ${sigmas}`,
+
     openInterest: (change: string) => `OI ${change} 5m`,
     openInterestDetail: (change: string, sigmas: string) =>
       `OI ${change} in 5m · ${sigmas}`,
@@ -257,6 +270,15 @@ export const en = {
     basis: (basis: string) => `${basis} vs spot`,
     basisDetail: (basis: string, over: boolean) =>
       `${basis} ${over ? 'over' : 'under'} spot`,
+
+    spread: (spread: string) => `spread ${spread}`,
+    /**
+     * A multiple rather than a sigma, because a book that quotes one tick for
+     * hours has no spread of its own to be a sigma of. The volume surge says it
+     * the same way, and the two mean the same thing by it.
+     */
+    spreadDetail: (spread: string, multiple: string) =>
+      `spread ${spread}, ${multiple}× what this book usually quotes`,
   },
 
   /**

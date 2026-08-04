@@ -20,6 +20,36 @@ export const fetchOkxRatio = ({
     period,
   })
 
+/**
+ * `[ts, sellVol, buyVol]`, newest first, stamped with the bar's open. Sell
+ * before buy is the exchange's order and not a typo — it is checked against the
+ * candles for the same bars, where the second column is the one that moves with
+ * the return.
+ */
+export type OkxTakerVolumeRow = [ts: string, sellVol: string, buyVol: string]
+
+/**
+ * Which side the market orders were on, per bar. The candle series says how much
+ * changed hands and the price says which way it went, but neither says who was
+ * crossing the spread to make it happen — a bar that rose on seventy percent
+ * sell-side takers is somebody being absorbed, not somebody buying.
+ *
+ * Contract-level rather than the `ccy` endpoint next to it, so a USDT perpetual
+ * and a USDC one are not handed the same reading. The head row is the bar
+ * currently forming; 100 rows of five minutes is a little over eight hours,
+ * which is the same window the momentum baseline is taken over.
+ */
+export const fetchOkxTakerVolume = ({
+  instId,
+  period = '5m',
+  limit = 100,
+}: {
+  instId: string
+  period?: RubikPeriod
+  limit?: number
+}): Promise<OkxTakerVolumeRow[]> =>
+  okxProxyGet('/rubik/stat/taker-volume-contract', { instId, period, limit })
+
 type OkxFundingRateHistoryRow = {
   instId: string
   fundingRate: string

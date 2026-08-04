@@ -4,6 +4,7 @@ import { flagStateOf } from '../utils/signals'
 import { useMessages } from '../i18n'
 
 import { useOkxSeriesChange } from './useOkxSeries'
+import { useOkxSpreadRead } from './useOkxSpread'
 import {
   useFundingBaseline,
   useFundingPrev,
@@ -13,6 +14,7 @@ import {
   useMomentumBaseline,
   useOiChangeBaseline,
   useRatio,
+  useTakerFlow,
 } from './useTickerField'
 
 /**
@@ -39,6 +41,7 @@ export default function useOkxSignals(instId: string) {
 
   useKlineData(instId)
   useRatio(instId)
+  useTakerFlow(instId)
   useFundingRate(instId)
   useFundingBaseline(instId)
   useFundingShiftBaseline(instId)
@@ -46,6 +49,7 @@ export default function useOkxSignals(instId: string) {
   useMomentumBaseline(instId)
   useOiChangeBaseline(instId)
   useOkxSeriesChange(instId)
+  useOkxSpreadRead(instId)
 
   const signals = collectSignals(readSignalInput(instId), t)
   return { signals, flag: flagStateOf(signals, t) }

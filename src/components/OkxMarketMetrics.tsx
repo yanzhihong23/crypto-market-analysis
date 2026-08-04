@@ -6,6 +6,7 @@ import {
   useFundingTime,
   useOpenInterestOpen,
   useRatio,
+  useTakerFlow,
   useVolCcyQuote,
 } from '../hooks/useTickerField'
 import { useOkxOpenInterest, useOkxPercent } from '../hooks/useOkxOpenInterest'
@@ -22,6 +23,7 @@ import { metricChipSx, signalChipSx } from './metricChipSx'
 function OkxMarketMetrics({ instId }: { instId: string }) {
   const volCcyQuote = useVolCcyQuote(instId)
   const ratio = useRatio(instId)
+  const takerFlow = useTakerFlow(instId)
   const fundingRate = useFundingRate(instId)
   const fundingTime = useFundingTime(instId)
   const openInterest = useOkxOpenInterest(instId)
@@ -73,6 +75,7 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
   // so a chip and the ring around it can never tell different stories. Each chip
   // asks for its own and tints itself if it is there.
   const volumeSignal = signalOf(signals, 'volume')
+  const takerSignal = signalOf(signals, 'taker')
   const ratioSignal = signalOf(signals, 'ratio')
   const fundingSignal = signalOf(signals, 'funding')
   const fundingShiftSignal = signalOf(signals, 'funding-shift')
@@ -81,10 +84,28 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
   const chipTitle = (name: string, ...parts: (string | null | undefined)[]) =>
     [name, ...parts].filter(Boolean).join(' — ')
 
+  // Which side has been crossing the spread belongs to the volume chip rather
+  // than to a fifth one: how much traded and who was doing it are one question,
+  // and the chip already answers the first half. The signal's own sentence
+  // carries the same share plus how unusual it is, so it stands in rather than
+  // being added to.
+  const takerLine =
+    takerSignal?.detail ??
+    (takerFlow
+      ? t.metrics.takerFlow(
+          `${Math.round(((1 + Math.abs(takerFlow.imbalance)) / 2) * 100)}%`,
+          takerFlow.imbalance > 0,
+        )
+      : null)
+
   // Session volume on the chip, a surge inside the current bar in the tooltip:
   // the day's total is what the number is for, and a day's total barely moves
   // when fifteen minutes go mad.
-  const volumeTitle = chipTitle(t.metrics.quoteVolume, volumeSignal?.detail)
+  const volumeTitle = chipTitle(
+    t.metrics.quoteVolume,
+    volumeSignal?.detail,
+    takerLine,
+  )
   const ratioTitle = chipTitle(t.metrics.ratio, ratioSignal?.detail)
   // The chip only shows the countdown near the settlement; the tooltip carries
   // it whenever the feed knows one, which is where you look to find out how
@@ -127,7 +148,7 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
         <Chip
           size="small"
           aria-label={t.metrics.quoteVolumeAria}
-          sx={volumeSignal ? signalChipSx : metricChipSx}
+          sx={volumeSignal || takerSignal ? signalChipSx : metricChipSx}
           label={volumeLabel}
         />
       </Tooltip>

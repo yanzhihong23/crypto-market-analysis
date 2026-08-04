@@ -16,6 +16,7 @@ import {
   recordOkxPrice,
   setOkxIndexPrice,
 } from '../store/okxRealtimeSeries'
+import { recordOkxSpread } from '../store/okxRealtimeSpread'
 import {
   markFeedMessage,
   resetFeed,
@@ -144,6 +145,15 @@ export const useOkxTickers = () => {
         // to know what it was five minutes ago, and this is the only place that
         // sees each one before it is overwritten.
         recordOkxPrice(ticker.instId, Number(ticker.last), Number(ticker.ts))
+        // Best bid and best ask ride along on the same message and were being
+        // thrown away with it. What the book charges to cross it is the one
+        // reading here that describes the conditions rather than the event.
+        recordOkxSpread(
+          ticker.instId,
+          Number(ticker.bidPx),
+          Number(ticker.askPx),
+          Number(ticker.ts),
+        )
       } else if (res.arg.channel === OkxChannel.OPEN_INTEREST) {
         const { oi, ts } = res.data[0] as OkxOpenInterest
         setOkxOpenInterest(instId, oi)

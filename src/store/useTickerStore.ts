@@ -40,6 +40,21 @@ interface TickerStore {
     { value: string; deviation: number | null; updatedAt: number }
   >
   setRatio: (instId: string, ratio: string, deviation: number | null) => void
+  /**
+   * Which side the market orders have been on, as a signed share: +1 is every
+   * taker buying, -1 is every taker selling, 0 is an even fight. Kept alongside
+   * its deviation the way the ratio is, because both are read off a polled
+   * history and neither moves between polls.
+   */
+  takerFlow: Record<
+    string,
+    { imbalance: number; deviation: number | null; updatedAt: number }
+  >
+  setTakerFlow: (
+    instId: string,
+    imbalance: number,
+    deviation: number | null,
+  ) => void
   fundingRate: Record<string, string>
   /**
    * When the rate currently being quoted is actually charged. A funding rate
@@ -125,6 +140,7 @@ export const useTickerStore = create<TickerStore>()(
             klineData: without(state.klineData),
             volCcyQuote: without(state.volCcyQuote),
             ratio: without(state.ratio),
+            takerFlow: without(state.takerFlow),
             fundingRate: without(state.fundingRate),
             fundingTime: without(state.fundingTime),
             fundingBaseline: without(state.fundingBaseline),
@@ -157,6 +173,18 @@ export const useTickerStore = create<TickerStore>()(
           ratio: {
             ...state.ratio,
             [instId]: { value: ratio, deviation, updatedAt: Date.now() },
+          },
+        })),
+      takerFlow: {},
+      setTakerFlow: (
+        instId: string,
+        imbalance: number,
+        deviation: number | null,
+      ) =>
+        set((state) => ({
+          takerFlow: {
+            ...state.takerFlow,
+            [instId]: { imbalance, deviation, updatedAt: Date.now() },
           },
         })),
       fundingBaseline: {},

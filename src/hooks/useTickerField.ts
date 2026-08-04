@@ -44,6 +44,20 @@ export function useRatio(instId: string) {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
 
+export function useTakerFlow(instId: string) {
+  const read = useCallback(
+    (state: ReturnType<typeof useTickerStore.getState>) =>
+      state.takerFlow[instId],
+    [instId],
+  )
+  const subscribe = useCallback(
+    (listener: () => void) => subscribeInstField(read)(listener),
+    [read],
+  )
+  const getSnapshot = useCallback(() => getInstFieldSnapshot(read), [read])
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
 export function useFundingRate(instId: string) {
   const read = useCallback(
     (state: ReturnType<typeof useTickerStore.getState>) =>

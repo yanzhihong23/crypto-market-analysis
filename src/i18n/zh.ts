@@ -58,7 +58,7 @@ export const zh: Messages = {
   alerts: {
     title: '提醒',
     titleUnseen: (unseen) => `提醒，${unseen} 条未读`,
-    what: '当一个品种有两类指标同时偏离常态时提醒：价格做了什么、成交量与持仓量是否跟上，以及盘口原本持有什么。',
+    what: '当一个品种有两类指标同时偏离常态时提醒：价格做了什么、成交量与主动成交方向及持仓量是否跟上，以及盘口原本持有什么、开价多少。',
     desktopNotifications: '桌面通知',
     blocked: '已在浏览器设置中对本站禁用。',
     unsupported: '当前浏览器不支持通知。',
@@ -115,6 +115,7 @@ export const zh: Messages = {
     // label is this short, and the tooltip spells out 持仓量 anyway.
     openInterestChange: (change) => `OI ${change}`,
     settlesIn: (countdown) => `${countdown}后结算`,
+    takerFlow: (share, buying) => `主动成交 ${share} 为${buying ? '买' : '卖'}`,
   },
 
   priceRange: {
@@ -200,6 +201,10 @@ export const zh: Messages = {
     volumeDetail: (multiple, sigmas) =>
       `成交量为常态的 ${multiple}× · ${sigmas}`,
 
+    taker: (share, buying) => `${buying ? '买' : '卖'}盘 ${share}`,
+    takerDetail: (share, buying, sigmas) =>
+      `主动成交 ${share} 为${buying ? '买' : '卖'} · ${sigmas}`,
+
     openInterest: (change) => `持仓 ${change} 5分钟`,
     openInterestDetail: (change, sigmas) =>
       `持仓量 5分钟 ${change} · ${sigmas}`,
@@ -215,6 +220,10 @@ export const zh: Messages = {
 
     basis: (basis) => `${basis} 相对现货`,
     basisDetail: (basis, over) => `较现货${over ? '溢价' : '折价'} ${basis}`,
+
+    spread: (spread) => `价差 ${spread}`,
+    spreadDetail: (spread, multiple) =>
+      `盘口价差 ${spread}，为该品种常态的 ${multiple}×`,
   },
 
   flow: {

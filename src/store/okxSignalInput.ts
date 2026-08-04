@@ -17,6 +17,7 @@ import {
   getOkxSeriesChange,
   indexInstIdOf,
 } from './okxRealtimeSeries'
+import { getOkxSpread } from './okxRealtimeSpread'
 import { getOkxTickerSnapshot } from './okxRealtimeTicker'
 import { useTickerStore } from './useTickerStore'
 
@@ -30,6 +31,7 @@ export function readSignalInput(
   const state = useTickerStore.getState()
   const ticker = getOkxTickerSnapshot(instId)
   const change = getOkxSeriesChange(instId)
+  const spread = getOkxSpread(instId)
 
   return {
     last: Number(ticker?.last),
@@ -44,6 +46,10 @@ export function readSignalInput(
     momentumBaseline: state.momentumBaseline[instId],
     oiChangeBaseline: state.oiChangeBaseline[instId],
     ratioDeviation: state.ratio[instId]?.deviation,
+    takerImbalance: state.takerFlow[instId]?.imbalance,
+    takerDeviation: state.takerFlow[instId]?.deviation,
+    spreadBps: spread?.bps,
+    spreadBaseline: spread?.baseline,
     fundingRate: state.fundingRate[instId],
     fundingBaseline: state.fundingBaseline[instId],
     fundingShiftBaseline: state.fundingShiftBaseline[instId],
