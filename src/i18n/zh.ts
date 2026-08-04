@@ -66,6 +66,8 @@ export const zh: Messages = {
     onlyWhenAway: '仅在离开时提醒',
     awayMeans: '离开指当前窗口不在最前。',
     empty: '暂无触发记录',
+    recent: '最近提醒',
+    hide: '隐藏最近提醒',
   },
 
   addTicker: {

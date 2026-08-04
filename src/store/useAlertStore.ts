@@ -42,6 +42,16 @@ interface AlertStore {
   /** When the list was last opened, which is what the badge counts against. */
   seenAt: number
   markSeen: () => void
+  /**
+   * When the tape along the bottom was last waved away, which every entry on it
+   * is dated against. Separate from `seenAt` because the two answer different
+   * questions: opening the list means you have read it, while dismissing the
+   * tape only means you are done being shown it — and a later alert brings the
+   * strip back on its own, which is the whole reason this is a timestamp rather
+   * than a flag.
+   */
+  tapeDismissedAt: number
+  dismissTape: () => void
   notificationsEnabled: boolean
   setNotificationsEnabled: (enabled: boolean) => void
   soundEnabled: boolean
@@ -68,6 +78,8 @@ export const useAlertStore = create<AlertStore>()(
       clear: () => set({ alerts: [], seenAt: Date.now() }),
       seenAt: 0,
       markSeen: () => set({ seenAt: Date.now() }),
+      tapeDismissedAt: 0,
+      dismissTape: () => set({ tapeDismissedAt: Date.now() }),
       // Off until asked for. Turning either on is what gets the browser's own
       // permission prompt in front of someone who is expecting it.
       notificationsEnabled: false,

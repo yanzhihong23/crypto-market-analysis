@@ -81,6 +81,9 @@ export const en = {
     onlyWhenAway: 'Only when I am away',
     awayMeans: 'Away is this window not being the one in front.',
     empty: 'Nothing has fired yet',
+    /** Names the strip along the bottom, which has no room to name itself. */
+    recent: 'Recent alerts',
+    hide: 'Hide recent alerts',
   },
 
   addTicker: {
