@@ -23,6 +23,46 @@ import {
 import { numericFont } from '../fonts'
 import { useDateLocale, useMessages } from '../i18n'
 
+/**
+ * One channel and its switch. There are four of them now, and they only read as
+ * a list of things that can be turned on for as long as they are one shape.
+ */
+function ChannelSwitch({
+  label,
+  checked,
+  disabled,
+  onChange,
+}: {
+  label: string
+  checked: boolean
+  disabled?: boolean
+  onChange: (checked: boolean) => void
+}) {
+  return (
+    <Stack
+      direction="row"
+      sx={{
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}
+    >
+      <Typography
+        sx={{
+          fontSize: 14,
+        }}
+      >
+        {label}
+      </Typography>
+      <Switch
+        size="small"
+        checked={checked}
+        disabled={disabled}
+        onChange={(_, next) => onChange(next)}
+      />
+    </Stack>
+  )
+}
+
 export default function AlertBell() {
   const alerts = useAlertStore((state) => state.alerts)
   const seenAt = useAlertStore((state) => state.seenAt)
@@ -34,6 +74,8 @@ export default function AlertBell() {
   const setNotificationsEnabled = useAlertStore(
     (state) => state.setNotificationsEnabled,
   )
+  const tapeEnabled = useAlertStore((state) => state.tapeEnabled)
+  const setTapeEnabled = useAlertStore((state) => state.setTapeEnabled)
   const soundEnabled = useAlertStore((state) => state.soundEnabled)
   const setSoundEnabled = useAlertStore((state) => state.setSoundEnabled)
   const quietWhenPresent = useAlertStore((state) => state.quietWhenPresent)
@@ -150,94 +192,61 @@ export default function AlertBell() {
           </Typography>
 
           {/* The switches are their own group, spaced tighter than they are from
-              the paragraph, so the block reads as prose followed by controls. */}
-          <Stack sx={{ gap: 0.5 }}>
-            <Stack
-              direction="row"
-              sx={{
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: 14,
-                }}
-              >
-                {t.alerts.desktopNotifications}
-              </Typography>
-              <Switch
-                size="small"
+              the paragraph, so the block reads as prose followed by controls.
+              Two groups within that: the strip on the page, and then the two
+              channels that reach off it under the one condition they share. A
+              single run of four would have put "only when I am away" directly
+              beneath a channel it has nothing to do with. */}
+          <Stack sx={{ gap: 1.5 }}>
+            <ChannelSwitch
+              label={t.alerts.tape}
+              checked={tapeEnabled}
+              onChange={setTapeEnabled}
+            />
+
+            <Stack sx={{ gap: 0.5 }}>
+              <ChannelSwitch
+                label={t.alerts.desktopNotifications}
                 checked={notificationsEnabled}
                 disabled={denied || unsupported}
-                onChange={(_, checked) => void toggleNotifications(checked)}
+                onChange={(checked) => void toggleNotifications(checked)}
               />
-            </Stack>
-            {(denied || unsupported) && (
-              <Typography
-                sx={{
-                  fontSize: 12,
-                  color: 'text.secondary',
-                }}
-              >
-                {denied ? t.alerts.blocked : t.alerts.unsupported}
-              </Typography>
-            )}
+              {(denied || unsupported) && (
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    color: 'text.secondary',
+                  }}
+                >
+                  {denied ? t.alerts.blocked : t.alerts.unsupported}
+                </Typography>
+              )}
 
-            <Stack
-              direction="row"
-              sx={{
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: 14,
-                }}
-              >
-                {t.alerts.sound}
-              </Typography>
-              <Switch
-                size="small"
+              <ChannelSwitch
+                label={t.alerts.sound}
                 checked={soundEnabled}
-                onChange={(_, checked) => toggleSound(checked)}
+                onChange={toggleSound}
               />
-            </Stack>
 
-            {/* A condition on the two above rather than a channel of its own, so
-                it sits under them and carries the note that used to state the
-                rule. */}
-            <Stack
-              direction="row"
-              sx={{
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: 14,
-                }}
-              >
-                {t.alerts.onlyWhenAway}
-              </Typography>
-              <Switch
-                size="small"
+              {/* A condition on the two above rather than a channel of its own,
+                  so it sits under them and carries the note that used to state
+                  the rule. */}
+              <ChannelSwitch
+                label={t.alerts.onlyWhenAway}
                 checked={quietWhenPresent}
-                onChange={(_, checked) => setQuietWhenPresent(checked)}
+                onChange={setQuietWhenPresent}
               />
+              {quietWhenPresent && (
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    color: 'text.secondary',
+                  }}
+                >
+                  {t.alerts.awayMeans}
+                </Typography>
+              )}
             </Stack>
-            {quietWhenPresent && (
-              <Typography
-                sx={{
-                  fontSize: 12,
-                  color: 'text.secondary',
-                }}
-              >
-                {t.alerts.awayMeans}
-              </Typography>
-            )}
           </Stack>
         </Stack>
 

@@ -73,6 +73,12 @@ export const en = {
     // Says what the list is a list of, so an empty one reads as nothing having
     // happened rather than as nothing working.
     what: "When two of a symbol's readings leave their usual range at once — what the price did, whether the volume, the side crossing the spread, open interest and forced closures were behind it, and what the book was already holding and charging.",
+    /**
+     * Sits apart from the two below it, and above them: this is the channel
+     * that speaks on the page rather than off it, so the away condition that
+     * closes the group must not look like it applies here too.
+     */
+    tape: 'Tape along the bottom',
     desktopNotifications: 'Desktop notifications',
     blocked: 'Blocked for this site in your browser settings.',
     unsupported: 'This browser does not support notifications.',

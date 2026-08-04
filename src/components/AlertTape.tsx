@@ -70,6 +70,7 @@ const fade =
   'linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%)'
 
 function useRecentAlerts(): Alert[] {
+  const enabled = useAlertStore((state) => state.tapeEnabled)
   const alerts = useAlertStore((state) => state.alerts)
   const dismissedAt = useAlertStore((state) => state.tapeDismissedAt)
   const [now, setNow] = useState(() => Date.now())
@@ -84,10 +85,14 @@ function useRecentAlerts(): Alert[] {
 
   return useMemo(
     () =>
-      alerts
-        .filter((alert) => alert.at > dismissedAt && now - alert.at < RECENT)
-        .slice(0, MOST_RECENT),
-    [alerts, dismissedAt, now],
+      enabled
+        ? alerts
+            .filter(
+              (alert) => alert.at > dismissedAt && now - alert.at < RECENT,
+            )
+            .slice(0, MOST_RECENT)
+        : [],
+    [enabled, alerts, dismissedAt, now],
   )
 }
 

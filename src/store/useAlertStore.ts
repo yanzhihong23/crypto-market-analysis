@@ -43,6 +43,16 @@ interface AlertStore {
   seenAt: number
   markSeen: () => void
   /**
+   * Whether the strip along the bottom runs at all. On, because it is the only
+   * one of these channels that cannot interrupt anything — it says its piece on
+   * the page you are already looking at. Off is for the reader who cannot read
+   * a board with something moving on it, and it has to be a setting rather than
+   * the strip's own dismissal: that one clears the batch in front of you, so
+   * without this they would be closing it again every time a card fired.
+   */
+  tapeEnabled: boolean
+  setTapeEnabled: (enabled: boolean) => void
+  /**
    * When the tape along the bottom was last waved away, which every entry on it
    * is dated against. Separate from `seenAt` because the two answer different
    * questions: opening the list means you have read it, while dismissing the
@@ -78,6 +88,8 @@ export const useAlertStore = create<AlertStore>()(
       clear: () => set({ alerts: [], seenAt: Date.now() }),
       seenAt: 0,
       markSeen: () => set({ seenAt: Date.now() }),
+      tapeEnabled: true,
+      setTapeEnabled: (tapeEnabled: boolean) => set({ tapeEnabled }),
       tapeDismissedAt: 0,
       dismissTape: () => set({ tapeDismissedAt: Date.now() }),
       // Off until asked for. Turning either on is what gets the browser's own

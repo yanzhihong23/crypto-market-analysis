@@ -59,6 +59,7 @@ export const zh: Messages = {
     title: '提醒',
     titleUnseen: (unseen) => `提醒，${unseen} 条未读`,
     what: '当一个品种有两类指标同时偏离常态时提醒：价格做了什么、成交量与主动成交方向、持仓量与强平是否跟上，以及盘口原本持有什么、开价多少。',
+    tape: '底部提示条',
     desktopNotifications: '桌面通知',
     blocked: '已在浏览器设置中对本站禁用。',
     unsupported: '当前浏览器不支持通知。',
