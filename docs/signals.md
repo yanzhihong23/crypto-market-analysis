@@ -3,7 +3,7 @@
 What the board watches, how each reading decides it is unusual, and what has to
 agree before a card is worth crossing the grid for.
 
-Chinese version: [signals.zh.md](signals.zh.md).
+中文版：[signals.zh.md](signals.zh.md) · Back to the [README](../README.md).
 
 ## The method
 

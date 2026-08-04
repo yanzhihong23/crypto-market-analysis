@@ -2,7 +2,7 @@
 
 面板在看哪些读数、每一条如何判断「异常」，以及要几条同时成立才值得让一张卡片跨过整个网格叫住你。
 
-English version: [signals.md](signals.md).
+English version: [signals.md](signals.md) · 返回 [README](../README.md)。
 
 ## 方法
 
