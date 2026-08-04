@@ -12,10 +12,43 @@
 
 import { OkxKline } from '../types/okx'
 
-import { Baseline, baselineOf } from './signals'
+import { Baseline, baselineOf, medianOf } from './signals'
 
 /** What a series with no bar spacing to measure is assumed to be. */
 const FALLBACK_BAR_MS = 1000 * 60 * 15
+
+/**
+ * How many bars make up a stretch. Twenty-four of the five-minute bars the
+ * momentum baseline is taken over is two hours — long enough that a couple of
+ * quiet bars inside a busy afternoon do not make one, short enough to still be
+ * the stretch the price is in rather than the one it was in this morning.
+ */
+const COIL_BARS = 24
+
+/**
+ * Stretches needed before one of them can be called the quiet end of anything.
+ * The hundred-bar series this is taken over yields seventy-seven, so this is a
+ * guard against a short or gappy reply rather than a bar that is ever near.
+ */
+const MIN_COIL_WINDOWS = 40
+
+export interface Coil {
+  /** Mean bar range across the newest stretch, in percent. */
+  recent: number
+  /** The middle stretch of the series, which is what "usual" means here. */
+  typical: number
+  /**
+   * Share of the series' stretches this one is quieter than, 0 to 1.
+   *
+   * A percentile rather than a distance in sigmas, and deliberately: a bar range
+   * is bounded below by zero and has its whole tail on the upside, so the mean
+   * minus three sigmas is routinely a negative number and nothing could ever be
+   * three sigma *quiet*. Stretches overlap by all but one bar, so this is "how
+   * does the last two hours compare with every two hours in the series" and not
+   * a draw from anything independent — which is the question anyway.
+   */
+  quieterThan: number
+}
 
 export interface KlineStats {
   /** Bar length, taken off the series rather than assumed. */
@@ -28,6 +61,43 @@ export interface KlineStats {
   closed: OkxKline | null
   /** The bar still forming, when the feed sent one. */
   forming: OkxKline | null
+}
+
+/**
+ * How quiet the newest stretch of a series is against every other stretch in it.
+ *
+ * Takes its own candles rather than reading the sparkline's, and it has to: the
+ * board's candles are cut to the session open, so for the first half of every
+ * day there are not enough of them to have a quiet end — the reading would be
+ * missing exactly when the overnight range it describes is most worth knowing.
+ * The uncut hundred bars the momentum baseline already fetches have no such
+ * hole, and cost nothing extra, which is why this is called from there.
+ *
+ * Bars arrive newest first, so the newest stretch is the first window.
+ */
+export function coilOf(klines?: OkxKline[]): Coil | null {
+  const ranges = (klines ?? [])
+    .map((kline) => barRangePercent(kline))
+    .filter((value): value is number => value !== null)
+
+  const windows: number[] = []
+  for (let start = 0; start + COIL_BARS <= ranges.length; start++) {
+    let sum = 0
+    for (let i = start; i < start + COIL_BARS; i++) sum += ranges[i]
+    windows.push(sum / COIL_BARS)
+  }
+  if (windows.length < MIN_COIL_WINDOWS) return null
+
+  const recent = windows[0]
+  const typical = medianOf(windows)
+  if (typical === null || !(typical > 0)) return null
+
+  return {
+    recent,
+    typical,
+    quieterThan:
+      windows.filter((window) => window > recent).length / windows.length,
+  }
 }
 
 /** Range as a share of the close, which is what makes bars comparable at all. */

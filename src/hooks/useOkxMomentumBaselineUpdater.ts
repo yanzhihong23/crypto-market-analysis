@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { fetchOkxKlines } from '../apis'
 import { useTickerStore } from '../store/useTickerStore'
 import { Period } from '../types/okx'
+import { coilOf } from '../utils/klineStats'
 import { baselineOf } from '../utils/signals'
 
 /**
@@ -56,9 +57,20 @@ export default function useOkxMomentumBaselineUpdater() {
       })
       if (!res?.length) return
 
+      // The coil comes off the same candles and goes in on the same write. It
+      // wants an uncut series for its own reason — the board's are clipped to
+      // the session, so half of every day has too few of them to have a quiet
+      // end — and this is the only uncut series anything here fetches.
+      //
+      // Half an hour old at worst, which sounds careless for a two-hour window
+      // and is not: the case where a stale coil would be wrong is the coil
+      // breaking, and a break is a move, and a move puts the momentum reading in
+      // front of this one on the badge. What is left is the sentence underneath
+      // it saying how long the thing that just broke had been winding up.
       setMomentumBaseline(
         instId,
         baselineOf(returnsOf(res.map((kline) => Number(kline[4])))),
+        coilOf(res),
       )
     },
     [setMomentumBaseline],

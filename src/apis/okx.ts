@@ -21,6 +21,46 @@ export const fetchOkxRatio = ({
   })
 
 /**
+ * Everyone holding this contract, longs over shorts, counted by account.
+ *
+ * The `ccy` endpoint the card's chip reads hands one figure to every contract on
+ * a coin, and caps at a hundred rows where that one runs to two days. Both of
+ * those are wrong for a divergence: the crowd has to be the crowd in *this*
+ * contract, and it has to be stamped with the same bars the elite series is.
+ */
+export const fetchOkxContractRatio = ({
+  instId,
+  period = '5m',
+}: {
+  instId: string
+  period?: RubikPeriod
+}): Promise<OkxRatio[]> =>
+  okxProxyGet('/rubik/stat/contracts/long-short-account-ratio-contract', {
+    instId,
+    period,
+  })
+
+/**
+ * The top traders' positions, longs over shorts, weighted by size.
+ *
+ * Weighted rather than counted, which is what makes it worth putting next to the
+ * one above: the crowd figure is a show of hands and this one is a show of
+ * money, so the two disagreeing is a real disagreement and not two views of the
+ * same accounts.
+ */
+export const fetchOkxTopTraderPositionRatio = ({
+  instId,
+  period = '5m',
+}: {
+  instId: string
+  period?: RubikPeriod
+}): Promise<OkxRatio[]> =>
+  okxProxyGet(
+    '/rubik/stat/contracts/long-short-position-ratio-contract-top-trader',
+    { instId, period },
+  )
+
+/**
  * `[ts, sellVol, buyVol]`, newest first, stamped with the bar's open. Sell
  * before buy is the exchange's order and not a typo — it is checked against the
  * candles for the same bars, where the second column is the one that moves with

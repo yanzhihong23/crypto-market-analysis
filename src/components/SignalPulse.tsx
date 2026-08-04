@@ -8,6 +8,12 @@ import { numericFont } from '../fonts'
  * itself first, because it is the one with a number anybody wants; where that
  * move has got to second; and the shape of the bar last, since a range or a wick
  * is context for a move rather than news on its own.
+ *
+ * The coil is last of all, and it is the reason this badge is worth having on a
+ * quiet card: it is the only reading here that can be alone, so most of the time
+ * it appears the rest of this list is empty. When it is not — when a two-hour
+ * wind-up has just been broken by a five-minute move — the move is the news and
+ * the coil is why it is worth reading, which is what the tooltip is for.
  */
 const LEAD_ORDER: SignalKind[] = [
   'momentum',
@@ -15,6 +21,7 @@ const LEAD_ORDER: SignalKind[] = [
   'strength',
   'volatility',
   'rejection',
+  'compression',
 ]
 
 const leadRank = (kind: SignalKind) => {

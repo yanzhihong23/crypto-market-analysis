@@ -44,8 +44,10 @@ export function readSignalInput(
     // whole pass, which is the difference between a sort per symbol and one sort.
     boardPercent: boardPercent ?? boardMedianPricePercent(state.instIds),
     momentumBaseline: state.momentumBaseline[instId],
+    coil: state.coil[instId],
     oiChangeBaseline: state.oiChangeBaseline[instId],
     ratioDeviation: state.ratio[instId]?.deviation,
+    divergenceDeviation: state.divergence[instId]?.deviation,
     takerImbalance: state.takerFlow[instId]?.imbalance,
     takerDeviation: state.takerFlow[instId]?.deviation,
     spreadBps: spread?.bps,

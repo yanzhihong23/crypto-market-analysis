@@ -229,6 +229,15 @@ export const en = {
     volatilityDetail: (range: string, sigmas: string) =>
       `bar range ${range} · ${sigmas}`,
 
+    /**
+     * A multiple and a percentile rather than a sigma: a bar range cannot be
+     * three sigma quiet, since the mean less three of them is below zero.
+     */
+    compression: (share: string) => `coiled ${share}×`,
+    /** Eight hours, because that is the series the stretch is ranked within. */
+    compressionDetail: (share: string, quieterThan: number) =>
+      `last 2h ranging ${share}× its usual, quieter than ${quieterThan}% of the last 8h`,
+
     breakoutHigh: '24h high',
     breakoutHighDetail: 'at its 24h high',
     breakoutLow: '24h low',
@@ -259,6 +268,16 @@ export const en = {
 
     ratio: (sigmas: string) => `L/S ${sigmas}`,
     ratioDetail: (deviation: string) => `L/S ${deviation}`,
+
+    /**
+     * Which way round the two are standing, not which of them is long: the gap
+     * has a level of its own on every contract, and what fires is the gap
+     * widening from there.
+     */
+    divergence: (sigmas: string, eliteLonger: boolean) =>
+      `top ${eliteLonger ? 'long' : 'short'} vs crowd ${sigmas}`,
+    divergenceDetail: (sigmas: string, eliteLonger: boolean) =>
+      `top traders leaning ${eliteLonger ? 'longer' : 'shorter'} against the crowd than usual · ${sigmas}`,
 
     funding: (sigmas: string) => `funding ${sigmas}`,
     fundingDetail: (deviation: string) => `funding ${deviation}`,

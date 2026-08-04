@@ -148,9 +148,10 @@ export function formatSigmas(deviation: number, t: Messages) {
 export type SignalFamily = 'price' | 'flow' | 'positioning'
 
 export type SignalKind =
-  // Price: what just happened to the quote.
+  // Price: what just happened to the quote, or what conspicuously has not.
   | 'momentum'
   | 'volatility'
+  | 'compression'
   | 'breakout'
   | 'rejection'
   | 'strength'
@@ -160,6 +161,7 @@ export type SignalKind =
   | 'open-interest'
   // Positioning: what the book was holding, paying, and charging going in.
   | 'ratio'
+  | 'divergence'
   | 'funding'
   | 'funding-shift'
   | 'basis'
@@ -168,6 +170,7 @@ export type SignalKind =
 const SIGNAL_FAMILY: Record<SignalKind, SignalFamily> = {
   momentum: 'price',
   volatility: 'price',
+  compression: 'price',
   breakout: 'price',
   rejection: 'price',
   strength: 'price',
@@ -175,6 +178,7 @@ const SIGNAL_FAMILY: Record<SignalKind, SignalFamily> = {
   taker: 'flow',
   'open-interest': 'flow',
   ratio: 'positioning',
+  divergence: 'positioning',
   funding: 'positioning',
   'funding-shift': 'positioning',
   basis: 'positioning',
@@ -222,6 +226,24 @@ export interface FlagState {
 const FAMILY_ORDER: SignalFamily[] = ['price', 'flow', 'positioning']
 
 /**
+ * Readings that describe a state rather than an event, and so never put a card
+ * up on their own account.
+ *
+ * The compression is the whole of the list and the reason it exists. Every other
+ * reading here fires because something happened; that one fires because nothing
+ * has, for two hours, in less room than usual. It is worth saying — it is the
+ * only thing on the board that speaks before the event rather than during it —
+ * but a coil is by definition a card with nothing else going on, so letting it
+ * count towards the bar would put a ring on the quietest tenth of the board at
+ * all times and mean the ring no longer said anything.
+ *
+ * Excluded from the count, not from the reasons: when the coil does break, the
+ * five-minute move rings the card and the two hours of winding up that preceded
+ * it are the most useful sentence in the list.
+ */
+const NEVER_RINGS: SignalKind[] = ['compression']
+
+/**
  * Whether the card claims the ring, and what to say if it does.
  *
  * Two families, so that no single metric can ring a card on its own — every one
@@ -233,12 +255,13 @@ const FAMILY_ORDER: SignalFamily[] = ['price', 'flow', 'positioning']
  * it draws has not changed meaning.
  */
 export function flagStateOf(signals: Signal[], t: Messages): FlagState | null {
-  if (signals.length < 2) return null
+  const ringing = signals.filter((signal) => !NEVER_RINGS.includes(signal.kind))
+  if (ringing.length < 2) return null
 
   const families = FAMILY_ORDER.filter((family) =>
-    signals.some((signal) => SIGNAL_FAMILY[signal.kind] === family),
+    ringing.some((signal) => SIGNAL_FAMILY[signal.kind] === family),
   )
-  const positioningReadings = signals.filter(
+  const positioningReadings = ringing.filter(
     (signal) => SIGNAL_FAMILY[signal.kind] === 'positioning',
   ).length
 

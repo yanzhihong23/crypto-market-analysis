@@ -77,6 +77,7 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
   const volumeSignal = signalOf(signals, 'volume')
   const takerSignal = signalOf(signals, 'taker')
   const ratioSignal = signalOf(signals, 'ratio')
+  const divergenceSignal = signalOf(signals, 'divergence')
   const fundingSignal = signalOf(signals, 'funding')
   const fundingShiftSignal = signalOf(signals, 'funding-shift')
   const oiSignal = signalOf(signals, 'open-interest')
@@ -106,7 +107,14 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
     volumeSignal?.detail,
     takerLine,
   )
-  const ratioTitle = chipTitle(t.metrics.ratio, ratioSignal?.detail)
+  // Whether the biggest accounts agree with the crowd goes on the chip that
+  // carries what the crowd holds: the ratio is the show of hands, and this is
+  // the only thing that says whether the money is behind it.
+  const ratioTitle = chipTitle(
+    t.metrics.ratio,
+    ratioSignal?.detail,
+    divergenceSignal?.detail,
+  )
   // The chip only shows the countdown near the settlement; the tooltip carries
   // it whenever the feed knows one, which is where you look to find out how
   // long a rate has to be held through before it costs anything.
@@ -156,7 +164,7 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
         <Chip
           size="small"
           aria-label={t.metrics.ratioAria}
-          sx={ratioSignal ? signalChipSx : metricChipSx}
+          sx={ratioSignal || divergenceSignal ? signalChipSx : metricChipSx}
           label={ratioLabel}
         />
       </Tooltip>

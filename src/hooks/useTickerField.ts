@@ -58,6 +58,20 @@ export function useTakerFlow(instId: string) {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
 
+export function useDivergence(instId: string) {
+  const read = useCallback(
+    (state: ReturnType<typeof useTickerStore.getState>) =>
+      state.divergence[instId],
+    [instId],
+  )
+  const subscribe = useCallback(
+    (listener: () => void) => subscribeInstField(read)(listener),
+    [read],
+  )
+  const getSnapshot = useCallback(() => getInstFieldSnapshot(read), [read])
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
 export function useFundingRate(instId: string) {
   const read = useCallback(
     (state: ReturnType<typeof useTickerStore.getState>) =>
@@ -132,6 +146,19 @@ export function useMomentumBaseline(instId: string) {
   const read = useCallback(
     (state: ReturnType<typeof useTickerStore.getState>) =>
       state.momentumBaseline[instId],
+    [instId],
+  )
+  const subscribe = useCallback(
+    (listener: () => void) => subscribeInstField(read)(listener),
+    [read],
+  )
+  const getSnapshot = useCallback(() => getInstFieldSnapshot(read), [read])
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
+export function useCoil(instId: string) {
+  const read = useCallback(
+    (state: ReturnType<typeof useTickerStore.getState>) => state.coil[instId],
     [instId],
   )
   const subscribe = useCallback(

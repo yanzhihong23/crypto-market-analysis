@@ -6,6 +6,8 @@ import { useMessages } from '../i18n'
 import { useOkxSeriesChange } from './useOkxSeries'
 import { useOkxSpreadRead } from './useOkxSpread'
 import {
+  useCoil,
+  useDivergence,
   useFundingBaseline,
   useFundingPrev,
   useFundingRate,
@@ -41,12 +43,14 @@ export default function useOkxSignals(instId: string) {
 
   useKlineData(instId)
   useRatio(instId)
+  useDivergence(instId)
   useTakerFlow(instId)
   useFundingRate(instId)
   useFundingBaseline(instId)
   useFundingShiftBaseline(instId)
   useFundingPrev(instId)
   useMomentumBaseline(instId)
+  useCoil(instId)
   useOiChangeBaseline(instId)
   useOkxSeriesChange(instId)
   useOkxSpreadRead(instId)

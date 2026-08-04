@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 import { OkxInstrument, OkxKline, OpenTime, SortBy } from '../types/okx'
+import { Coil } from '../utils/klineStats'
 import { Baseline } from '../utils/signals'
 
 interface TickerStore {
@@ -55,6 +56,17 @@ interface TickerStore {
     imbalance: number,
     deviation: number | null,
   ) => void
+  /**
+   * How far the elite position ratio is sitting from the crowd's account ratio,
+   * as a difference of logs, with how unusual that is for this contract. Held
+   * like the ratio for the same reason: both are read off a polled history and
+   * neither moves between polls.
+   */
+  divergence: Record<
+    string,
+    { gap: number; deviation: number | null; updatedAt: number }
+  >
+  setDivergence: (instId: string, gap: number, deviation: number | null) => void
   fundingRate: Record<string, string>
   /**
    * When the rate currently being quoted is actually charged. A funding rate
@@ -92,7 +104,18 @@ interface TickerStore {
    */
   momentumBaseline: Record<string, Baseline | null>
   momentumBaselineAt: Record<string, number>
-  setMomentumBaseline: (instId: string, baseline: Baseline | null) => void
+  /**
+   * How quiet the last two hours have been against the eight behind them. Off
+   * the same uncut candles as the baseline above and written with it, because
+   * the board's own candles are cut to the session and have too few bars to
+   * answer this for the first half of every day.
+   */
+  coil: Record<string, Coil | null>
+  setMomentumBaseline: (
+    instId: string,
+    baseline: Baseline | null,
+    coil: Coil | null,
+  ) => void
   /** The same, for five-minute open interest changes. */
   oiChangeBaseline: Record<string, Baseline | null>
   setOiChangeBaseline: (instId: string, baseline: Baseline | null) => void
@@ -141,6 +164,7 @@ export const useTickerStore = create<TickerStore>()(
             volCcyQuote: without(state.volCcyQuote),
             ratio: without(state.ratio),
             takerFlow: without(state.takerFlow),
+            divergence: without(state.divergence),
             fundingRate: without(state.fundingRate),
             fundingTime: without(state.fundingTime),
             fundingBaseline: without(state.fundingBaseline),
@@ -149,6 +173,7 @@ export const useTickerStore = create<TickerStore>()(
             fundingBaselineAt: without(state.fundingBaselineAt),
             momentumBaseline: without(state.momentumBaseline),
             momentumBaselineAt: without(state.momentumBaselineAt),
+            coil: without(state.coil),
             oiChangeBaseline: without(state.oiChangeBaseline),
             openInterestOpen: without(state.openInterestOpen),
           }
@@ -187,6 +212,14 @@ export const useTickerStore = create<TickerStore>()(
             [instId]: { imbalance, deviation, updatedAt: Date.now() },
           },
         })),
+      divergence: {},
+      setDivergence: (instId: string, gap: number, deviation: number | null) =>
+        set((state) => ({
+          divergence: {
+            ...state.divergence,
+            [instId]: { gap, deviation, updatedAt: Date.now() },
+          },
+        })),
       fundingBaseline: {},
       fundingShiftBaseline: {},
       fundingPrev: {},
@@ -211,9 +244,15 @@ export const useTickerStore = create<TickerStore>()(
         })),
       momentumBaseline: {},
       momentumBaselineAt: {},
-      setMomentumBaseline: (instId: string, baseline: Baseline | null) =>
+      coil: {},
+      setMomentumBaseline: (
+        instId: string,
+        baseline: Baseline | null,
+        coil: Coil | null,
+      ) =>
         set((state) => ({
           momentumBaseline: { ...state.momentumBaseline, [instId]: baseline },
+          coil: { ...state.coil, [instId]: coil },
           momentumBaselineAt: {
             ...state.momentumBaselineAt,
             [instId]: Date.now(),

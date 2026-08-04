@@ -184,6 +184,10 @@ export const zh: Messages = {
     volatility: (range) => `振幅 ${range}`,
     volatilityDetail: (range, sigmas) => `K线振幅 ${range} · ${sigmas}`,
 
+    compression: (share) => `盘整 ${share}×`,
+    compressionDetail: (share, quieterThan) =>
+      `近 2 小时振幅为常态的 ${share}×，窄于近 8 小时内 ${quieterThan}% 的时段`,
+
     breakoutHigh: '24小时新高',
     breakoutHighDetail: '正处于24小时最高价',
     breakoutLow: '24小时新低',
@@ -211,6 +215,11 @@ export const zh: Messages = {
 
     ratio: (sigmas) => `多空比 ${sigmas}`,
     ratioDetail: (deviation) => `多空比${deviation}`,
+
+    divergence: (sigmas, eliteLonger) =>
+      `大户${eliteLonger ? '偏多' : '偏空'} ${sigmas}`,
+    divergenceDetail: (sigmas, eliteLonger) =>
+      `大户持仓较散户异常${eliteLonger ? '偏多' : '偏空'} · ${sigmas}`,
 
     funding: (sigmas) => `资金费率 ${sigmas}`,
     fundingDetail: (deviation) => `资金费率${deviation}`,

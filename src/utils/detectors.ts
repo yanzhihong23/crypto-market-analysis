@@ -33,6 +33,7 @@ import {
   isAnomalousChange,
 } from './signals'
 import {
+  Coil,
   KlineStats,
   barRangePercent,
   klineStatsOf,
@@ -99,6 +100,25 @@ const MIN_FUNDING_SHIFT = 1
 const MIN_TAKER_IMBALANCE = 0.15
 
 /**
+ * How far down its own session a stretch has to sit before it is a coil. The
+ * bottom tenth, which is a looser bar than the three sigmas everything else is
+ * held to and has to be: this is a percentile of a series that always has a
+ * bottom tenth, so unlike the sigma tests it flags roughly a tenth of the board
+ * at all times rather than nothing on a calm afternoon. That is the right shape
+ * for the one reading here that is a state rather than an event — "which of
+ * these is quietest right now" always has an answer, and is the question.
+ */
+const COIL_PERCENTILE = 0.9
+
+/**
+ * And how much tighter than its usual, so that a day with no range to speak of
+ * does not report its quietest two hours as news. A fifth below the middle
+ * stretch is the materiality half of the test — the percentile says where in the
+ * day this sits, and this says the day had somewhere to sit.
+ */
+const MAX_COIL_SHARE = 0.8
+
+/**
  * The five-minute move, against the spread of this instrument's own five-minute
  * moves. Measured off the live buffer rather than a candle so it lands within
  * seconds of the move instead of at the end of the bar containing it.
@@ -158,6 +178,53 @@ export function volatilitySignal(
     deviation,
     label: t.signal.volatility(rangeLabel),
     detail: t.signal.volatilityDetail(rangeLabel, formatSigmas(deviation!, t)),
+  }
+}
+
+/**
+ * The last couple of hours trading in less room than this instrument has taken
+ * all session. The one reading on this board that fires before something happens
+ * rather than while it is happening — a range winds in ahead of the move that
+ * unwinds it, and that is the whole of its usefulness.
+ *
+ * It is the mirror of the expansion above, and it is a separate function rather
+ * than a sign flip on that one because the two are not the same measurement
+ * upside down. An expansion is one bar against the spread of bars, and it can be
+ * read the moment the bar closes. A compression is not visible in any one bar —
+ * a single narrow bar inside a busy afternoon is nothing — so it has to be a
+ * stretch of them, measured against every other stretch of the same length.
+ *
+ * Never rings on its own, and `signals.ts` is where that is arranged rather than
+ * here: a coil is by construction a card with nothing else going on, so a rule
+ * that let it ring would ring the quietest tenth of the board at all times. What
+ * it is for is the badge, and for riding along in the reasons when the coil
+ * finally breaks — a two-hour wind-up under a five-minute move is the pair worth
+ * having, and both are true at once for exactly as long as that is interesting.
+ */
+export function compressionSignal(
+  {
+    coil,
+  }: {
+    coil?: Coil | null
+  },
+  t: Messages,
+): Signal | null {
+  if (!coil) return null
+  if (coil.quieterThan < COIL_PERCENTILE) return null
+
+  const share = coil.recent / coil.typical
+  if (share > MAX_COIL_SHARE) return null
+
+  const shareLabel = share.toFixed(1)
+  return {
+    kind: 'compression',
+    // A percentile, not a distance, and the reasons list sorts on distances.
+    deviation: null,
+    label: t.signal.compression(shareLabel),
+    detail: t.signal.compressionDetail(
+      shareLabel,
+      Math.round(coil.quieterThan * 100),
+    ),
   }
 }
 
@@ -423,6 +490,43 @@ export function ratioSignal(
   }
 }
 
+/**
+ * The money and the show of hands standing further apart than they usually do.
+ *
+ * The ratio above says what everybody holds. This says whether the accounts
+ * holding the most agree with them — the crowd figure counts heads and the elite
+ * figure weighs size, so the two parting is people with something at stake
+ * taking the other side rather than one crowd described twice.
+ *
+ * No floor on the gap itself, unlike the readings that measure a change. The gap
+ * has a level of its own that is nothing like zero and differs by an order of
+ * magnitude across the board, so a floor in its units would mean a different
+ * thing on every instrument; and the series earns the sigma test honestly —
+ * across eight hours of BTC, ETH, SUI and DOGE nothing came within a fifth of
+ * three sigma, so three of them is already the rare event it is meant to be.
+ */
+export function divergenceSignal(
+  {
+    deviation,
+  }: {
+    deviation?: number | null
+  },
+  t: Messages,
+): Signal | null {
+  if (!isAnomalous(deviation)) return null
+  return {
+    kind: 'divergence',
+    deviation: deviation!,
+    // Above means the elite side is the longer of the two against its own
+    // normal, which is the direction anybody reading this wants first.
+    label: t.signal.divergence(formatSigmas(deviation!, t), deviation! > 0),
+    detail: t.signal.divergenceDetail(
+      formatSigmas(deviation!, t),
+      deviation! > 0,
+    ),
+  }
+}
+
 export function fundingSignal(
   {
     rate,
@@ -578,9 +682,17 @@ export interface SignalInput {
   /** The middle of the board's five-minute moves, to net the market out. */
   boardPercent?: number | null
   momentumBaseline?: Baseline | null
+  /**
+   * How quiet the last two hours have been. Off the uncut candles the momentum
+   * baseline is taken over rather than off `klines`, which are cut to the
+   * session and too few of them to answer this for half of every day.
+   */
+  coil?: Coil | null
   oiChangeBaseline?: Baseline | null
   /** Already a deviation: the ratio arrives with its own history. */
   ratioDeviation?: number | null
+  /** The same, for the gap between the elite and crowd ratios. */
+  divergenceDeviation?: number | null
   /** Signed share of the bar's market orders, +1 all buying, -1 all selling. */
   takerImbalance?: number | null
   /** Also already a deviation: the split is polled with its own history. */
@@ -614,6 +726,7 @@ export function collectSignals(input: SignalInput, t: Messages): Signal[] {
       t,
     ),
     volatilitySignal({ stats }, t),
+    compressionSignal({ coil: input.coil }, t),
     breakoutSignal(
       {
         last: input.last,
@@ -648,6 +761,7 @@ export function collectSignals(input: SignalInput, t: Messages): Signal[] {
       t,
     ),
     ratioSignal({ deviation: input.ratioDeviation }, t),
+    divergenceSignal({ deviation: input.divergenceDeviation }, t),
     fundingSignal(
       {
         rate: input.fundingRate,

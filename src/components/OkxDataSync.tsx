@@ -4,6 +4,7 @@ import useOkxInstrumentsUpdater from '../hooks/useOkxInstrumentsUpdater'
 import useOkxKlinesUpdater from '../hooks/useOkxKlinesUpdater'
 import useOkxRatioUpdater from '../hooks/useOkxRatioUpdater'
 import useOkxTakerFlowUpdater from '../hooks/useOkxTakerFlowUpdater'
+import useOkxDivergenceUpdater from '../hooks/useOkxDivergenceUpdater'
 import useOkxFundingBaselineUpdater from '../hooks/useOkxFundingBaselineUpdater'
 import useOkxMomentumBaselineUpdater from '../hooks/useOkxMomentumBaselineUpdater'
 import useOkxOpenInterestUpdater from '../hooks/useOkxOpenInterestUpdater'
@@ -17,6 +18,7 @@ export default function OkxDataSync() {
   useOkxKlinesUpdater()
   const { updateRatioByInstId } = useOkxRatioUpdater()
   const { updateTakerFlowByInstId } = useOkxTakerFlowUpdater()
+  const { updateDivergenceByInstId } = useOkxDivergenceUpdater()
   const { updateFundingBaselineByInstId } = useOkxFundingBaselineUpdater()
   const { updateMomentumBaselineByInstId } = useOkxMomentumBaselineUpdater()
   const { updateOpenInterestOpenByInstId } = useOkxOpenInterestUpdater()
@@ -27,6 +29,7 @@ export default function OkxDataSync() {
       await add(instId)
       await updateRatioByInstId(instId)
       await updateTakerFlowByInstId(instId)
+      await updateDivergenceByInstId(instId)
       await updateFundingBaselineByInstId(instId)
       await updateMomentumBaselineByInstId(instId)
       await updateOpenInterestOpenByInstId(instId)
@@ -37,6 +40,7 @@ export default function OkxDataSync() {
     remove,
     updateRatioByInstId,
     updateTakerFlowByInstId,
+    updateDivergenceByInstId,
     updateFundingBaselineByInstId,
     updateMomentumBaselineByInstId,
     updateOpenInterestOpenByInstId,
