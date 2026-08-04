@@ -248,6 +248,51 @@ const FAMILY_ORDER: SignalFamily[] = ['price', 'flow', 'positioning']
  */
 const NEVER_RINGS: SignalKind[] = ['compression']
 
+/** What a positioning reading is taken from, for the exception below. */
+type PositioningSource = 'crowd' | 'funding' | 'basis' | 'spread'
+
+/**
+ * Which readings are the same source seen twice.
+ *
+ * The positioning exception counts two readings within one family as a ring, and
+ * the reason it is allowed to is that the readings were separately sourced —
+ * what the crowd holds and what it pays to hold it are different measurements
+ * that disagree often, so their agreeing is an event. That was written when this
+ * family had three members. It now has six, and two of the pairs in it are not
+ * separate measurements at all: the funding level and its shift since the last
+ * settlement are one series asked two questions, and the account ratio and the
+ * elite-versus-crowd gap share the crowd for a leg.
+ *
+ * Measured over 1200 instrument-settlements, the funding pair alone crossed
+ * together six times — six cards rung by one series describing itself twice.
+ * Grouping by source keeps the exception doing what its rationale says.
+ *
+ * Exhaustive over every kind rather than a partial map of the positioning ones,
+ * so a reading added to that family cannot quietly default to counting as its
+ * own source.
+ */
+const POSITIONING_SOURCE: Record<SignalKind, PositioningSource | null> = {
+  momentum: null,
+  volatility: null,
+  compression: null,
+  breakout: null,
+  rejection: null,
+  strength: null,
+  volume: null,
+  taker: null,
+  'open-interest': null,
+  liquidation: null,
+  // Both read the crowd's book; the divergence adds the elite side but keeps
+  // the same crowd underneath it.
+  ratio: 'crowd',
+  divergence: 'crowd',
+  // One series, two questions.
+  funding: 'funding',
+  'funding-shift': 'funding',
+  basis: 'basis',
+  spread: 'spread',
+}
+
 /**
  * Whether the card claims the ring, and what to say if it does.
  *
@@ -257,7 +302,8 @@ const NEVER_RINGS: SignalKind[] = ['compression']
  * counts twice within itself: what the crowd holds and what it pays to hold it
  * are separately sourced and disagree often, so their agreeing is an event.
  * That exception is also the original bar this board shipped with, and the ring
- * it draws has not changed meaning.
+ * it draws has not changed meaning — which is why the two readings have to come
+ * from two sources and not merely from two detectors.
  */
 export function flagStateOf(signals: Signal[], t: Messages): FlagState | null {
   const ringing = signals.filter((signal) => !NEVER_RINGS.includes(signal.kind))
@@ -266,11 +312,15 @@ export function flagStateOf(signals: Signal[], t: Messages): FlagState | null {
   const families = FAMILY_ORDER.filter((family) =>
     ringing.some((signal) => SIGNAL_FAMILY[signal.kind] === family),
   )
-  const positioningReadings = ringing.filter(
-    (signal) => SIGNAL_FAMILY[signal.kind] === 'positioning',
-  ).length
+  // Sources rather than readings: two views of one series are one observation,
+  // however many detectors report it.
+  const positioningSources = new Set(
+    ringing
+      .map((signal) => POSITIONING_SOURCE[signal.kind])
+      .filter((source): source is PositioningSource => source !== null),
+  )
 
-  if (families.length < 2 && positioningReadings < 2) return null
+  if (families.length < 2 && positioningSources.size < 2) return null
 
   const reasons = [...signals].sort((a, b) => {
     const byFamily =

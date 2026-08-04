@@ -466,6 +466,29 @@ export function takerFlowSignal(
  * Measured against open interest so the number travels: five hundred contracts
  * is a rounding error on BTC and the whole book on a small cap.
  */
+/** Contracts closed out over contracts open, in percent, or null without both. */
+const liquidatedShareOf = (
+  liquidation?: { long: number; short: number } | null,
+  openInterest?: number | null,
+) => {
+  if (!liquidation || !openInterest || !(openInterest > 0)) return null
+  return ((liquidation.long + liquidation.short) / openInterest) * 100
+}
+
+/**
+ * Whether the exchange has given its own account of the forcing on this
+ * instrument. Shared with the open interest reading below, which stops guessing
+ * at the side once this is true — both read the same input, so neither has to
+ * know what the other decided.
+ */
+const hasObservedLiquidation = (
+  liquidation?: { long: number; short: number } | null,
+  openInterest?: number | null,
+) => {
+  const share = liquidatedShareOf(liquidation, openInterest)
+  return share !== null && share >= MIN_LIQUIDATED_SHARE
+}
+
 export function liquidationSignal(
   {
     liquidation,
@@ -476,11 +499,9 @@ export function liquidationSignal(
   },
   t: Messages,
 ): Signal | null {
-  if (!liquidation || !openInterest || !(openInterest > 0)) return null
-
-  const total = liquidation.long + liquidation.short
-  const share = (total / openInterest) * 100
-  if (share < MIN_LIQUIDATED_SHARE) return null
+  const share = liquidatedShareOf(liquidation, openInterest)
+  if (share === null || share < MIN_LIQUIDATED_SHARE || !liquidation)
+    return null
 
   // Which side was carried out, not which side was bigger by a hair: the pair is
   // reported as one event and the dominant side is what it is about.
@@ -500,16 +521,26 @@ export function liquidationSignal(
  * Open interest moving unusually fast, and which side it says is being taken
  * out. The quadrant is in the detail rather than in a second signal because it
  * is not a separate observation — it is this one read together with the price.
+ *
+ * And it is dropped entirely once the exchange has said which side went. The
+ * quadrant is an inference from two numbers that each have other explanations;
+ * a liquidation is the thing itself. Carrying both put the same sentence on the
+ * chip twice in different words, once hedged and once not, with the hedged one
+ * first.
  */
 export function openInterestSignal(
   {
     oiPercent,
     pricePercent,
     baseline,
+    liquidation,
+    openInterest,
   }: {
     oiPercent?: number | null
     pricePercent?: number | null
     baseline?: Baseline | null
+    liquidation?: { long: number; short: number } | null
+    openInterest?: number | null
   },
   t: Messages,
 ): Signal | null {
@@ -520,7 +551,9 @@ export function openInterestSignal(
     return null
 
   const read =
-    pricePercent == null ? null : squeezeRead(pricePercent, oiPercent)
+    pricePercent == null || hasObservedLiquidation(liquidation, openInterest)
+      ? null
+      : squeezeRead(pricePercent, oiPercent)
   const change = formatPercent(oiPercent)
   const detail = t.signal.openInterestDetail(
     change,
@@ -831,6 +864,8 @@ export function collectSignals(input: SignalInput, t: Messages): Signal[] {
         oiPercent: input.oiPercent,
         pricePercent: input.pricePercent,
         baseline: input.oiChangeBaseline,
+        liquidation: input.liquidation,
+        openInterest: input.openInterest,
       },
       t,
     ),
