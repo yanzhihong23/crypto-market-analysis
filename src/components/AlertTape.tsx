@@ -2,7 +2,14 @@ import { keyframes } from '@emotion/react'
 import { Box, IconButton, Stack, Tooltip } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import {
+  Fragment,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { formatDistanceToNowStrict } from 'date-fns'
 
 import { Alert, useAlertStore } from '../store/useAlertStore'
@@ -30,16 +37,25 @@ const TAPE_HEIGHT = 34
 
 /**
  * How far back the strip reaches. The log keeps fifty entries so that "what
- * happened while I was out" has an answer; the tape is a different claim — that
- * this is live — and an hour is about as long as a reading stays that.
+ * happened while I was out" has an answer; the tape makes a stronger claim —
+ * that this is still what the board is doing — and the readings underneath it
+ * are five-minute ones. Three of those is about as long as that holds.
  */
-const RECENT = 60 * 60 * 1000
+const RECENT = 15 * 60 * 1000
 
 /**
  * Enough to be a tape rather than a headline, and few enough that the loop comes
  * back round while the first entry is still worth reading.
  */
 const MOST_RECENT = 12
+
+/**
+ * How much of an entry the strip carries. `flagStateOf` hands over every reading
+ * that was out of range, which on a symbol doing several things at once is more
+ * than fits on a line anybody reads to the end of. The same three the desktop
+ * notification takes, for the same reason: the bell is where all of them are.
+ */
+const MOST_REASONS = 3
 
 /** Pixels a second: slow enough to finish reading an entry that is leaving. */
 const SPEED = 40
@@ -63,6 +79,19 @@ const groupSx = {
   flexShrink: 0,
   gap: 3,
   pr: 3,
+} as const
+
+/**
+ * Between the readings within an entry. A middle dot would not do it: every
+ * reading already spells itself with one, so the mark that separated two of them
+ * would be the same mark that joins a move to its sigma. This is the rule the
+ * top bar uses to hold two kinds of thing apart, at the size this line reads at.
+ */
+const ruleSx = {
+  width: '1px',
+  height: 10,
+  flexShrink: 0,
+  backgroundColor: 'surface.marker',
 } as const
 
 /** Entries do not stop dead at the edges; they arrive and leave. */
@@ -175,18 +204,33 @@ export default function AlertTape() {
       <Box component="span" sx={{ fontWeight: 600 }}>
         {alert.instId.split('-')[0]}
       </Box>
-      <Box component="span" sx={{ color: 'text.secondary' }}>
-        {alert.headline}
-      </Box>
+      {/* What kind of event it was, then what it was made of — the same order,
+          and the same two weights, the bell puts them in. A headline on its own
+          says a card is worth looking at; the readings are what let you decide
+          from here whether it is. */}
+      <Box component="span">{alert.headline}</Box>
+      {alert.reasons.slice(0, MOST_REASONS).map((reason) => (
+        <Fragment key={reason.kind}>
+          <Box sx={ruleSx} />
+          <Box
+            component="span"
+            sx={{ ...numericFont, color: 'text.secondary' }}
+          >
+            {reason.detail}
+          </Box>
+        </Fragment>
+      ))}
       {/* Which is the difference between "this is happening" and "this happened
-          while you were making coffee". */}
+          while you were making coffee". Set apart from the readings rather than
+          ruled off them: it is not one of them. */}
       <Box
         component="span"
         sx={{
           ...numericFont,
+          ml: 0.5,
           fontSize: 11,
           color: 'text.secondary',
-          opacity: 0.75,
+          opacity: 0.6,
         }}
       >
         {formatDistanceToNowStrict(alert.at, {
