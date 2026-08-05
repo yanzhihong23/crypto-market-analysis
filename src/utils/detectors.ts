@@ -34,6 +34,7 @@ import {
 } from './signals'
 import {
   Coil,
+  DailyStats,
   KlineStats,
   barRangePercent,
   klineStatsOf,
@@ -249,25 +250,97 @@ export function compressionSignal(
 }
 
 /**
+ * Which end of a longer range the price has left, if it has left one.
+ *
+ * The month first, then the week: the two windows are nested, so a price through
+ * the month's high is through the week's as well, and the month is what anybody
+ * would say out loud about it.
+ *
+ * Shared with the day's breakout below, which stands down once this fires. Both
+ * read the same price against different memories, so neither has to know what
+ * the other decided.
+ */
+const rangeBreakOf = (last: number, daily?: DailyStats | null) => {
+  if (!daily || !(last > 0)) return null
+  if (
+    ((daily.high30d - daily.low30d) / last) * 100 <
+    MIN_BREAKOUT_RANGE_PERCENT
+  )
+    return null
+
+  if (last >= daily.high30d) return { days: 30, high: true }
+  if (last <= daily.low30d) return { days: 30, high: false }
+  if (last >= daily.high7d) return { days: 7, high: true }
+  if (last <= daily.low7d) return { days: 7, high: false }
+  return null
+}
+
+/**
+ * Through the high or low of a week or a month of daily bars.
+ *
+ * The day's breakout below is the same shape with a shorter memory, and the two
+ * are worth having together rather than instead of each other: a new 24h high a
+ * tenth of the way up the month is a bounce inside a range, and the same high
+ * taking out the month is the range ending. This one is the reason the medium
+ * term layer was worth building at all — everything else it holds is a state
+ * that is true for days, and this is the moment one of them stops being true.
+ *
+ * Measured against closed daily bars, so a price at a new monthly high is
+ * genuinely above every bar behind it rather than above a bar it is itself still
+ * writing. No sigma, for the reason the day's breakout carries none: this is a
+ * fact about where the price is, not a distance from anywhere.
+ */
+export function rangeBreakSignal(
+  {
+    last,
+    daily,
+  }: {
+    last: number
+    daily?: DailyStats | null
+  },
+  t: Messages,
+): Signal | null {
+  const broken = rangeBreakOf(last, daily)
+  if (!broken) return null
+
+  return {
+    kind: 'range-break',
+    deviation: null,
+    label: t.signal.rangeBreak(broken.days, broken.high),
+    detail: t.signal.rangeBreakDetail(broken.days, broken.high),
+  }
+}
+
+/**
  * At the edge of the day's range. No baseline and no sigma: this is a fact about
  * where the price is, not a distance from anywhere, and dressing it up as one
  * would invent a number.
+ *
+ * Silent once the longer range above has broken, which it usually has whenever
+ * this would fire — a price at a monthly high is at a daily high by
+ * construction. Carrying both put "24h high · 30d high" in the list where the
+ * second says everything the first does and more, the way the open interest
+ * reading drops its inferred quadrant once the exchange has named the side.
+ * They are one family either way, so nothing about the ring turns on this.
  */
 export function breakoutSignal(
   {
     last,
     high24h,
     low24h,
+    daily,
   }: {
     last: number
     high24h: number
     low24h: number
+    daily?: DailyStats | null
   },
   t: Messages,
 ): Signal | null {
   if (!(last > 0) || !(high24h > 0) || !(low24h > 0)) return null
   if (((high24h - low24h) / last) * 100 < MIN_BREAKOUT_RANGE_PERCENT)
     return null
+  if (rangeBreakOf(last, daily)) return null
 
   if (last >= high24h) {
     return {
@@ -788,6 +861,12 @@ export interface SignalInput {
    * session and too few of them to answer this for half of every day.
    */
   coil?: Coil | null
+  /**
+   * A month and a week of daily bars. Fetched for the medium-term layer, which
+   * mostly reports states this file has no business in; the one thing in it that
+   * is an event — the price leaving that range — belongs here.
+   */
+  daily?: DailyStats | null
   oiChangeBaseline?: Baseline | null
   /** Already a deviation: the ratio arrives with its own history. */
   ratioDeviation?: number | null
@@ -827,11 +906,13 @@ export function collectSignals(input: SignalInput, t: Messages): Signal[] {
     ),
     volatilitySignal({ stats }, t),
     compressionSignal({ coil: input.coil }, t),
+    rangeBreakSignal({ last: input.last, daily: input.daily }, t),
     breakoutSignal(
       {
         last: input.last,
         high24h: input.high24h,
         low24h: input.low24h,
+        daily: input.daily,
       },
       t,
     ),

@@ -196,6 +196,10 @@ export const zh: Messages = {
     breakoutLow: '24小时新低',
     breakoutLowDetail: '正处于24小时最低价',
 
+    rangeBreak: (days, high) => `${days}日新${high ? '高' : '低'}`,
+    rangeBreakDetail: (days, high) =>
+      `已突破 ${days} 日${high ? '最高价' : '最低价'}`,
+
     upperWick: '上影线',
     upperWickDetail: (share) => `冲高回落，上影线占 ${share}%`,
     lowerWick: '下影线',

@@ -66,6 +66,7 @@ Two exceptions:
 | `volatility`  | The last closed bar's range is ≥3σ above normal **and** ≥1.5× the mean range                                          | Session candles (15m)                          |
 | `compression` | The last 2h ranged quieter than 90% of the 2h stretches in the series **and** ≤0.8× the middle stretch — _fixed band_ | 100×5m candles, uncut                          |
 | `breakout`    | Price is at or through the 24h high or low, and the 24h range is ≥0.5% of price                                       | `tickers` feed                                 |
+| `range-break` | Price is through the high or low of the last 30 closed daily bars, or failing that the last 7                         | Daily candles; see the backdrop below          |
 | `rejection`   | A bar at least as wide as normal closed with ≥60% of its range as one wick                                            | Session candles (15m)                          |
 | `strength`    | The move net of the board's median 5m move is ≥3σ **and** ≥0.3%                                                       | As `momentum`, minus the board median          |
 
@@ -74,6 +75,12 @@ contraction — they are separate functions rather than one signed test because 
 compression is not visible in any single bar and has to be measured over a
 stretch. `compression` is also the only reading here that speaks _before_ the
 event rather than during it.
+
+`range-break` and `breakout` are the same shape with different memories, and
+the longer one stands the shorter one down: a price at a monthly high is at a
+daily high by construction, so carrying both would put "24h high · 30d high" in
+the list where the second says everything the first does and more. They are one
+family either way, so nothing about the ring turns on it.
 
 ### Flow — whether anyone was behind it
 
@@ -116,16 +123,60 @@ tick for hours, so nearly all of its measured variation is the mid drifting unde
 a fixed gap; the sigma test still gates it, but the number said out loud is what
 a tick-quantised series can honestly say about itself.
 
+## The backdrop
+
+Every reading above answers a question about the last few minutes, and the
+longest yardstick any of them is held to — bar the funding baseline — is eight
+hours. That is a real blind spot: a coin three days into a slide has its own
+decline built into what counts as normal for it.
+
+A slower layer sits underneath, taken from a month and a week of daily bars and
+a hundred days of open interest, refreshed hourly.
+
+| Reading          | Says                                                                              |
+| ---------------- | --------------------------------------------------------------------------------- |
+| `range-position` | Where the price sits between the month's low and high, and when it is near an end |
+| `daily-coil`     | The last 3 days quieter than 90% of the 3-day stretches behind them, at ≤0.8×     |
+| `vol-regime`     | The week's mean daily range against the month's, at ≥1.5× or ≤0.67×               |
+| `oi-percentile`  | Open interest in the top or bottom tenth of its own 100 days                      |
+| `funding-carry`  | A week's settlements summed, past ±40‱ — about 21% a year                         |
+
+**These are not signals, and structurally cannot become one.** Each is true
+continuously for days, so letting one into the ring rule would hand every
+five-minute twitch a second family for free and light the whole board.
+`compression` already ran into this and is held out by a list in `signals.ts`
+that somebody has to maintain; the backdrop shares no type with `Signal`, so
+there is nothing to remember. They are also not weighed against each other and
+there is no score — `daily-coil` and a contracting `vol-regime` overlap and will
+often speak together, which would matter if they were votes and does not because
+they are sentences.
+
+`range-break` is the one exception, and it earns it by being an event rather
+than a state: the month's high is either being taken out or it is not.
+
+Two of the five earn a fixed band rather than a baseline. `oi-percentile` is a
+percentile by construction. `funding-carry` has no baseline available — a
+hundred settlements is thirty-three days, so a series of weekly sums drawn from
+it is five independent numbers — and a cost of carry as a share of notional is
+already per instrument with a real zero, the way the basis is. Its band is set
+where a crowded trade actually starts and not at what a calm week happens to
+reach: measured over 29 instruments the whole board sat between −15.6 and
++19.2‱, median 9.1 in absolute terms, so it fires on none of them in a market
+like that, deliberately.
+
+Nothing on the board draws from the backdrop yet beyond `range-break` and a
+plain readout on the detail dialog.
+
 ## Where each reading appears
 
-| Surface                  | Carries                                                                                            |
-| ------------------------ | -------------------------------------------------------------------------------------------------- |
-| Badge over the sparkline | The leading `price` reading: momentum, then breakout, strength, volatility, rejection, compression |
-| Volume chip              | `volume`, `taker` — the taker split shows whenever it is known, not only when it fires             |
-| L/S chip                 | `ratio`, `divergence`                                                                              |
-| Funding chip             | `funding`, `funding-shift`, plus the settlement countdown near the hour                            |
-| Open interest chip       | `open-interest`, `liquidation`, plus the session flow quadrant                                     |
-| Card ring + alert list   | Every reading that is firing, ordered by family                                                    |
+| Surface                  | Carries                                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| Badge over the sparkline | The leading `price` reading: momentum, then range-break, breakout, strength, volatility, rejection, compression |
+| Volume chip              | `volume`, `taker` — the taker split shows whenever it is known, not only when it fires                          |
+| L/S chip                 | `ratio`, `divergence`                                                                                           |
+| Funding chip             | `funding`, `funding-shift`, plus the settlement countdown near the hour                                         |
+| Open interest chip       | `open-interest`, `liquidation`, plus the session flow quadrant                                                  |
+| Card ring + alert list   | Every reading that is firing, ordered by family                                                                 |
 
 `basis` and `spread` have no chip of their own. They reach the screen through the
 ring and the alert list, which is deliberate: both are absent from almost every
@@ -141,13 +192,21 @@ the board to carry something that usually is not there.
 | Candles                                                     | Polled every minute                                                                  |
 | Account ratio, taker split, divergence                      | Polled every 5 minutes                                                               |
 | Momentum baseline and coil                                  | Polled every 30 minutes, off one uncut 100×5m fetch                                  |
-| Funding baseline                                            | Refetched when older than 6 hours                                                    |
+| Funding baseline and the week's carry                       | Refetched when older than 6 hours, off one 100-settlement fetch                      |
 | Open interest session open                                  | Polled every 30 minutes                                                              |
+| Backdrop: 300 daily candles, 100 days of open interest      | Polled hourly, first pass delayed 30s; the candles are dropped once reduced          |
 
 Statistics requests go through a limiter: one queue per path, 500ms between
 requests to the same path, against an allowance of five per two seconds. It is
 paced there rather than in each poller so that no caller can forget, and so a
 statistics endpoint added later is paced without being told.
+
+Candles do not go through it — that allowance is per statistics path and this is
+not one of them — so the two pollers that walk the watchlist against
+`/market/candles` each pace themselves one symbol at a time. The backdrop's
+first pass waits half a minute rather than starting alongside the momentum
+baseline's, which would double the rate on that path at a cold start. It
+describes a month; it can wait.
 
 ## Known couplings
 

@@ -17,6 +17,10 @@ import { numericFont } from '../fonts'
  */
 const LEAD_ORDER: SignalKind[] = [
   'momentum',
+  // Ahead of the day's breakout, and never beside it — the longer range stands
+  // the shorter one down when both would fire. A month's high is the bigger
+  // fact, and on the badge there is room for exactly one.
+  'range-break',
   'breakout',
   'strength',
   'volatility',

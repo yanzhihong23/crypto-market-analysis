@@ -252,6 +252,17 @@ export const en = {
     breakoutLow: '24h low',
     breakoutLowDetail: 'at its 24h low',
 
+    /**
+     * The window is a number rather than two spelled-out readings, because the
+     * same sentence covers a week and a month and only the figure differs.
+     * "Through" rather than "at", unlike the day's breakout: this is measured
+     * against closed daily bars, so the price is genuinely past all of them.
+     */
+    rangeBreak: (days: number, high: boolean) =>
+      `${days}d ${high ? 'high' : 'low'}`,
+    rangeBreakDetail: (days: number, high: boolean) =>
+      `through its ${days}-day ${high ? 'high' : 'low'}`,
+
     upperWick: 'upper wick',
     upperWickDetail: (share: number) =>
       `rejected from the high, ${share}% wick`,

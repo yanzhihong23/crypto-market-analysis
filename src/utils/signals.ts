@@ -153,6 +153,7 @@ export type SignalKind =
   | 'volatility'
   | 'compression'
   | 'breakout'
+  | 'range-break'
   | 'rejection'
   | 'strength'
   // Flow: whether anyone put anything behind it, and which side they were on.
@@ -173,6 +174,11 @@ const SIGNAL_FAMILY: Record<SignalKind, SignalFamily> = {
   volatility: 'price',
   compression: 'price',
   breakout: 'price',
+  // The one reading here fed by the medium-term layer rather than by a
+  // five-minute one. It belongs in this family and not in that layer because it
+  // is an event and not a state: the month's high is either being taken out or
+  // it is not, and the moment it is, is the moment worth crossing the grid for.
+  'range-break': 'price',
   rejection: 'price',
   strength: 'price',
   volume: 'flow',
@@ -276,6 +282,7 @@ const POSITIONING_SOURCE: Record<SignalKind, PositioningSource | null> = {
   volatility: null,
   compression: null,
   breakout: null,
+  'range-break': null,
   rejection: null,
   strength: null,
   volume: null,
