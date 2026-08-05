@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 import { OkxInstrument, OkxKline, OpenTime, SortBy } from '../types/okx'
-import { Coil } from '../utils/klineStats'
+import { Coil, DailyStats } from '../utils/klineStats'
 import { Baseline } from '../utils/signals'
 
 interface TickerStore {
@@ -120,6 +120,20 @@ interface TickerStore {
   oiChangeBaseline: Record<string, Baseline | null>
   setOiChangeBaseline: (instId: string, baseline: Baseline | null) => void
   /**
+   * A month and a week of daily bars, reduced to the dozen numbers anything
+   * medium term is read against.
+   *
+   * The daily candles it comes off are not kept — three hundred bars per symbol
+   * would be most of what this store saves, and nothing reads them twice. What
+   * is kept is the yardstick, which is the part that survives a reload usefully:
+   * it describes a month, so an hour-old copy of it is as good as a fresh one,
+   * and a board that reopens already knowing where every symbol sits in its
+   * range is a board that does not have to refetch to say so.
+   */
+  dailyStats: Record<string, DailyStats | null>
+  dailyStatsAt: Record<string, number>
+  setDailyStats: (instId: string, stats: DailyStats | null) => void
+  /**
    * Open interest as it stood when the current session opened, which is what
    * the live figure off the websocket is measured against. Stamped with the
    * session it was taken for, so switching the board's open discards it rather
@@ -175,6 +189,8 @@ export const useTickerStore = create<TickerStore>()(
             momentumBaselineAt: without(state.momentumBaselineAt),
             coil: without(state.coil),
             oiChangeBaseline: without(state.oiChangeBaseline),
+            dailyStats: without(state.dailyStats),
+            dailyStatsAt: without(state.dailyStatsAt),
             openInterestOpen: without(state.openInterestOpen),
           }
         }),
@@ -262,6 +278,16 @@ export const useTickerStore = create<TickerStore>()(
       setOiChangeBaseline: (instId: string, baseline: Baseline | null) =>
         set((state) => ({
           oiChangeBaseline: { ...state.oiChangeBaseline, [instId]: baseline },
+        })),
+      dailyStats: {},
+      dailyStatsAt: {},
+      // Stamped even when the derivation came to nothing, so a symbol with too
+      // little history is not refetched on every pass for the month it takes to
+      // grow some.
+      setDailyStats: (instId: string, stats: DailyStats | null) =>
+        set((state) => ({
+          dailyStats: { ...state.dailyStats, [instId]: stats },
+          dailyStatsAt: { ...state.dailyStatsAt, [instId]: Date.now() },
         })),
       openInterestOpen: {},
       setOpenInterestOpen: (

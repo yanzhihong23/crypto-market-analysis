@@ -7,6 +7,7 @@ import useOkxTakerFlowUpdater from '../hooks/useOkxTakerFlowUpdater'
 import useOkxDivergenceUpdater from '../hooks/useOkxDivergenceUpdater'
 import useOkxFundingBaselineUpdater from '../hooks/useOkxFundingBaselineUpdater'
 import useOkxMomentumBaselineUpdater from '../hooks/useOkxMomentumBaselineUpdater'
+import useOkxDailyStatsUpdater from '../hooks/useOkxDailyStatsUpdater'
 import useOkxOpenInterestUpdater from '../hooks/useOkxOpenInterestUpdater'
 import useOkxAlerts from '../hooks/useOkxAlerts'
 import { useOkxTickers } from '../hooks/useOkxTickers'
@@ -21,6 +22,7 @@ export default function OkxDataSync() {
   const { updateDivergenceByInstId } = useOkxDivergenceUpdater()
   const { updateFundingBaselineByInstId } = useOkxFundingBaselineUpdater()
   const { updateMomentumBaselineByInstId } = useOkxMomentumBaselineUpdater()
+  const { updateDailyStatsByInstId } = useOkxDailyStatsUpdater()
   const { updateOpenInterestOpenByInstId } = useOkxOpenInterestUpdater()
   useOkxAlerts()
 
@@ -32,6 +34,7 @@ export default function OkxDataSync() {
       await updateDivergenceByInstId(instId)
       await updateFundingBaselineByInstId(instId)
       await updateMomentumBaselineByInstId(instId)
+      await updateDailyStatsByInstId(instId)
       await updateOpenInterestOpenByInstId(instId)
     }
     okxTickerActions.remove = remove
@@ -43,6 +46,7 @@ export default function OkxDataSync() {
     updateDivergenceByInstId,
     updateFundingBaselineByInstId,
     updateMomentumBaselineByInstId,
+    updateDailyStatsByInstId,
     updateOpenInterestOpenByInstId,
   ])
 

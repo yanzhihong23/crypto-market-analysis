@@ -319,6 +319,28 @@ export const en = {
   },
 
   /**
+   * The readings that describe weeks rather than minutes. Every one of them says
+   * which window it covers out loud, because that is the only thing separating
+   * them from the reading of the same name on the intraday side — "coiled 0.6×"
+   * means an afternoon there and a fortnight here.
+   */
+  backdrop: {
+    /** Plain strings, like the 24h breakout: a place is not a quantity. */
+    rangePositionHigh: 'near 30d high',
+    rangePositionLow: 'near 30d low',
+    rangePositionDetail: (percent: number, high: boolean) =>
+      `${percent}% up its 30-day range, within a tenth of the ${high ? 'high' : 'low'}`,
+
+    dailyCoil: (share: string) => `3d coiled ${share}×`,
+    dailyCoilDetail: (share: string, quieterThan: number) =>
+      `last 3d ranging ${share}× its usual, quieter than ${quieterThan}% of the three-day stretches behind it`,
+
+    volRegime: (ratio: string) => `vol ${ratio}× month`,
+    volRegimeDetail: (ratio: string, expanding: boolean) =>
+      `this week ranging ${ratio}× its month — volatility ${expanding ? 'expanding' : 'winding down'}`,
+  },
+
+  /**
    * What a price move and a session's open interest move say together. Each says
    * what the move is and what it is not, because the pair that shares a price
    * direction is what gets confused.

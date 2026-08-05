@@ -242,6 +242,21 @@ export const zh: Messages = {
       `盘口价差 ${spread}，为该品种常态的 ${multiple}×`,
   },
 
+  backdrop: {
+    rangePositionHigh: '接近30日高点',
+    rangePositionLow: '接近30日低点',
+    rangePositionDetail: (percent, high) =>
+      `处于30日区间的 ${percent}%，距${high ? '高点' : '低点'}不足一成`,
+
+    dailyCoil: (share) => `3日盘整 ${share}×`,
+    dailyCoilDetail: (share, quieterThan) =>
+      `近 3 日振幅为常态的 ${share}×，窄于历史上 ${quieterThan}% 的三日时段`,
+
+    volRegime: (ratio) => `波动 ${ratio}× 月度`,
+    volRegimeDetail: (ratio, expanding) =>
+      `近一周振幅为近一月的 ${ratio}×，波动正在${expanding ? '放大' : '收敛'}`,
+  },
+
   flow: {
     'longs-building': '新多推动上涨',
     'shorts-covering': '空头平仓，而非新多进场',

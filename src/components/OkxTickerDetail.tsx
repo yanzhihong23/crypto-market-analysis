@@ -14,6 +14,7 @@ import { useId, useState } from 'react'
 import { format } from 'date-fns'
 
 import useOkxTicker from '../hooks/useOkxTicker'
+import useOkxBackdrop from '../hooks/useOkxBackdrop'
 import useOkxTickerDetail, {
   DETAIL_TOOLTIP_FORMAT,
   DetailWindow,
@@ -62,6 +63,42 @@ const syncByTime: SyncMethod = (ticks, { activeLabel }) => {
   // moment being read. Past its own sampling step there is nothing to point at.
   const step = Math.abs(Number(ticks[1].value) - Number(ticks[0].value))
   return distance > step ? -1 : nearest
+}
+
+/**
+ * Scaffolding for the medium-term layer, and meant to be replaced.
+ *
+ * The readings exist before anything is drawn from them — the card's edge and
+ * the line a fired alert carries are both still to come — and a layer nobody
+ * can see is a layer nobody can check. This is the plainest thing that puts it
+ * in front of a person: where the price sits in its month, and whatever else
+ * the backdrop has to say about it.
+ */
+function BackdropReadout({ instId }: { instId: string }) {
+  const backdrop = useOkxBackdrop(instId)
+  if (backdrop.rangePosition === null) return null
+
+  return (
+    <Stack
+      direction="row"
+      sx={{ alignItems: 'baseline', flexWrap: 'wrap', gap: 1.5 }}
+    >
+      <Typography
+        sx={{ fontSize: 12, color: 'text.secondary', ...numericFont }}
+      >
+        30d {Math.round(backdrop.rangePosition * 100)}%
+      </Typography>
+      {backdrop.readings.map((reading) => (
+        <Typography
+          key={reading.kind}
+          title={reading.detail}
+          sx={{ fontSize: 12, color: 'text.secondary' }}
+        >
+          {reading.label}
+        </Typography>
+      ))}
+    </Stack>
+  )
 }
 
 function ChartSection({
@@ -256,7 +293,10 @@ export default function OkxTickerDetail({
           pb: 1.5,
         }}
       >
-        <OkxMarketMetrics instId={instId} />
+        <Stack sx={{ gap: 0.75, minWidth: 0 }}>
+          <OkxMarketMetrics instId={instId} />
+          <BackdropReadout instId={instId} />
+        </Stack>
         <SegmentedToggle
           label={t.detail.window}
           value={detailWindow}

@@ -1,13 +1,17 @@
 /**
- * The candle series the board already holds, read as statistics rather than as
- * a chart.
+ * Candle series read as statistics rather than as a chart.
  *
- * Nothing here costs a request: every watched symbol keeps a day of candles for
+ * `klineStatsOf` costs nothing: every watched symbol keeps a day of candles for
  * its sparkline, and a day of them is a large enough sample for "is this bar's
  * volume unusual for this instrument" to have an answer. The work is cached
  * against the array it was derived from, which is exactly the right lifetime —
  * the poll replaces the array wholesale once a minute, so a stale entry becomes
  * unreachable at the moment it stops being true.
+ *
+ * The other two take candles somebody had to fetch — `coilOf` the uncut
+ * five-minute series behind the momentum baseline, `dailyStatsOf` a series of
+ * daily bars — and are pure all the same. What they cost is decided by whoever
+ * calls them; what they mean is decided here.
  */
 
 import { OkxKline } from '../types/okx'
@@ -18,10 +22,15 @@ import { Baseline, baselineOf, medianOf } from './signals'
 const FALLBACK_BAR_MS = 1000 * 60 * 15
 
 /**
- * How many bars make up a stretch. Twenty-four of the five-minute bars the
- * momentum baseline is taken over is two hours — long enough that a couple of
- * quiet bars inside a busy afternoon do not make one, short enough to still be
- * the stretch the price is in rather than the one it was in this morning.
+ * How many bars make up a stretch, when the caller does not say. Twenty-four of
+ * the five-minute bars the momentum baseline is taken over is two hours — long
+ * enough that a couple of quiet bars inside a busy afternoon do not make one,
+ * short enough to still be the stretch the price is in rather than the one it
+ * was in this morning.
+ *
+ * A parameter rather than a constant because the same measurement is worth
+ * taking at more than one horizon: three of the daily bars below is the same
+ * question asked of a fortnight instead of an afternoon.
  */
 const COIL_BARS = 24
 
@@ -75,16 +84,16 @@ export interface KlineStats {
  *
  * Bars arrive newest first, so the newest stretch is the first window.
  */
-export function coilOf(klines?: OkxKline[]): Coil | null {
+export function coilOf(klines?: OkxKline[], bars = COIL_BARS): Coil | null {
   const ranges = (klines ?? [])
     .map((kline) => barRangePercent(kline))
     .filter((value): value is number => value !== null)
 
   const windows: number[] = []
-  for (let start = 0; start + COIL_BARS <= ranges.length; start++) {
+  for (let start = 0; start + bars <= ranges.length; start++) {
     let sum = 0
-    for (let i = start; i < start + COIL_BARS; i++) sum += ranges[i]
-    windows.push(sum / COIL_BARS)
+    for (let i = start; i < start + bars; i++) sum += ranges[i]
+    windows.push(sum / bars)
   }
   if (windows.length < MIN_COIL_WINDOWS) return null
 
@@ -109,6 +118,102 @@ export function barRangePercent(kline: OkxKline) {
     return null
   }
   return ((high - low) / close) * 100
+}
+
+/**
+ * Daily bars behind the two windows below. A month is the reference the whole
+ * backdrop layer is stated against, and a week is the recent half of it.
+ */
+const DAILY_BARS_MONTH = 30
+const DAILY_BARS_WEEK = 7
+
+/**
+ * Stretch length for the daily coil. Three days against every three days in the
+ * series, which is the same question the two-hour one asks of an afternoon: long
+ * enough that one quiet day inside a busy fortnight does not make one, short
+ * enough to still be the stretch the price is in.
+ */
+const DAILY_COIL_BARS = 3
+
+/**
+ * The yardstick a symbol's medium-term position is read against.
+ *
+ * Every field here is slow — the shortest of them is a week — which is what
+ * makes it worth fetching, deriving once and persisting. What it deliberately
+ * does not hold is any reading: where the price sits inside `high30d`/`low30d`
+ * is current to the second and belongs to whoever asks, the same way the
+ * momentum baseline is stored and the move it measures is not.
+ */
+export interface DailyStats {
+  high30d: number
+  low30d: number
+  /** The same over a week, for the shorter of the two breakout tests. */
+  high7d: number
+  low7d: number
+  /** Mean daily range, in percent, over the last week and the last month. */
+  range7d: number
+  range30d: number
+  /** Where the last three days sit among every three days in the series. */
+  coil: Coil | null
+}
+
+/** Highest high and lowest low across a stretch of bars. */
+const extremesOf = (bars: OkxKline[]) => {
+  let high = -Infinity
+  let low = Infinity
+  for (const bar of bars) {
+    const barHigh = Number(bar[2])
+    const barLow = Number(bar[3])
+    if (Number.isFinite(barHigh)) high = Math.max(high, barHigh)
+    if (Number.isFinite(barLow)) low = Math.min(low, barLow)
+  }
+  return high > 0 && low > 0 && high > low ? { high, low } : null
+}
+
+/** Mean bar range as a share of close, in percent, or null with nothing to mean. */
+const meanRangeOf = (bars: OkxKline[]) => {
+  const ranges = bars
+    .map((bar) => barRangePercent(bar))
+    .filter((value): value is number => value !== null)
+  if (!ranges.length) return null
+  return ranges.reduce((sum, range) => sum + range, 0) / ranges.length
+}
+
+/**
+ * A month and a week of daily bars, read off a series of them.
+ *
+ * Closed bars only, and the forming one dropped rather than clipped: today's
+ * high is a partial of what it will be, and letting it into the month's extremes
+ * would mean a price that has just made a new high sits at exactly the top of
+ * its own range by construction — which is the one state worth being able to
+ * tell apart from being near it.
+ *
+ * Bars arrive newest first, so the recent windows are the front of the series.
+ */
+export function dailyStatsOf(klines?: OkxKline[]): DailyStats | null {
+  const closed = (klines ?? []).filter((kline) => kline[8] === '1')
+  if (closed.length < DAILY_BARS_MONTH) return null
+
+  const month = closed.slice(0, DAILY_BARS_MONTH)
+  const week = closed.slice(0, DAILY_BARS_WEEK)
+
+  const monthly = extremesOf(month)
+  const weekly = extremesOf(week)
+  const range30d = meanRangeOf(month)
+  const range7d = meanRangeOf(week)
+  if (!monthly || !weekly || !range30d || !range7d) return null
+
+  return {
+    high30d: monthly.high,
+    low30d: monthly.low,
+    high7d: weekly.high,
+    low7d: weekly.low,
+    range7d,
+    range30d,
+    // Over the whole series rather than the month: the percentile is only worth
+    // as much as the history it ranks within, and the fetch already paid for it.
+    coil: coilOf(closed, DAILY_COIL_BARS),
+  }
 }
 
 const cache = new WeakMap<OkxKline[], KlineStats>()
