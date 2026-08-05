@@ -30,6 +30,9 @@ export default function useOkxBackdrop(instId: string): Backdrop {
   useTickerStore((state) => state.dailyOiPercentile[instId])
   // This one genuinely arrives on a different poller.
   useTickerStore((state) => state.fundingCarry[instId])
+  // And this one is not keyed by instrument at all: it is the market the
+  // symbol is being measured against, so every card watches the same value.
+  useTickerStore((state) => state.benchmarkDaily)
 
   return readBackdrop(instId, t)
 }

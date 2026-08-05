@@ -67,6 +67,10 @@ const syncByTime: SyncMethod = (ticks, { activeLabel }) => {
   return distance > step ? -1 : nearest
 }
 
+/** Percentage points, always signed: the sign is most of what an excess says. */
+const formatExcess = (points: number) =>
+  `${points > 0 ? '+' : ''}${points.toFixed(1)}%`
+
 /**
  * What has been true of this instrument for weeks, beside what the periods are
  * doing right now.
@@ -117,6 +121,28 @@ function BackdropPanel({ instId }: { instId: string }) {
               </Typography>
             )}
           </Stack>
+
+          {/* Reported at every level rather than only when it is unusual, the
+              way the range position is: how a symbol has done against BTC is
+              worth knowing on any month, and it has no honest threshold of its
+              own until the rest of the market is taken out — which is what the
+              reading below it does and this deliberately does not. */}
+          {backdrop.relative && (
+            <Stack
+              direction="row"
+              sx={{ alignItems: 'baseline', gap: 1, minHeight: 22 }}
+            >
+              <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                {t.backdrop.relativeLabel}
+              </Typography>
+              <Typography sx={{ fontSize: 12, ...numericFont }}>
+                {t.backdrop.relativeValue(
+                  formatExcess(backdrop.relative.excess30d),
+                  formatExcess(backdrop.relative.excess7d),
+                )}
+              </Typography>
+            </Stack>
+          )}
 
           {/* The sentence rather than the chip. The card has room for one of
               these at a time and shows the short form; this is the surface

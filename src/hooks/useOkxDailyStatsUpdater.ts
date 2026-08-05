@@ -47,6 +47,14 @@ const POLL_INTERVAL_MS = 1000 * 60 * 60
 const FIRST_PASS_DELAY_MS = 1000 * 30
 
 /**
+ * What relative strength is measured against. Fetched on the same walk and on
+ * the same hour, whether or not it is on the board — a benchmark that came and
+ * went with the watchlist would make the same symbol's excess return mean
+ * different things on different boards.
+ */
+const BENCHMARK_INST_ID = 'BTC-USDT-SWAP'
+
+/**
  * The yardstick everything medium term is measured against, refreshed hourly.
  *
  * The candles themselves are dropped once the statistics are out of them. Three
@@ -79,8 +87,25 @@ export default function useOkxDailyStatsUpdater() {
     [setDailyStats],
   )
 
+  const updateBenchmark = useCallback(async () => {
+    const { benchmarkDailyAt, setBenchmarkDaily } = useTickerStore.getState()
+    if (benchmarkDailyAt > Date.now() - STALE_AFTER_MS) return
+
+    const res = await fetchOkxKlines({
+      instId: BENCHMARK_INST_ID,
+      period: Period.DAY_1,
+      limit: BARS,
+    })
+    if (!res?.length) return
+
+    setBenchmarkDaily(dailyStatsOf(res))
+  }, [])
+
   const updateAll = useCallback(async () => {
     try {
+      // First, so that a board whose symbols land one at a time has something
+      // to be measured against by the time the first of them arrives.
+      await updateBenchmark()
       for (const instId of instIds) {
         await updateByInstId(instId)
       }
@@ -95,7 +120,7 @@ export default function useOkxDailyStatsUpdater() {
     timerRef.current = setTimeout(() => {
       void updateAllRef.current()
     }, POLL_INTERVAL_MS)
-  }, [instIds, updateByInstId])
+  }, [instIds, updateByInstId, updateBenchmark])
 
   updateAllRef.current = updateAll
 

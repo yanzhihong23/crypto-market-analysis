@@ -171,6 +171,16 @@ export interface DailyStats {
   /** Mean daily range, in percent, over the last week and the last month. */
   range7d: number
   range30d: number
+  /**
+   * What the price has actually done over each window, in percent.
+   *
+   * The only field here that is worth nothing on its own. Everything else
+   * describes this instrument against its own history; a return only becomes a
+   * reading once something else has been subtracted from it — which is why it
+   * is carried rather than read, and why what subtracts from it lives elsewhere.
+   */
+  return7d: number
+  return30d: number
   /** Where the last three days sit among every three days in the series. */
   coil: Coil | null
 }
@@ -186,6 +196,14 @@ const extremesOf = (bars: OkxKline[]) => {
     if (Number.isFinite(barLow)) low = Math.min(low, barLow)
   }
   return high > 0 && low > 0 && high > low ? { high, low } : null
+}
+
+/** Close against the close `bars` ago, in percent. Newest first, so index up. */
+const returnOver = (closed: OkxKline[], bars: number) => {
+  const now = Number(closed[0]?.[4])
+  const then = Number(closed[bars]?.[4])
+  if (!(then > 0) || !Number.isFinite(now)) return null
+  return ((now - then) / then) * 100
 }
 
 /** Mean bar range as a share of close, in percent, or null with nothing to mean. */
@@ -209,8 +227,11 @@ const meanRangeOf = (bars: OkxKline[]) => {
  * Bars arrive newest first, so the recent windows are the front of the series.
  */
 export function dailyStatsOf(klines?: OkxKline[]): DailyStats | null {
+  // One more bar than the windows need: a month's return is measured from the
+  // close a month ago, so thirty bars describe the stretch and thirty-one are
+  // needed to have both ends of it.
   const closed = (klines ?? []).filter((kline) => kline[8] === '1')
-  if (closed.length < DAILY_BARS_MONTH) return null
+  if (closed.length < DAILY_BARS_MONTH + 1) return null
 
   const month = closed.slice(0, DAILY_BARS_MONTH)
   const week = closed.slice(0, DAILY_BARS_WEEK)
@@ -219,7 +240,10 @@ export function dailyStatsOf(klines?: OkxKline[]): DailyStats | null {
   const weekly = extremesOf(week)
   const range30d = meanRangeOf(month)
   const range7d = meanRangeOf(week)
+  const return30d = returnOver(closed, DAILY_BARS_MONTH)
+  const return7d = returnOver(closed, DAILY_BARS_WEEK)
   if (!monthly || !weekly || !range30d || !range7d) return null
+  if (return30d === null || return7d === null) return null
 
   return {
     high30d: monthly.high,
@@ -228,6 +252,8 @@ export function dailyStatsOf(klines?: OkxKline[]): DailyStats | null {
     low7d: weekly.low,
     range7d,
     range30d,
+    return7d,
+    return30d,
     // Over the whole series rather than the month: the percentile is only worth
     // as much as the history it ranks within, and the fetch already paid for it.
     coil: coilOf(closed, DAILY_COIL_BARS),

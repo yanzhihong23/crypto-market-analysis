@@ -344,6 +344,19 @@ export const en = {
      */
     rangeLabel: '30-day range',
     pending: 'Still reading the last 30 days.',
+    /** Points, not percent of anything: this is one return minus another. */
+    relativeLabel: 'vs BTC',
+    relativeValue: (excess30d: string, excess7d: string) =>
+      `${excess30d} on the month · ${excess7d} on the week`,
+
+    /**
+     * The board is already out of this number by the time it is printed, so
+     * the sentence says so — otherwise a reader would net it out again in
+     * their head against the `vs BTC` figure sitting directly above it.
+     */
+    relativeStrength: (signed: string) => `${signed} vs board`,
+    relativeStrengthDetail: (size: string, ahead: boolean) =>
+      `${ahead ? 'ahead of' : 'behind'} the rest of the board by ${size} on the month, with BTC taken out`,
 
     /** Plain strings, like the 24h breakout: a place is not a quantity. */
     rangePositionHigh: 'near 30d high',

@@ -157,6 +157,18 @@ interface TickerStore {
     oiPercentile: number | null,
   ) => void
   /**
+   * BTC's own daily stats, held apart from the watchlist's.
+   *
+   * Everything else here is keyed by instrument because it describes one. This
+   * describes the market, and it is fetched whether or not anybody is watching
+   * BTC — a benchmark that came and went with the watchlist would make the same
+   * symbol's relative strength mean different things on different boards, which
+   * is the one thing a benchmark exists to prevent.
+   */
+  benchmarkDaily: DailyStats | null
+  benchmarkDailyAt: number
+  setBenchmarkDaily: (stats: DailyStats | null) => void
+  /**
    * Open interest as it stood when the current session opened, which is what
    * the live figure off the websocket is measured against. Stamped with the
    * session it was taken for, so switching the board's open discards it rather
@@ -326,6 +338,10 @@ export const useTickerStore = create<TickerStore>()(
           },
           dailyStatsAt: { ...state.dailyStatsAt, [instId]: Date.now() },
         })),
+      benchmarkDaily: null,
+      benchmarkDailyAt: 0,
+      setBenchmarkDaily: (stats: DailyStats | null) =>
+        set({ benchmarkDaily: stats, benchmarkDailyAt: Date.now() }),
       openInterestOpen: {},
       setOpenInterestOpen: (
         instId: string,

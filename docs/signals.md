@@ -133,13 +133,19 @@ decline built into what counts as normal for it.
 A slower layer sits underneath, taken from a month and a week of daily bars and
 a hundred days of open interest, refreshed hourly.
 
-| Reading          | Says                                                                              |
-| ---------------- | --------------------------------------------------------------------------------- |
-| `range-position` | Where the price sits between the month's low and high, and when it is near an end |
-| `daily-coil`     | The last 3 days quieter than 90% of the 3-day stretches behind them, at ≤0.8×     |
-| `vol-regime`     | The week's mean daily range against the month's, at ≥1.5× or ≤0.67×               |
-| `oi-percentile`  | Open interest in the top or bottom tenth of its own 100 days                      |
-| `funding-carry`  | A week's settlements summed, past ±40‱ — about 21% a year                         |
+| Reading             | Says                                                                              |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `range-position`    | Where the price sits between the month's low and high, and when it is near an end |
+| `daily-coil`        | The last 3 days quieter than 90% of the 3-day stretches behind them, at ≤0.8×     |
+| `vol-regime`        | The week's mean daily range against the month's, at ≥1.5× or ≤0.67×               |
+| `oi-percentile`     | Open interest in the top or bottom tenth of its own 100 days                      |
+| `funding-carry`     | A week's settlements summed, past ±40‱ — about 21% a year                         |
+| `relative-strength` | The month's return, net of BTC **and** of the board's own excess, past ±20 points |
+
+Two figures are reported at every level rather than only when unusual: where the
+price sits in the month's range, and what it has done against BTC over the week
+and the month. Both are always defined and neither has an honest threshold of
+its own, so neither is a reading.
 
 **These are not signals, and structurally cannot become one.** Each is true
 continuously for days, so letting one into the ring rule would hand every
@@ -164,8 +170,25 @@ reach: measured over 29 instruments the whole board sat between −15.6 and
 +19.2‱, median 9.1 in absolute terms, so it fires on none of them in a market
 like that, deliberately.
 
-Nothing on the board draws from the backdrop yet beyond `range-break` and a
-plain readout on the detail dialog.
+`relative-strength` subtracts twice, and both subtractions are load-bearing.
+Taking BTC out removes the one factor every instrument here moves on. Taking the
+**board's own median excess** out removes the second: alts run ahead of or behind
+BTC as a class for weeks, which is a fact about the market and not about any
+symbol in it. Measured across 39 instruments the median excess over BTC was
+−10.1 points — a symmetric band around zero would have flagged fourteen of them,
+almost all laggards, and reported the alt market's drawdown as if it were news
+about each one. Netted, the spread re-centres and ±20 flags 4 of 39.
+
+This is the intraday `strength` reading at a horizon of a month, netted the same
+way and for the same reason. It needs a board to have a middle, so below eight
+watched symbols it stays quiet — the figure against BTC is still reported, since
+only the reading claims the move is unusual. The benchmark is fetched whether or
+not BTC is on the board: one that came and went with the watchlist would make the
+same symbol's relative strength mean different things on different boards.
+
+The backdrop reaches the screen as `range-break`, the second track under the
+card's 24h range, the context line a fired alert carries, and the medium-term
+panel on the detail dialog.
 
 ## Where each reading appears
 
@@ -195,6 +218,7 @@ the board to carry something that usually is not there.
 | Funding baseline and the week's carry                       | Refetched when older than 6 hours, off one 100-settlement fetch                      |
 | Open interest session open                                  | Polled every 30 minutes                                                              |
 | Backdrop: 300 daily candles, 100 days of open interest      | Polled hourly, first pass delayed 30s; the candles are dropped once reduced          |
+| BTC's daily benchmark                                       | The same hourly walk, first and whether or not BTC is watched                        |
 
 Statistics requests go through a limiter: one queue per path, 500ms between
 requests to the same path, against an allowance of five per two seconds. It is

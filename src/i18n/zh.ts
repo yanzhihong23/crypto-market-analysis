@@ -250,6 +250,13 @@ export const zh: Messages = {
     title: '中长线',
     rangeLabel: '30 日区间位置',
     pending: '正在读取近 30 日数据。',
+    relativeLabel: '相对 BTC',
+    relativeValue: (excess30d, excess7d) =>
+      `30 日 ${excess30d} · 7 日 ${excess7d}`,
+
+    relativeStrength: (signed) => `${signed} 相对板块`,
+    relativeStrengthDetail: (size, ahead) =>
+      `扣除 BTC 后，30 日收益${ahead ? '领先' : '落后'}板块其余品种 ${size}`,
 
     rangePositionHigh: '接近30日高点',
     rangePositionLow: '接近30日低点',

@@ -34,6 +34,7 @@ export type BackdropKind =
   | 'vol-regime'
   | 'oi-percentile'
   | 'funding-carry'
+  | 'relative-strength'
 
 export interface BackdropReading {
   kind: BackdropKind
@@ -63,6 +64,16 @@ export interface Backdrop {
    * thing in the space it has.
    */
   range: { low: number; high: number } | null
+  /**
+   * What this has done against BTC over each window, in percentage points.
+   *
+   * A field rather than a reading, and for the reason `rangePosition` is one:
+   * it is always defined, always worth knowing, and has no honest threshold of
+   * its own. Ten points behind BTC over a month is a fact about the symbol; it
+   * is only news once the rest of the market has been taken out of it, which is
+   * what the reading below does and what this deliberately does not.
+   */
+  relative: { excess7d: number; excess30d: number } | null
   /** The ones with something to say right now. */
   readings: BackdropReading[]
 }
@@ -75,6 +86,17 @@ export interface BackdropInput {
   oiPercentile?: number | null
   /** What a long has paid to hold this for a week, in the card's unit. */
   fundingCarry?: number | null
+  /**
+   * The benchmark's own daily stats. BTC, and fetched whether or not anybody is
+   * watching it: the point of a benchmark is that it does not depend on what is
+   * on the board.
+   */
+  benchmark?: DailyStats | null
+  /**
+   * The middle of the board's excess returns over BTC, in points, or null when
+   * too few symbols are being watched for a middle to mean anything.
+   */
+  boardExcess30d?: number | null
 }
 
 /**
@@ -141,6 +163,39 @@ const OI_EDGE_SHARE = 0.1
  * percentile would report the top of a calm distribution as a crowded trade.
  */
 const MAX_WEEKLY_CARRY = 40
+
+/**
+ * How far a month's return has to sit from the board's before the symbol is
+ * doing something the market is not.
+ *
+ * Netted against the board and not against zero, and the measurement is the
+ * whole argument for it. Across 39 instruments the median excess over BTC was
+ * **−10.1 points** — the alt market as a whole was a tenth behind BTC on the
+ * month, so a symmetric band around zero would have flagged fourteen of them,
+ * almost all underperformers, and reported that fact about the market as if it
+ * were a fact about each symbol. Netting the middle out re-centres the spread
+ * on zero by construction and leaves what is actually per-symbol.
+ *
+ * Twenty points on the netted figure flags 4 of the 39, which is the shape the
+ * rest of this layer has: a tenth of the board at the extremes rather than
+ * nothing on a quiet month. Fifteen would flag 18% and twenty-five 5%.
+ */
+const MIN_RELATIVE_EXCESS = 20
+
+/**
+ * Symbols needed before the board has a middle worth subtracting.
+ *
+ * A median of three is one of them, and the reading would swing on which two
+ * other cards happen to be open — which is exactly the objection that kept the
+ * benchmark from being the watchlist in the first place. Below this the figure
+ * against BTC is still reported; only the reading stays quiet, because only the
+ * reading claims the move is unusual.
+ *
+ * Exported because the median is taken where the board is known — this file
+ * sees one instrument at a time — and the two have to agree about when there is
+ * a board at all.
+ */
+export const MIN_BOARD_SYMBOLS = 8
 
 /**
  * Where the price sits in the month, as a share of the month's range.
@@ -291,11 +346,60 @@ function fundingCarryReading(
   }
 }
 
+/**
+ * What this has done against BTC, over each window. Null without both series,
+ * and zero on BTC itself, which is correct rather than a special case.
+ */
+export function relativeOf({ daily, benchmark }: BackdropInput) {
+  if (!daily || !benchmark) return null
+  return {
+    excess7d: daily.return7d - benchmark.return7d,
+    excess30d: daily.return30d - benchmark.return30d,
+  }
+}
+
+/**
+ * A month spent going somewhere the rest of the board did not.
+ *
+ * Two subtractions, and both are load-bearing. Taking BTC out removes the one
+ * factor every one of these instruments moves on; taking the board's middle out
+ * removes the second — that alts as a class run ahead of or behind BTC for
+ * weeks at a time, which is a fact about the market and not about any symbol in
+ * it. What is left is the part that belongs to this contract.
+ *
+ * This is the intraday `strength` reading at a horizon of a month, and it is
+ * netted the same way and for the same reason: subtracting the middle is the
+ * difference between "everything is down against BTC" and "this one is".
+ */
+function relativeStrengthReading(
+  input: BackdropInput,
+  relative: { excess30d: number } | null,
+  t: Messages,
+): BackdropReading | null {
+  if (!relative || input.boardExcess30d == null) return null
+
+  const netted = relative.excess30d - input.boardExcess30d
+  if (Math.abs(netted) < MIN_RELATIVE_EXCESS) return null
+
+  // Signed on the chip, where the sign is the reading; unsigned in the
+  // sentence, which says "leading" or "lagging" and would otherwise say it
+  // twice — once in a word and once in a minus.
+  const signed = `${netted > 0 ? '+' : ''}${netted.toFixed(0)}%`
+  const size = `${Math.abs(netted).toFixed(0)}%`
+  return {
+    kind: 'relative-strength',
+    label: t.backdrop.relativeStrength(signed),
+    detail: t.backdrop.relativeStrengthDetail(size, netted > 0),
+  }
+}
+
 export function collectBackdrop(input: BackdropInput, t: Messages): Backdrop {
   const rangePosition = rangePositionOf(input)
+  const relative = relativeOf(input)
 
   return {
     rangePosition,
+    relative,
     range: input.daily
       ? { low: input.daily.low30d, high: input.daily.high30d }
       : null,
@@ -305,6 +409,7 @@ export function collectBackdrop(input: BackdropInput, t: Messages): Backdrop {
       volRegimeReading(input.daily, t),
       oiPercentileReading(input.oiPercentile, t),
       fundingCarryReading(input.fundingCarry, t),
+      relativeStrengthReading(input, relative, t),
     ].filter((reading): reading is BackdropReading => reading !== null),
   }
 }
