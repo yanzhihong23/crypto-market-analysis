@@ -328,6 +328,30 @@ export default function AlertBell() {
                     {reason.detail}
                   </Typography>
                 ))}
+                {/* The backdrop, under the readings and set in from them: what
+                    happened is above, and what it happened to is here. All of
+                    it, unlike the tape — this is the list you open when you
+                    have decided to ask, and it has the room. */}
+                {(alert.context ?? []).map((reading) => (
+                  <Typography
+                    key={reading.kind}
+                    sx={[
+                      {
+                        fontSize: 12,
+                        color: 'text.secondary',
+                        opacity: 0.75,
+                        pl: 1,
+                        borderLeft: '2px solid',
+                        borderColor: 'surface.marker',
+                      },
+                      ...(Array.isArray(numericFont)
+                        ? numericFont
+                        : [numericFont]),
+                    ]}
+                  >
+                    {reading.detail}
+                  </Typography>
+                ))}
               </Stack>
             ))}
           </Box>

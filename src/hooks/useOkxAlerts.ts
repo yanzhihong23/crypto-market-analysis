@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { useTickerStore } from '../store/useTickerStore'
 import { useAlertStore } from '../store/useAlertStore'
 import { readSignalInput } from '../store/okxSignalInput'
+import { readBackdrop } from '../store/okxBackdropInput'
 import {
   boardMedianPricePercent,
   subscribeOkxSeriesAny,
@@ -88,6 +89,11 @@ export default function useOkxAlerts() {
           at: now,
           headline: flag.headline,
           reasons: flag.reasons,
+          // Read here rather than inside `flagStateOf`, which decides whether
+          // the card rings and must not be able to see this: none of it can
+          // ring anything, and passing it in would be the first step towards
+          // it quietly doing so.
+          context: readBackdrop(instId, t).readings,
         })
 
         const { notificationsEnabled, soundEnabled, quietWhenPresent } =

@@ -7,6 +7,7 @@ import StarBorderIcon from '@mui/icons-material/StarBorder'
 
 import useOkxTicker from '../hooks/useOkxTicker'
 import useOkxSignals from '../hooks/useOkxSignals'
+import useOkxBackdrop from '../hooks/useOkxBackdrop'
 import { useTickerStore } from '../store/useTickerStore'
 import { removeOkxTicker } from '../store/okxRealtimeTicker'
 import { okxTickerActions } from '../okx/okxTickerActions'
@@ -127,6 +128,10 @@ const CardActions = memo(function CardActions({
 function OkxTickerCard({ instId }: { instId: string }) {
   const t = useOkxTicker(instId)
   const { signals, flag } = useOkxSignals(instId)
+  // The month behind the day. Nothing here can ring the card — it is read
+  // separately from the signals for exactly that reason — so it reaches the
+  // screen as the second track under the range and as that track's tooltip.
+  const backdrop = useOkxBackdrop(instId)
   const pinned = useTickerStore((state) => state.pinnedInstIds.includes(instId))
   // Opening the detail is deliberately a button rather than a click on the
   // card: the card already answers a double-click by pinning, and a single
@@ -217,6 +222,10 @@ function OkxTickerCard({ instId }: { instId: string }) {
         last={t.last}
         open={t.open}
         up={up}
+        monthPosition={backdrop.rangePosition}
+        monthLabel={backdrop.readings
+          .map((reading) => reading.detail)
+          .join(' · ')}
       />
 
       {/* The action bar is positioned against the chart, so the chart owns the

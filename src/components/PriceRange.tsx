@@ -18,6 +18,8 @@ function PriceRange({
   open,
   reference,
   up,
+  monthPosition,
+  monthLabel,
 }: {
   low: string
   high: string
@@ -31,6 +33,21 @@ function PriceRange({
   /** Optional secondary value, such as a 24h weighted average. */
   reference?: string
   up?: boolean
+  /**
+   * Where the price sits in a longer range, 0 to 1, drawn as a second track
+   * under the first.
+   *
+   * The day inside the month, in the idiom the card already uses for the day.
+   * It cannot share the track above it — the two are different scales, and a
+   * marker placed by one would be in the wrong place on the other — but it can
+   * share the shape, which is what makes it readable without being learned.
+   *
+   * Carries no direction colour. Green and red on this card answer "which way",
+   * and where a price sits in its month is not a which-way; the neutral marker
+   * is the point rather than a compromise.
+   */
+  monthPosition?: number | null
+  monthLabel?: string
 }) {
   const t = useMessages()
 
@@ -191,6 +208,47 @@ function PriceRange({
           />
         )}
       </Box>
+
+      {/* The month, thinner and dimmer than the day above it, and without the
+          labels that track carries: a second pair of numbers on a card this
+          narrow would be read as a second price rather than as a horizon. What
+          it is for is the shape — a marker pinned to one end of this while the
+          one above it wanders says the day is happening somewhere that matters. */}
+      {monthPosition !== null && monthPosition !== undefined && (
+        <Tooltip
+          title={monthLabel ?? ''}
+          arrow
+          disableHoverListener={!monthLabel}
+        >
+          <Box
+            role="presentation"
+            sx={{
+              position: 'relative',
+              height: 2,
+              mt: -0.25,
+              borderRadius: 1,
+              // The same surface as the track above, not a fainter one. Held
+              // back by being thinner and by carrying no colour; dimming it as
+              // well left the marker looking like a stray dot rather than a
+              // position on something, which is the one thing it has to be.
+              backgroundColor: 'surface.subtle',
+            }}
+          >
+            <Box
+              style={offset(Math.min(Math.max(monthPosition, 0), 1))}
+              sx={{
+                position: 'absolute',
+                top: -1,
+                left: 'var(--marker-left)',
+                width: MARKER_WIDTH,
+                height: 4,
+                borderRadius: 1,
+                backgroundColor: 'surface.marker',
+              }}
+            />
+          </Box>
+        </Tooltip>
+      )}
     </Stack>
   )
 }

@@ -57,6 +57,14 @@ const MOST_RECENT = 12
  */
 const MOST_REASONS = 3
 
+/**
+ * And how much of the backdrop it carries after them. One, where the bell shows
+ * all of it: this line already runs to three readings, and the backdrop is the
+ * qualifier on them rather than more of them — a reader who wants the rest is
+ * asking a longer question than a moving strip can answer.
+ */
+const MOST_CONTEXT = 1
+
 /** Pixels a second: slow enough to finish reading an entry that is leaving. */
 const SPEED = 40
 
@@ -219,6 +227,24 @@ export default function AlertTape() {
             {reason.detail}
           </Box>
         </Fragment>
+      ))}
+      {/* What had been true for weeks when this fired. Behind the readings and
+          in the label rather than the sentence, because it is not one of them:
+          those say what happened, and this says what it happened to. No rule in
+          front of it either — a rule would rank it with them. */}
+      {(alert.context ?? []).slice(0, MOST_CONTEXT).map((reading) => (
+        <Box
+          key={reading.kind}
+          component="span"
+          sx={{
+            ml: 0.5,
+            fontSize: 11,
+            color: 'text.secondary',
+            opacity: 0.75,
+          }}
+        >
+          {reading.label}
+        </Box>
       ))}
       {/* Which is the difference between "this is happening" and "this happened
           while you were making coffee". Set apart from the readings rather than

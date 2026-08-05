@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 import { Signal, formatDeviation, formatSigmas } from '../utils/signals'
+import type { BackdropReading } from '../utils/backdrop'
 import { currentMessages } from '../i18n'
 
 export interface Alert {
@@ -17,6 +18,21 @@ export interface Alert {
    * changed its mind about what happened would be worse than no entry.
    */
   reasons: Signal[]
+  /**
+   * What had been true of this instrument for weeks when it fired, if anything.
+   *
+   * The readings above are why the card rang; these are not, and could not be —
+   * a state that has held for days cannot be the news. They are what decides
+   * whether the news is worth acting on: the same five-minute burst is a
+   * different event on a symbol that has been coiled for three days at the top
+   * of its month than on one in the middle of nowhere.
+   *
+   * Captured at the moment of firing and stored with the rest, for the reason
+   * the readings are: an entry that changed its mind about the state of the
+   * market when it fired would be worse than one carrying no state at all.
+   * Optional, because entries written before this existed have none.
+   */
+  context?: BackdropReading[]
 }
 
 /** Alerts as they were stored before a reading other than the two could fire. */
