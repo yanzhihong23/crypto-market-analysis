@@ -157,7 +157,11 @@ export default function BaseAreaChart({
         data={data}
         syncId={syncId}
         syncMethod={syncMethod}
-        margin={{ top: 10, right: 10, left: 5, bottom: 30 }}
+        // The bottom margin is the caption's room, and only the caption's: the
+        // axis reserves its own height. Charts that pass no `label` were each
+        // holding thirty empty pixels under their ticks, which on a dialog
+        // stacking four of them read as the sections having drifted apart.
+        margin={{ top: 10, right: 10, left: 5, bottom: label ? 30 : 4 }}
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">

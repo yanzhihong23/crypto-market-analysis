@@ -247,6 +247,10 @@ export const zh: Messages = {
   },
 
   backdrop: {
+    title: '中长线',
+    rangeLabel: '30 日区间位置',
+    pending: '正在读取近 30 日数据。',
+
     rangePositionHigh: '接近30日高点',
     rangePositionLow: '接近30日低点',
     rangePositionDetail: (percent, high) =>
@@ -268,6 +272,18 @@ export const zh: Messages = {
     fundingCarry: (signed) => `周成本 ${signed}`,
     fundingCarryDetail: (paid, annual, longsPaying) =>
       `近一周${longsPaying ? '多头' : '空头'}累计支付 ${paid}，年化 ${annual}`,
+  },
+
+  timeframe: {
+    title: '多周期',
+    agreement: (agreed, of, up) =>
+      `${of} 个周期中 ${agreed} 个向${up ? '上' : '下'}`,
+    loading: '正在读取各周期…',
+    position: (percent) => `处于该周期区间的 ${percent}%`,
+
+    coil: (share) => `盘整 ${share}×`,
+    coilDetail: (share, quieterThan) =>
+      `振幅为常态的 ${share}×，窄于身后 ${quieterThan}% 的时段`,
   },
 
   flow: {

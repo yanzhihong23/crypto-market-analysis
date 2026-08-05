@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { fetchOkxKlines } from '../apis'
 import { useTickerStore } from '../store/useTickerStore'
 import { Period } from '../types/okx'
-import { coilOf } from '../utils/klineStats'
+import { barReturnsOf, coilOf } from '../utils/klineStats'
 import { baselineOf } from '../utils/signals'
 
 /**
@@ -22,16 +22,6 @@ const BARS = 100
  */
 const STALE_AFTER_MS = 1000 * 60 * 30
 const POLL_INTERVAL_MS = 1000 * 60 * 30
-
-/** Percent moves bar to bar, off a series that arrives newest first. */
-const returnsOf = (closes: number[]) =>
-  closes
-    .slice(0, -1)
-    .map((close, index) => {
-      const previous = closes[index + 1]
-      return previous > 0 ? ((close - previous) / previous) * 100 : NaN
-    })
-    .filter((value) => Number.isFinite(value))
 
 export default function useOkxMomentumBaselineUpdater() {
   const setMomentumBaseline = useTickerStore(
@@ -67,11 +57,7 @@ export default function useOkxMomentumBaselineUpdater() {
       // breaking, and a break is a move, and a move puts the momentum reading in
       // front of this one on the badge. What is left is the sentence underneath
       // it saying how long the thing that just broke had been winding up.
-      setMomentumBaseline(
-        instId,
-        baselineOf(returnsOf(res.map((kline) => Number(kline[4])))),
-        coilOf(res),
-      )
+      setMomentumBaseline(instId, baselineOf(barReturnsOf(res)), coilOf(res))
     },
     [setMomentumBaseline],
   )

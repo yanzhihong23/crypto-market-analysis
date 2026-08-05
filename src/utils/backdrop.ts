@@ -54,6 +54,15 @@ export interface Backdrop {
    * whether or not anything is worth saying out loud.
    */
   rangePosition: number | null
+  /**
+   * The month's extremes the position above is a share of.
+   *
+   * Carried alongside rather than left implied: half of a range means nothing
+   * without the range, and a surface with room to print both should. The card
+   * has room for neither and shows the marker instead, which says the same
+   * thing in the space it has.
+   */
+  range: { low: number; high: number } | null
   /** The ones with something to say right now. */
   readings: BackdropReading[]
 }
@@ -287,6 +296,9 @@ export function collectBackdrop(input: BackdropInput, t: Messages): Backdrop {
 
   return {
     rangePosition,
+    range: input.daily
+      ? { low: input.daily.low30d, high: input.daily.high30d }
+      : null,
     readings: [
       rangePositionReading(rangePosition, t),
       dailyCoilReading(input.daily?.coil, t),

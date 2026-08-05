@@ -336,6 +336,15 @@ export const en = {
    * means an afternoon there and a fortnight here.
    */
   backdrop: {
+    title: 'Medium term',
+    /**
+     * Spelled out rather than abbreviated. This began life as `30d 50%`, which
+     * is readable once you know what it is and unreadable until then, on a
+     * surface that has the room to just say it.
+     */
+    rangeLabel: '30-day range',
+    pending: 'Still reading the last 30 days.',
+
     /** Plain strings, like the 24h breakout: a place is not a quantity. */
     rangePositionHigh: 'near 30d high',
     rangePositionLow: 'near 30d low',
@@ -365,6 +374,33 @@ export const en = {
      */
     fundingCarryDetail: (paid: string, annual: string, longsPaying: boolean) =>
       `${longsPaying ? 'longs' : 'shorts'} paid ${paid} over the last week, ${annual} a year`,
+  },
+
+  /**
+   * The same instrument at four bar sizes. Bar codes — `15m`, `1H` — are the
+   * exchange's own and are not translated; they are what the row is labelled
+   * with everywhere anyone has seen this instrument before.
+   */
+  timeframe: {
+    title: 'Across timeframes',
+    /**
+     * A count, not a verdict. "3 of 4 up" says what was counted and leaves the
+     * reader to decide what it is worth, which is the whole difference between
+     * this panel and a rating.
+     */
+    agreement: (agreed: number, of: number, up: boolean) =>
+      `${agreed} of ${of} ${up ? 'up' : 'down'}`,
+    loading: 'Reading the periods…',
+    position: (percent: number) => `${percent}% up this period's range`,
+
+    /**
+     * The coil, worded without naming a window: the row it sits on is already
+     * labelled with the period, where the board's own version has only one and
+     * so says "the last 2h" out loud.
+     */
+    coil: (share: string) => `coiled ${share}×`,
+    coilDetail: (share: string, quieterThan: number) =>
+      `ranging ${share}× its usual, quieter than ${quieterThan}% of the stretches behind it`,
   },
 
   /**

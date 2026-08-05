@@ -109,6 +109,24 @@ export function coilOf(klines?: OkxKline[], bars = COIL_BARS): Coil | null {
   }
 }
 
+/**
+ * Percent moves bar to bar, off a series that arrives newest first.
+ *
+ * The spread of these is what makes a return at one period comparable with a
+ * return at another: a fifth of a percent is a violent fifteen minutes and a
+ * quiet day, and only its own distribution says which this one is.
+ */
+export function barReturnsOf(klines?: OkxKline[]) {
+  const closes = (klines ?? []).map((kline) => Number(kline[4]))
+  return closes
+    .slice(0, -1)
+    .map((close, index) => {
+      const previous = closes[index + 1]
+      return previous > 0 ? ((close - previous) / previous) * 100 : NaN
+    })
+    .filter((value) => Number.isFinite(value))
+}
+
 /** Range as a share of the close, which is what makes bars comparable at all. */
 export function barRangePercent(kline: OkxKline) {
   const high = Number(kline[2])

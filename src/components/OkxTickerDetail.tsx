@@ -30,6 +30,8 @@ import BaseAreaChart, { type SyncMethod } from './BaseAreaChart'
 import SegmentedToggle, { SegmentedOption } from './SegmentedToggle'
 import SymbolAvatar from './SymbolAvatar'
 import OkxMarketMetrics from './OkxMarketMetrics'
+import TimeframeGrid from './TimeframeGrid'
+import PositionTrack from './PositionTrack'
 
 const windowOptions = (t: Messages): SegmentedOption<DetailWindow>[] => [
   { value: DetailWindow.DAY, label: t.detail.window24h },
@@ -66,40 +68,70 @@ const syncByTime: SyncMethod = (ticks, { activeLabel }) => {
 }
 
 /**
- * Scaffolding for the medium-term layer, and meant to be replaced.
+ * What has been true of this instrument for weeks, beside what the periods are
+ * doing right now.
  *
- * The readings exist before anything is drawn from them — the card's edge and
- * the line a fired alert carries are both still to come — and a layer nobody
- * can see is a layer nobody can check. This is the plainest thing that puts it
- * in front of a person: where the price sits in its month, and whatever else
- * the backdrop has to say about it.
+ * This started as a debug readout — `30d 50%` and a row of labels — which was
+ * the right thing while nothing else drew from the layer and the wrong thing
+ * once the dialog had room. Half of a range is only worth saying if the range
+ * is said too, so the month's low and high are here rather than implied, and
+ * each reading gets the sentence it wrote for itself instead of its chip.
  */
-function BackdropReadout({ instId }: { instId: string }) {
+function BackdropPanel({ instId }: { instId: string }) {
   const backdrop = useOkxBackdrop(instId)
-  if (backdrop.rangePosition === null && !backdrop.readings.length) return null
+  const t = useMessages()
 
   return (
-    <Stack
-      direction="row"
-      sx={{ alignItems: 'baseline', flexWrap: 'wrap', gap: 1.5 }}
-    >
-      {backdrop.rangePosition !== null && (
-        <Typography
-          sx={{ fontSize: 12, color: 'text.secondary', ...numericFont }}
-        >
-          30d {Math.round(backdrop.rangePosition * 100)}%
+    <Box>
+      <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75 }}>
+        {t.backdrop.title}
+      </Typography>
+
+      {backdrop.rangePosition === null ? (
+        <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+          {t.backdrop.pending}
         </Typography>
+      ) : (
+        <Stack sx={{ gap: 0.5 }}>
+          <Stack
+            direction="row"
+            sx={{ alignItems: 'center', gap: 1, minHeight: 22 }}
+          >
+            <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {t.backdrop.rangeLabel}
+            </Typography>
+            <Typography sx={{ fontSize: 13, ...numericFont }}>
+              {Math.round(backdrop.rangePosition * 100)}%
+            </Typography>
+            <PositionTrack position={backdrop.rangePosition} />
+            {backdrop.range && (
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  color: 'text.secondary',
+                  ...numericFont,
+                }}
+              >
+                {formatNumber(backdrop.range.low, 6)} –{' '}
+                {formatNumber(backdrop.range.high, 6)}
+              </Typography>
+            )}
+          </Stack>
+
+          {/* The sentence rather than the chip. The card has room for one of
+              these at a time and shows the short form; this is the surface
+              somebody opened to read them. */}
+          {backdrop.readings.map((reading) => (
+            <Typography
+              key={reading.kind}
+              sx={{ fontSize: 12, color: 'text.secondary' }}
+            >
+              {reading.detail}
+            </Typography>
+          ))}
+        </Stack>
       )}
-      {backdrop.readings.map((reading) => (
-        <Typography
-          key={reading.kind}
-          title={reading.detail}
-          sx={{ fontSize: 12, color: 'text.secondary' }}
-        >
-          {reading.label}
-        </Typography>
-      ))}
-    </Stack>
+    </Box>
   )
 }
 
@@ -295,10 +327,7 @@ export default function OkxTickerDetail({
           pb: 1.5,
         }}
       >
-        <Stack sx={{ gap: 0.75, minWidth: 0 }}>
-          <OkxMarketMetrics instId={instId} />
-          <BackdropReadout instId={instId} />
-        </Stack>
+        <OkxMarketMetrics instId={instId} />
         <SegmentedToggle
           label={t.detail.window}
           value={detailWindow}
@@ -325,6 +354,26 @@ export default function OkxTickerDetail({
           </Typography>
         ) : (
           <Stack sx={{ gap: 2.5 }}>
+            {/* Above the charts, and neither governed by the window selector:
+                the periods and the month are the frame a chart is read inside,
+                so they come before it, and changing which stretch the charts
+                cover does not change what the hour has been doing.
+
+                Side by side on anything wide enough, because each is a short
+                column and one of them alone left the other half of the row
+                empty. Stacked below that, where two columns would be four
+                characters each. */}
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              sx={{ gap: { xs: 2, sm: 4 }, alignItems: 'flex-start' }}
+            >
+              <Box sx={{ flex: '0 1 auto', minWidth: 0 }}>
+                <TimeframeGrid instId={instId} open={open} />
+              </Box>
+              <Box sx={{ flex: '1 1 0', minWidth: 0 }}>
+                <BackdropPanel instId={instId} />
+              </Box>
+            </Stack>
             <ChartSection
               title={t.detail.price}
               note={t.detail.priceNote}
