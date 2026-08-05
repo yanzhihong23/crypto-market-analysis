@@ -10,6 +10,8 @@ import {
   timeframeReadOf,
 } from '../utils/timeframes'
 
+import useOkxTicker from './useOkxTicker'
+
 export interface Timeframes {
   reads: TimeframeRead[]
   loading: boolean
@@ -31,10 +33,16 @@ interface Fetched {
  * They go straight to the exchange rather than through the statistics limiter —
  * candles are not one of its paths — so all four go at once.
  *
- * Not refreshed on a timer either. This is the panel somebody opened to think
- * about a chart with, and the shortest bar in it is fifteen minutes; a row
- * rewriting itself under a cursor would be worse than one that is a few minutes
- * old and says so by being still.
+ * Not refreshed on a timer, and it does not need to be. What these candles are
+ * for is the yardstick — the spread of a period's moves, the size of its bars,
+ * how quiet the last stretch was — and none of that changes until a bar closes.
+ * What does change is the move each period has made so far, and that is
+ * measured against the live price rather than refetched, the same arrangement
+ * the momentum baseline and its five-minute move have run on all along.
+ *
+ * Getting that division wrong is what this hook was doing: it handed the
+ * readings only closed bars, so the `1d` row reported a move that had finished
+ * up to a day earlier while the price at the top of the same dialog was live.
  *
  * The candles are held and the readings derived from them on the way out, so
  * that switching language rewrites the sentences without spending four requests
@@ -79,14 +87,16 @@ export default function useOkxTimeframes(
     }
   }, [instId, enabled])
 
+  const last = Number(useOkxTicker(instId).last)
+
   const reads = useMemo(
     () =>
       fetched.series.length
         ? TIMEFRAMES.map((period, index) =>
-            timeframeReadOf(period, fetched.series[index], t),
+            timeframeReadOf(period, fetched.series[index], last, t),
           )
         : [],
-    [fetched.series, t],
+    [fetched.series, last, t],
   )
 
   return { reads, loading: fetched.loading, failed: fetched.failed }

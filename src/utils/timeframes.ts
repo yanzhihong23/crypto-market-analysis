@@ -65,9 +65,14 @@ const MAX_COIL_SHARE = 0.8
 export interface TimeframeRead {
   period: Period
   /**
-   * The last closed bar's return, in percent. The column that makes the panel
-   * worth having: four of these pointing the same way is the agreement, and one
-   * of them alone is the thing a five-minute board would have shown you anyway.
+   * How far this period has moved, in percent: the last closed bar's close
+   * against the live price, which is the change any chart means by `1d`.
+   *
+   * The column that makes the panel worth having: four of these pointing the
+   * same way is the agreement, and one of them alone is the thing a five-minute
+   * board would have shown you anyway. Which is also why it has to be the bar in
+   * progress — an agreement counted across four finished bars is an agreement
+   * about the past, and three of those four finished hours ago.
    */
   returnPercent: number | null
   /**
@@ -78,7 +83,7 @@ export interface TimeframeRead {
   deviation: number | null
   /** Whatever else this period has to say, in the board's own words. */
   signals: Signal[]
-  /** Where the last close sits between the series' extremes, 0 to 1. */
+  /** Where the live price sits between the series' extremes, 0 to 1. */
   position: number | null
 }
 
@@ -108,17 +113,34 @@ function coilReading(klines: OkxKline[], t: Messages): Signal | null {
 }
 
 /**
- * What one period has to say, off its own candles.
+ * What one period has to say, off its own candles and the live price.
  *
- * Closed bars only. Everything here is a bar against the spread of bars, and a
- * bar still being written is short of what it will be on every count — which is
- * a fair trade on a card reading five minutes and a poor one on a row labelled
- * `1d`, where extrapolating a day's volume from four hours of it would be the
- * loudest number in the panel and the least true.
+ * The split between those two is the whole of this function, and getting it
+ * wrong is not a rounding error. The bar statistics — range, volume, wick, coil
+ * — are taken over closed bars only, because a bar still being written is short
+ * of what it will be on every one of them, and extrapolating a day's volume
+ * from four hours of it would be the loudest number in the panel and the least
+ * true.
+ *
+ * The return is not one of those, and treating it as one is what this used to
+ * do. A partial bar's return is not short of anything: it is the move so far,
+ * which is exactly what a row labelled `1d` is read as meaning. Taking the last
+ * *closed* daily bar instead reports a move that finished up to a day ago, and
+ * on an instrument that has turned it reports the opposite of what is
+ * happening — measured on one, the panel read `1d +7.19%` from a bar two days
+ * back while the day itself was down 7.43%.
+ *
+ * So the move is measured from the last closed bar's close to the live price,
+ * which is the change every chart means by it and is current to the second. Its
+ * yardstick stays the spread of complete bars, which understates the sigma
+ * early in a bar — a tenth of the way into a day, a typical day's move looks
+ * unusual — and that is the honest reading rather than a flaw: what it says is
+ * how far this period has travelled against how far it usually travels in whole.
  */
 export function timeframeReadOf(
   period: Period,
   klines: OkxKline[] | undefined,
+  last: number,
   t: Messages,
 ): TimeframeRead {
   const empty: TimeframeRead = {
@@ -134,18 +156,29 @@ export function timeframeReadOf(
 
   const stats = klineStatsOf(closed)
   const returns = barReturnsOf(closed)
-  const returnPercent = returns.length ? returns[0] : null
+
+  // Falls back to the last closed bar's own return when there is no live price
+  // yet, which is the best available answer rather than a blank row.
+  const previousClose = Number(closed[0]?.[4])
+  const live =
+    Number.isFinite(last) && last > 0 && previousClose > 0
+      ? ((last - previousClose) / previousClose) * 100
+      : null
+  const returnPercent = live ?? (returns.length ? returns[0] : null)
   const deviation =
     returnPercent === null
       ? null
       : deviationFrom(returnPercent, baselineOf(returns))
 
+  // The extremes come off closed bars and the marker off the live price, so a
+  // price that has left the period's range pins to the end it left by; the
+  // clamp is what makes that read as "at the top" rather than fall off it.
   const high = Math.max(...closed.map((kline) => Number(kline[2])))
   const low = Math.min(...closed.map((kline) => Number(kline[3])))
-  const last = Number(closed[0]?.[4])
+  const at = live === null ? previousClose : last
   const position =
-    high > low && Number.isFinite(last)
-      ? Math.min(Math.max((last - low) / (high - low), 0), 1)
+    high > low && Number.isFinite(at)
+      ? Math.min(Math.max((at - low) / (high - low), 0), 1)
       : null
 
   return {
