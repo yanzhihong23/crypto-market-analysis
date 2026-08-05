@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
 import { OkxInstrument, OkxKline, OpenTime, SortBy } from '../types/okx'
-import { Coil, DailyStats } from '../utils/klineStats'
+import { Coil, DailyStats, isDailyStats } from '../utils/klineStats'
 import { Baseline } from '../utils/signals'
 
 interface TickerStore {
@@ -370,6 +370,73 @@ export const useTickerStore = create<TickerStore>()(
     {
       name: 'tickers',
       storage: createJSONStorage(() => localStorage),
+      /**
+       * Bumped whenever a persisted *record* grows a field, as opposed to the
+       * store growing a record.
+       *
+       * A new record is safe unversioned: it is absent from an old save, reads
+       * as undefined, and every caller already asks whether it is there. A new
+       * field inside a record that is already saved is not — the record arrives
+       * looking complete, passes the null check that guards it, and yields
+       * undefined only when something reaches through it. Relative strength
+       * subtracts two of those and put `NaN%` on the dialog for anybody whose
+       * daily stats had been written an hour earlier by the build before it.
+       */
+      version: 1,
+      /**
+       * For version steps from here on. It cannot repair what is already saved,
+       * and it is worth being precise about why: zustand only migrates when the
+       * stored blob carries a numeric version, and every blob written before
+       * this option existed carries none. Those load as-is and are then written
+       * back stamped with the current version, so a migration keyed on the step
+       * they actually came from can never run for them.
+       */
+      migrate: (persisted, version) => {
+        const state = persisted as TickerStore
+        if (version >= 1) return state
+        return { ...state, dailyStats: {}, dailyStatsAt: {} }
+      },
+      /**
+       * Which is why the shape check lives here instead, where it runs on every
+       * rehydration and asks nothing about where the state came from.
+       *
+       * Only the daily stats are checked, because they are the only record here
+       * that is a *composite* and persisted. A record added later is absent from
+       * an old save rather than half-built, and every caller already asks
+       * whether it is there; a field added to a record already being saved is
+       * the case nothing catches, and this is that case.
+       *
+       * Dropped rather than repaired, along with the timestamp that would
+       * otherwise keep the hourly poll from replacing them. They are derived
+       * from candles refetched every hour anyway, so the honest fix is to let
+       * the next pass write the shape this build expects. Nulls are kept: a
+       * symbol too new to have a month of history is a real answer, not a
+       * malformed one.
+       */
+      merge: (persisted, current) => {
+        const saved = (persisted ?? {}) as Partial<TickerStore>
+        const usable = Object.entries(saved.dailyStats ?? {}).filter(
+          ([, stats]) => stats === null || isDailyStats(stats),
+        )
+        const keep = new Set(usable.map(([instId]) => instId))
+
+        return {
+          ...current,
+          ...saved,
+          dailyStats: Object.fromEntries(usable),
+          dailyStatsAt: Object.fromEntries(
+            Object.entries(saved.dailyStatsAt ?? {}).filter(([instId]) =>
+              keep.has(instId),
+            ),
+          ),
+          benchmarkDaily: isDailyStats(saved.benchmarkDaily)
+            ? saved.benchmarkDaily
+            : null,
+          benchmarkDailyAt: isDailyStats(saved.benchmarkDaily)
+            ? (saved.benchmarkDailyAt ?? 0)
+            : 0,
+        }
+      },
       /**
        * Everything but the instrument list, which is four hundred-odd contracts
        * and was 425KB of the 431KB this store saved. It is refetched on every

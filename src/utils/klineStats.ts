@@ -185,6 +185,44 @@ export interface DailyStats {
   coil: Coil | null
 }
 
+/**
+ * Whether a value off the persisted store is a `DailyStats` this build can read.
+ *
+ * Every field is checked rather than the object's presence, because the failure
+ * this exists for is a record that looks complete and is not: one written before
+ * this shape grew a field arrives with that field absent, passes any null check
+ * guarding it, and yields undefined only where something reaches through it. A
+ * subtraction downstream then produces NaN, which is a number, and every test
+ * after that asks whether there is one.
+ */
+/** The fields of `DailyStats` that are plain numbers, which is all but the coil. */
+type NumericField = {
+  [K in keyof DailyStats]: DailyStats[K] extends number ? K : never
+}[keyof DailyStats]
+
+/**
+ * A record rather than a list, so the compiler holds it exhaustive: a numeric
+ * field added to `DailyStats` will not build until it is named here. That is
+ * the actual protection — the check below is easy to write and easy to forget
+ * to extend, and forgetting to extend it is the whole bug it exists for.
+ */
+const NUMERIC_FIELDS: Record<NumericField, true> = {
+  high30d: true,
+  low30d: true,
+  high7d: true,
+  low7d: true,
+  range7d: true,
+  range30d: true,
+  return7d: true,
+  return30d: true,
+}
+
+export function isDailyStats(value: unknown): value is DailyStats {
+  if (!value || typeof value !== 'object') return false
+  const stats = value as Record<string, unknown>
+  return Object.keys(NUMERIC_FIELDS).every((key) => Number.isFinite(stats[key]))
+}
+
 /** Highest high and lowest low across a stretch of bars. */
 const extremesOf = (bars: OkxKline[]) => {
   let high = -Infinity

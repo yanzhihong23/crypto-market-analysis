@@ -352,10 +352,18 @@ function fundingCarryReading(
  */
 export function relativeOf({ daily, benchmark }: BackdropInput) {
   if (!daily || !benchmark) return null
-  return {
-    excess7d: daily.return7d - benchmark.return7d,
-    excess30d: daily.return30d - benchmark.return30d,
-  }
+
+  const excess7d = daily.return7d - benchmark.return7d
+  const excess30d = daily.return30d - benchmark.return30d
+  // Both ends checked rather than trusted. These are derived figures out of a
+  // persisted store, and a record written by a build that computed fewer of
+  // them arrives here with the field simply absent — which subtracts to NaN and
+  // reaches the screen as one, because NaN is a number and every guard above
+  // asks whether there is one. The store is versioned so that does not happen;
+  // this is what makes it not matter if it does.
+  if (!Number.isFinite(excess7d) || !Number.isFinite(excess30d)) return null
+
+  return { excess7d, excess30d }
 }
 
 /**
