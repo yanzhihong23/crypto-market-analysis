@@ -76,18 +76,20 @@ const syncByTime: SyncMethod = (ticks, { activeLabel }) => {
  */
 function BackdropReadout({ instId }: { instId: string }) {
   const backdrop = useOkxBackdrop(instId)
-  if (backdrop.rangePosition === null) return null
+  if (backdrop.rangePosition === null && !backdrop.readings.length) return null
 
   return (
     <Stack
       direction="row"
       sx={{ alignItems: 'baseline', flexWrap: 'wrap', gap: 1.5 }}
     >
-      <Typography
-        sx={{ fontSize: 12, color: 'text.secondary', ...numericFont }}
-      >
-        30d {Math.round(backdrop.rangePosition * 100)}%
-      </Typography>
+      {backdrop.rangePosition !== null && (
+        <Typography
+          sx={{ fontSize: 12, color: 'text.secondary', ...numericFont }}
+        >
+          30d {Math.round(backdrop.rangePosition * 100)}%
+        </Typography>
+      )}
       {backdrop.readings.map((reading) => (
         <Typography
           key={reading.kind}

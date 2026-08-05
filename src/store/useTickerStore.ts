@@ -88,12 +88,25 @@ interface TickerStore {
    */
   fundingShiftBaseline: Record<string, Baseline | null>
   fundingPrev: Record<string, string>
-  /** All three come off one history, so all three go in on one write. */
+  /**
+   * What a long has paid to hold this for a week, summed over the settlements
+   * in it, in the unit the card shows the rate in.
+   *
+   * Rides along on the history the baselines above are taken from and costs no
+   * request of its own. It belongs with the medium-term readings rather than
+   * with them — the level and the shift describe one settlement, and this
+   * describes twenty-one — but the fetch is here, and a second poller against
+   * the same endpoint to compute a different sum off the same rows would be a
+   * request spent on arithmetic.
+   */
+  fundingCarry: Record<string, number | null>
+  /** All four come off one history, so all four go in on one write. */
   setFundingBaseline: (
     instId: string,
     baseline: Baseline | null,
     shiftBaseline: Baseline | null,
     previous: string,
+    carry: number | null,
   ) => void
   fundingBaselineAt: Record<string, number>
   /**
@@ -132,7 +145,17 @@ interface TickerStore {
    */
   dailyStats: Record<string, DailyStats | null>
   dailyStatsAt: Record<string, number>
-  setDailyStats: (instId: string, stats: DailyStats | null) => void
+  /**
+   * Where open interest sits in its own hundred days, 0 to 1. Off a different
+   * endpoint from the candles above and on the same hourly walk, so it goes in
+   * on the same write rather than earning a poller of its own.
+   */
+  dailyOiPercentile: Record<string, number | null>
+  setDailyStats: (
+    instId: string,
+    stats: DailyStats | null,
+    oiPercentile: number | null,
+  ) => void
   /**
    * Open interest as it stood when the current session opened, which is what
    * the live figure off the websocket is measured against. Stamped with the
@@ -184,6 +207,7 @@ export const useTickerStore = create<TickerStore>()(
             fundingBaseline: without(state.fundingBaseline),
             fundingShiftBaseline: without(state.fundingShiftBaseline),
             fundingPrev: without(state.fundingPrev),
+            fundingCarry: without(state.fundingCarry),
             fundingBaselineAt: without(state.fundingBaselineAt),
             momentumBaseline: without(state.momentumBaseline),
             momentumBaselineAt: without(state.momentumBaselineAt),
@@ -191,6 +215,7 @@ export const useTickerStore = create<TickerStore>()(
             oiChangeBaseline: without(state.oiChangeBaseline),
             dailyStats: without(state.dailyStats),
             dailyStatsAt: without(state.dailyStatsAt),
+            dailyOiPercentile: without(state.dailyOiPercentile),
             openInterestOpen: without(state.openInterestOpen),
           }
         }),
@@ -239,12 +264,14 @@ export const useTickerStore = create<TickerStore>()(
       fundingBaseline: {},
       fundingShiftBaseline: {},
       fundingPrev: {},
+      fundingCarry: {},
       fundingBaselineAt: {},
       setFundingBaseline: (
         instId: string,
         baseline: Baseline | null,
         shiftBaseline: Baseline | null,
         previous: string,
+        carry: number | null,
       ) =>
         set((state) => ({
           fundingBaseline: { ...state.fundingBaseline, [instId]: baseline },
@@ -253,6 +280,7 @@ export const useTickerStore = create<TickerStore>()(
             [instId]: shiftBaseline,
           },
           fundingPrev: { ...state.fundingPrev, [instId]: previous },
+          fundingCarry: { ...state.fundingCarry, [instId]: carry },
           fundingBaselineAt: {
             ...state.fundingBaselineAt,
             [instId]: Date.now(),
@@ -281,12 +309,21 @@ export const useTickerStore = create<TickerStore>()(
         })),
       dailyStats: {},
       dailyStatsAt: {},
+      dailyOiPercentile: {},
       // Stamped even when the derivation came to nothing, so a symbol with too
       // little history is not refetched on every pass for the month it takes to
       // grow some.
-      setDailyStats: (instId: string, stats: DailyStats | null) =>
+      setDailyStats: (
+        instId: string,
+        stats: DailyStats | null,
+        oiPercentile: number | null,
+      ) =>
         set((state) => ({
           dailyStats: { ...state.dailyStats, [instId]: stats },
+          dailyOiPercentile: {
+            ...state.dailyOiPercentile,
+            [instId]: oiPercentile,
+          },
           dailyStatsAt: { ...state.dailyStatsAt, [instId]: Date.now() },
         })),
       openInterestOpen: {},

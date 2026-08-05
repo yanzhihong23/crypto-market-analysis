@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef } from 'react'
 
-import { fetchOkxKlines } from '../apis'
+import { fetchOkxKlines, fetchOkxOpenInterestHistory } from '../apis'
 import { useTickerStore } from '../store/useTickerStore'
 import { Period } from '../types/okx'
 import { dailyStatsOf } from '../utils/klineStats'
+import { oiPercentileOf } from '../utils/openInterest'
 
 /**
  * Ten months of daily bars, which is the endpoint's ceiling and costs the same
@@ -11,6 +12,13 @@ import { dailyStatsOf } from '../utils/klineStats'
  * is there so the coil's percentile has a history worth ranking within.
  */
 const BARS = 300
+
+/**
+ * Days of open interest, which is the statistics endpoints' hard ceiling — they
+ * cap at a hundred rows whatever is asked for. Long enough that a level sitting
+ * at the top of it has a build-up behind it rather than a busy fortnight.
+ */
+const OI_DAYS = 100
 
 /**
  * A daily bar closes once a day, so an hour-old copy of a month is a month. The
@@ -57,14 +65,16 @@ export default function useOkxDailyStatsUpdater() {
       const fetchedAt = useTickerStore.getState().dailyStatsAt[instId]
       if (fetchedAt && fetchedAt > Date.now() - STALE_AFTER_MS) return
 
-      const res = await fetchOkxKlines({
-        instId,
-        period: Period.DAY_1,
-        limit: BARS,
-      })
-      if (!res?.length) return
+      // In parallel: the two go to different hosts — candles straight to the
+      // exchange, the statistics path through our own origin and its limiter —
+      // so neither is waiting on the other's allowance.
+      const [klines, openInterest] = await Promise.all([
+        fetchOkxKlines({ instId, period: Period.DAY_1, limit: BARS }),
+        fetchOkxOpenInterestHistory({ instId, period: '1D', limit: OI_DAYS }),
+      ])
+      if (!klines?.length) return
 
-      setDailyStats(instId, dailyStatsOf(res))
+      setDailyStats(instId, dailyStatsOf(klines), oiPercentileOf(openInterest))
     },
     [setDailyStats],
   )

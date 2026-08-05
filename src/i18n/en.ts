@@ -338,6 +338,22 @@ export const en = {
     volRegime: (ratio: string) => `vol ${ratio}× month`,
     volRegimeDetail: (ratio: string, expanding: boolean) =>
       `this week ranging ${ratio}× its month — volatility ${expanding ? 'expanding' : 'winding down'}`,
+
+    oiCrowded: 'OI near 100d high',
+    oiEmpty: 'OI near 100d low',
+    oiPercentileDetail: (percent: number, crowded: boolean) =>
+      `open interest above ${percent}% of the last 100 days — ${crowded ? 'a crowd already positioned' : 'barely anyone positioned'}`,
+
+    /** Signed, like the rate on the card: which side pays is most of it. */
+    fundingCarry: (signed: string) => `carry ${signed}/wk`,
+    /**
+     * Unsigned here, because the sentence names the side that paid and a
+     * negative amount next to it would say the opposite. The direction is which
+     * side has been paying, not which way the price went: a positive rate is
+     * longs paying shorts, and a week of it is the crowd charged for being long.
+     */
+    fundingCarryDetail: (paid: string, annual: string, longsPaying: boolean) =>
+      `${longsPaying ? 'longs' : 'shorts'} paid ${paid} over the last week, ${annual} a year`,
   },
 
   /**

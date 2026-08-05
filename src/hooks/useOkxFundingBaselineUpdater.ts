@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { fetchOkxFundingRateHistory } from '../apis'
 import { useTickerStore } from '../store/useTickerStore'
 import { baselineOf } from '../utils/signals'
+import { fundingCarryOf } from '../utils/funding'
 
 /**
  * Funding settles every eight hours, so its history is worth refetching on the
@@ -42,11 +43,15 @@ export default function useOkxFundingBaselineUpdater() {
         .slice(0, -1)
         .map((rate, index) => rate - rates[index + 1])
 
+      // The week's carry rides along on the same rows. It belongs to the
+      // medium-term layer rather than to the two baselines above, but the fetch
+      // that answers it has already happened here.
       setFundingBaseline(
         instId,
         baselineOf(rates),
         baselineOf(steps),
         rates[0].toFixed(1),
+        fundingCarryOf(res),
       )
     },
     [setFundingBaseline],

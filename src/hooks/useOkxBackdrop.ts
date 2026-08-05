@@ -23,6 +23,13 @@ export default function useOkxBackdrop(instId: string): Backdrop {
 
   useOkxTicker(instId)
   useTickerStore((state) => state.dailyStats[instId])
+  // Written on the same pass as the stats above, so it needs no subscription of
+  // its own — it has one anyway, because sharing a write is the updater's
+  // arrangement rather than this file's, and a later split should not silently
+  // stop the screen updating.
+  useTickerStore((state) => state.dailyOiPercentile[instId])
+  // This one genuinely arrives on a different poller.
+  useTickerStore((state) => state.fundingCarry[instId])
 
   return readBackdrop(instId, t)
 }

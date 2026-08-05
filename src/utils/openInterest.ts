@@ -99,3 +99,29 @@ export function describeSqueeze(read: SqueezeRead, t: Messages) {
 export function isForcedExit(read: SqueezeRead) {
   return read === 'short-squeeze' || read === 'long-liquidation'
 }
+
+/** Days of history before a percentile over them is worth quoting. */
+const MIN_OI_DAYS = 30
+
+/**
+ * Where today's open interest sits among the last hundred days of it, 0 to 1.
+ *
+ * A percentile rather than a distance from a mean, for the reason the coil is
+ * one: open interest trends for weeks at a time, so the spread of a hundred days
+ * of it describes the trend rather than the noise, and a sigma taken over it
+ * would call an ordinary Tuesday in a rising market unusual.
+ *
+ * Read in coin rather than in dollars. A notional series rises with the price
+ * even when not one contract has changed hands, and over a hundred days that is
+ * most of what a dollar series would be showing.
+ */
+export function oiPercentileOf(rows?: Array<[ts: string, ...rest: string[]]>) {
+  const series = (rows ?? [])
+    .map((row) => Number(row[2]))
+    .filter((value) => Number.isFinite(value) && value > 0)
+  if (series.length < MIN_OI_DAYS) return null
+
+  // Newest first, so the head is the figure being placed.
+  const current = series[0]
+  return series.filter((value) => value < current).length / series.length
+}

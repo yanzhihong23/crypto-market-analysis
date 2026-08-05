@@ -16,12 +16,17 @@ import { getOkxTickerSnapshot } from './okxRealtimeTicker'
 import { useTickerStore } from './useTickerStore'
 
 export function readBackdrop(instId: string, t: Messages): Backdrop {
+  const state = useTickerStore.getState()
   const ticker = getOkxTickerSnapshot(instId)
 
   return collectBackdrop(
     {
       last: Number(ticker?.last),
-      daily: useTickerStore.getState().dailyStats[instId],
+      daily: state.dailyStats[instId],
+      oiPercentile: state.dailyOiPercentile[instId],
+      // Off the funding poller rather than the daily one, which is where the
+      // history it is summed from was already being fetched.
+      fundingCarry: state.fundingCarry[instId],
     },
     t,
   )

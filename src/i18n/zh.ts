@@ -255,6 +255,15 @@ export const zh: Messages = {
     volRegime: (ratio) => `波动 ${ratio}× 月度`,
     volRegimeDetail: (ratio, expanding) =>
       `近一周振幅为近一月的 ${ratio}×，波动正在${expanding ? '放大' : '收敛'}`,
+
+    oiCrowded: '持仓接近百日高位',
+    oiEmpty: '持仓接近百日低位',
+    oiPercentileDetail: (percent, crowded) =>
+      `持仓量高于近 100 日中 ${percent}% 的水平，${crowded ? '已有大量筹码在场' : '几乎无人在场'}`,
+
+    fundingCarry: (signed) => `周成本 ${signed}`,
+    fundingCarryDetail: (paid, annual, longsPaying) =>
+      `近一周${longsPaying ? '多头' : '空头'}累计支付 ${paid}，年化 ${annual}`,
   },
 
   flow: {

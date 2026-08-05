@@ -28,7 +28,12 @@ import type { Messages } from '../i18n/en'
 
 import { Coil, DailyStats } from './klineStats'
 
-export type BackdropKind = 'daily-coil' | 'range-position' | 'vol-regime'
+export type BackdropKind =
+  | 'daily-coil'
+  | 'range-position'
+  | 'vol-regime'
+  | 'oi-percentile'
+  | 'funding-carry'
 
 export interface BackdropReading {
   kind: BackdropKind
@@ -57,6 +62,10 @@ export interface BackdropInput {
   /** Live, off the ticker feed: the yardstick is slow but the price is not. */
   last: number
   daily?: DailyStats | null
+  /** Where open interest sits in its own hundred days, 0 to 1. */
+  oiPercentile?: number | null
+  /** What a long has paid to hold this for a week, in the card's unit. */
+  fundingCarry?: number | null
 }
 
 /**
@@ -88,6 +97,41 @@ const MAX_COIL_SHARE = 0.8
  */
 const REGIME_EXPANSION = 1.5
 const REGIME_CONTRACTION = 1 / REGIME_EXPANSION
+
+/**
+ * How far into its own hundred days open interest has to sit before the level is
+ * worth naming. A decile at each end, the bar the coil is held to and for the
+ * same reason: this is a percentile of a series that always has a top and a
+ * bottom, so unlike a sigma test it is meant to describe roughly a tenth of the
+ * board at all times rather than nothing on a calm afternoon.
+ *
+ * Measured across 29 instruments it put three in the top decile and three in the
+ * bottom, with the middle of the board at the 46th percentile — centred, and
+ * flagging a fifth of it in total. That is a great deal to say out loud for a
+ * reading that rang a card, and nothing at all for one that only ever adds a
+ * sentence to a card something else has already put up.
+ */
+const OI_EDGE_SHARE = 0.1
+
+/**
+ * A week's carry, in tenths of a basis point, past which holding this has cost
+ * real money rather than the usual toll.
+ *
+ * A fixed band, and it earns one the way the basis does: a cost of carry as a
+ * share of notional is already per instrument, has a real zero, and means the
+ * same thing on BTC as on a small cap. There is also no baseline to be had —
+ * a hundred settlements is thirty-three days, so a series of weekly sums drawn
+ * from it is five independent numbers, and the overlapping windows that would
+ * pad it out to twenty are still five weeks of information wearing a disguise.
+ *
+ * Forty is about twenty-one percent a year. Measured across 29 instruments in a
+ * quiet week the whole board sat between -15.6 and +19.2, median 9.1 in
+ * absolute terms, so this fires on none of them today — which is the intent
+ * rather than a miscalibration. What it is for is the market where the majors
+ * run at three figures annualised, and a band set at this week's ninetieth
+ * percentile would report the top of a calm distribution as a crowded trade.
+ */
+const MAX_WEEKLY_CARRY = 40
 
 /**
  * Where the price sits in the month, as a share of the month's range.
@@ -178,6 +222,66 @@ function volRegimeReading(
   }
 }
 
+/**
+ * How much leverage is standing on this contract, against how much usually is.
+ *
+ * The five-minute open interest reading says what just arrived or left. This says
+ * what has accumulated: a contract carrying more open positions than on ninety of
+ * the last hundred days has a crowd on it whether or not anything happened in the
+ * last five minutes, and that crowd is what a move has to move through.
+ *
+ * The other end is worth saying too, and is not merely the absence of the first.
+ * Open interest at its own hundred-day low is a contract nobody is positioned in,
+ * which alongside a coil is the same picture twice — no leverage, no range, and
+ * nothing yet to unwind.
+ */
+function oiPercentileReading(
+  percentile: number | null | undefined,
+  t: Messages,
+): BackdropReading | null {
+  if (percentile == null || !Number.isFinite(percentile)) return null
+  if (percentile > OI_EDGE_SHARE && percentile < 1 - OI_EDGE_SHARE) return null
+
+  const percent = Math.round(percentile * 100)
+  const crowded = percentile >= 0.5
+  return {
+    kind: 'oi-percentile',
+    label: crowded ? t.backdrop.oiCrowded : t.backdrop.oiEmpty,
+    detail: t.backdrop.oiPercentileDetail(percent, crowded),
+  }
+}
+
+/**
+ * What the week actually cost the side that is long.
+ *
+ * `funding` says the rate is unusual for this instrument and `funding-shift`
+ * says it has just moved; both are about one settlement. This is about
+ * twenty-one of them, and it is the only one of the three that answers what
+ * holding the position has been worth — a rate too ordinary to flag, charged
+ * every eight hours for a week, is how a crowded trade is actually paid for.
+ */
+function fundingCarryReading(
+  carry: number | null | undefined,
+  t: Messages,
+): BackdropReading | null {
+  if (carry == null || !Number.isFinite(carry)) return null
+  if (Math.abs(carry) < MAX_WEEKLY_CARRY) return null
+
+  // Signed on the chip, where it follows the funding rate's own convention and
+  // the sign is all there is room for. Unsigned in the sentence, which names the
+  // side that paid — "shorts paid -59" says the opposite of what it means.
+  const signed = `${carry > 0 ? '+' : ''}${carry.toFixed(0)}‱`
+  const paid = `${Math.abs(carry).toFixed(0)}‱`
+  // Annualised as well, because a week of tenths of a basis point is not a
+  // number anyone holds an opinion about until it is a rate per year.
+  const annual = `${Math.abs((carry / 100) * 52).toFixed(0)}%`
+  return {
+    kind: 'funding-carry',
+    label: t.backdrop.fundingCarry(signed),
+    detail: t.backdrop.fundingCarryDetail(paid, annual, carry > 0),
+  }
+}
+
 export function collectBackdrop(input: BackdropInput, t: Messages): Backdrop {
   const rangePosition = rangePositionOf(input)
 
@@ -187,6 +291,8 @@ export function collectBackdrop(input: BackdropInput, t: Messages): Backdrop {
       rangePositionReading(rangePosition, t),
       dailyCoilReading(input.daily?.coil, t),
       volRegimeReading(input.daily, t),
+      oiPercentileReading(input.oiPercentile, t),
+      fundingCarryReading(input.fundingCarry, t),
     ].filter((reading): reading is BackdropReading => reading !== null),
   }
 }
