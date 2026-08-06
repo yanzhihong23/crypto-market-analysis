@@ -47,6 +47,16 @@ export default function useOkxMomentumBaselineUpdater() {
       })
       if (!res?.length) return
 
+      // Closed bars only, the way every other series here is read. The head of
+      // this reply is the bar still forming, and a partial bar is a partial of
+      // both things taken off it: its range is short of what it will be and so
+      // is its return. In the coil that lands asymmetrically and so actually
+      // matters — the newest stretch is the one being judged, and it was the
+      // only one of the seventy-odd carrying a half-written bar, so it read
+      // quieter than the stretches it was being compared with by construction.
+      const closed = res.filter((kline) => kline[8] === '1')
+      if (!closed.length) return
+
       // The coil comes off the same candles and goes in on the same write. It
       // wants an uncut series for its own reason — the board's are clipped to
       // the session, so half of every day has too few of them to have a quiet
@@ -57,7 +67,11 @@ export default function useOkxMomentumBaselineUpdater() {
       // breaking, and a break is a move, and a move puts the momentum reading in
       // front of this one on the badge. What is left is the sentence underneath
       // it saying how long the thing that just broke had been winding up.
-      setMomentumBaseline(instId, baselineOf(barReturnsOf(res)), coilOf(res))
+      setMomentumBaseline(
+        instId,
+        baselineOf(barReturnsOf(closed)),
+        coilOf(closed),
+      )
     },
     [setMomentumBaseline],
   )

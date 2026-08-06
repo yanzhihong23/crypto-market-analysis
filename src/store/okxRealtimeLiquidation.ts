@@ -121,7 +121,17 @@ export const recordOkxLiquidation = (
     buffer = []
     events.set(instId, buffer)
   }
-  buffer.push({ ts, sz, long })
+
+  // Inserted by the exchange's stamp rather than by arrival. A cascade is the
+  // one time this reading matters and the one time a message carries hundreds
+  // of details, and they do not arrive in order — an older one landing last
+  // would sit at the head, where the expiry scan stops at the first row still
+  // inside the window and would therefore stop immediately, holding every
+  // expired event in the count behind it. Appending is still the common path:
+  // the search starts from the newest end and usually finds nothing later.
+  let at = buffer.length
+  while (at > 0 && buffer[at - 1].ts > ts) at--
+  buffer.splice(at, 0, { ts, sz, long })
 
   recompute(instId, Date.now())
 }

@@ -64,7 +64,7 @@ Two exceptions:
 | ------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | `momentum`    | The 5m move is ≥3σ from this instrument's own 5m moves **and** ≥0.3%                                                  | Live tick buffer; baseline from 100×5m candles |
 | `volatility`  | The last closed bar's range is ≥3σ above normal **and** ≥1.5× the mean range                                          | Rolling 25h of 15m candles                     |
-| `compression` | The last 2h ranged quieter than 90% of the 2h stretches in the series **and** ≤0.8× the middle stretch — _fixed band_ | 100×5m candles, uncut                          |
+| `compression` | The last 2h ranged quieter than 90% of the 2h stretches in the series **and** ≤0.8× the middle stretch — _fixed band_ | 100×5m candles, uncut, closed only             |
 | `breakout`    | Price is at or through the 24h high or low, and the 24h range is ≥0.5% of price                                       | `tickers` feed                                 |
 | `range-break` | Price is through the high or low of the last 30 closed daily bars, or failing that the last 7                         | Daily candles; see the backdrop below          |
 | `rejection`   | A bar at least as wide as normal closed with ≥60% of its range as one wick                                            | Rolling 25h of 15m candles                     |

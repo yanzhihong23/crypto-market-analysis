@@ -59,8 +59,16 @@ export default function useOkxTakerFlowUpdater() {
       // Newest first, and the head is the bar still forming. It is the reading
       // worth having when it has filled enough to mean anything, and the bar
       // behind it — five minutes stale at worst — when it has not.
-      const typical = medianOf(res.slice(1).map(totalOf)) ?? 0
-      const index = totalOf(res[0]) >= typical * MIN_FORMING_SHARE ? 0 : 1
+      //
+      // With nothing behind it to say what a full bar looks like, the forming
+      // one is not trusted: falling back to zero there made the test `total >=
+      // 0`, which every bar passes, so the one case the floor exists for was
+      // the one case it was absent from.
+      const typical = medianOf(res.slice(1).map(totalOf))
+      const index =
+        typical !== null && totalOf(res[0]) >= typical * MIN_FORMING_SHARE
+          ? 0
+          : 1
 
       const reading = res[index]
       if (!reading) return
