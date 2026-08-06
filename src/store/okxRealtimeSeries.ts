@@ -14,6 +14,8 @@
  * live there, the same split the funding rate already uses.
  */
 
+import { MIN_BOARD_SYMBOLS } from '../utils/signals'
+
 /** The window a change is taken over. Also what its baseline is a sigma of. */
 export const SERIES_WINDOW_MS = 1000 * 60 * 5
 
@@ -242,6 +244,12 @@ let median: { key: string; version: number; value: number | null } | undefined
  * beat to have done anything of its own. A mean would be dragged around by the
  * one symbol that just moved twenty percent — the number it is being compared
  * against would contain the thing being measured.
+ *
+ * Null below `MIN_BOARD_SYMBOLS` contributing moves, which is the same bar the
+ * month-long version of this reading is held to and for the same reason: on a
+ * watchlist of three the median is usually the symbol being measured, so the
+ * excess it is netted against comes out at zero and `strength` reports on a
+ * market that is not there.
  */
 export const boardMedianPricePercent = (instIds: string[]) => {
   const key = instIds.join(',')
@@ -257,11 +265,12 @@ export const boardMedianPricePercent = (instIds: string[]) => {
     .sort((a, b) => a - b)
 
   const middle = Math.floor(moves.length / 2)
-  const value = !moves.length
-    ? null
-    : moves.length % 2
-      ? moves[middle]
-      : (moves[middle - 1] + moves[middle]) / 2
+  const value =
+    moves.length < MIN_BOARD_SYMBOLS
+      ? null
+      : moves.length % 2
+        ? moves[middle]
+        : (moves[middle - 1] + moves[middle]) / 2
 
   median = { key, version, value }
   return value

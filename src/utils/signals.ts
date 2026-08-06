@@ -65,6 +65,23 @@ export function baselineOf(values: number[]): Baseline | null {
 }
 
 /**
+ * Symbols needed before the board has a middle worth subtracting.
+ *
+ * Both readings that net the market out — `strength` over five minutes and
+ * `relative-strength` over a month — subtract the median of the board, and
+ * below a handful of symbols that median is not a market. A median of three is
+ * one of them, and on a watchlist that size it is routinely the symbol being
+ * measured: the excess comes out at exactly zero, and on a watchlist of two it
+ * comes out as half the gap between the pair, so the same move reads as
+ * strength on one card and weakness on the other.
+ *
+ * Eight, which is where the middle stops swinging on which one card happens to
+ * be open. Below it neither reading fires; the raw figures both are derived
+ * from are still reported, since only the reading claims a move is unusual.
+ */
+export const MIN_BOARD_SYMBOLS = 8
+
+/**
  * The middle of a set of readings, or null when there are none. Used where a
  * mean would be dragged around by the one sample that went mad, which is the
  * usual case whenever the thing being summarised is a volume or a spread.

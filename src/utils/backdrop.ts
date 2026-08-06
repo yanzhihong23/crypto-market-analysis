@@ -183,21 +183,6 @@ const MAX_WEEKLY_CARRY = 40
 const MIN_RELATIVE_EXCESS = 20
 
 /**
- * Symbols needed before the board has a middle worth subtracting.
- *
- * A median of three is one of them, and the reading would swing on which two
- * other cards happen to be open — which is exactly the objection that kept the
- * benchmark from being the watchlist in the first place. Below this the figure
- * against BTC is still reported; only the reading stays quiet, because only the
- * reading claims the move is unusual.
- *
- * Exported because the median is taken where the board is known — this file
- * sees one instrument at a time — and the two have to agree about when there is
- * a board at all.
- */
-export const MIN_BOARD_SYMBOLS = 8
-
-/**
  * Where the price sits in the month, as a share of the month's range.
  *
  * Exported on its own because it is the field rather than a reading: the caller

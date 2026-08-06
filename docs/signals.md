@@ -68,7 +68,7 @@ Two exceptions:
 | `breakout`    | Price is at or through the 24h high or low, and the 24h range is ≥0.5% of price                                       | `tickers` feed                                 |
 | `range-break` | Price is through the high or low of the last 30 closed daily bars, or failing that the last 7                         | Daily candles; see the backdrop below          |
 | `rejection`   | A bar at least as wide as normal closed with ≥60% of its range as one wick                                            | Rolling 25h of 15m candles                     |
-| `strength`    | The move net of the board's median 5m move is ≥3σ **and** ≥0.3%                                                       | As `momentum`, minus the board median          |
+| `strength`    | The move net of the board's median 5m move is ≥3σ **and** ≥0.3%, on a board of ≥8                                     | As `momentum`, minus the board median          |
 
 `volatility` only ever reports an expansion, and `compression` only a
 contraction — they are separate functions rather than one signed test because a
@@ -180,9 +180,11 @@ almost all laggards, and reported the alt market's drawdown as if it were news
 about each one. Netted, the spread re-centres and ±20 flags 4 of 39.
 
 This is the intraday `strength` reading at a horizon of a month, netted the same
-way and for the same reason. It needs a board to have a middle, so below eight
-watched symbols it stays quiet — the figure against BTC is still reported, since
-only the reading claims the move is unusual. The benchmark is fetched whether or
+way and for the same reason. Both need a board to have a middle, so below eight
+watched symbols both stay quiet — the figure against BTC is still reported, since
+only the reading claims the move is unusual. `strength` used to go without that
+bar, which on a watchlist of three meant the median it was netted against was
+usually the symbol itself and the excess came out at exactly zero. The benchmark is fetched whether or
 not BTC is on the board: one that came and went with the watchlist would make the
 same symbol's relative strength mean different things on different boards.
 

@@ -9,8 +9,8 @@
  * second. Putting them together is the whole of this file.
  */
 
-import { Backdrop, MIN_BOARD_SYMBOLS, collectBackdrop } from '../utils/backdrop'
-import { medianOf } from '../utils/signals'
+import { Backdrop, collectBackdrop } from '../utils/backdrop'
+import { MIN_BOARD_SYMBOLS, medianOf } from '../utils/signals'
 import type { Messages } from '../i18n/en'
 
 import { getOkxTickerSnapshot } from './okxRealtimeTicker'
