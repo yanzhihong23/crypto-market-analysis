@@ -63,11 +63,11 @@ Two exceptions:
 | Signal        | Fires when                                                                                                            | Source                                         |
 | ------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | `momentum`    | The 5m move is ≥3σ from this instrument's own 5m moves **and** ≥0.3%                                                  | Live tick buffer; baseline from 100×5m candles |
-| `volatility`  | The last closed bar's range is ≥3σ above normal **and** ≥1.5× the mean range                                          | Session candles (15m)                          |
+| `volatility`  | The last closed bar's range is ≥3σ above normal **and** ≥1.5× the mean range                                          | Rolling 25h of 15m candles                     |
 | `compression` | The last 2h ranged quieter than 90% of the 2h stretches in the series **and** ≤0.8× the middle stretch — _fixed band_ | 100×5m candles, uncut                          |
 | `breakout`    | Price is at or through the 24h high or low, and the 24h range is ≥0.5% of price                                       | `tickers` feed                                 |
 | `range-break` | Price is through the high or low of the last 30 closed daily bars, or failing that the last 7                         | Daily candles; see the backdrop below          |
-| `rejection`   | A bar at least as wide as normal closed with ≥60% of its range as one wick                                            | Session candles (15m)                          |
+| `rejection`   | A bar at least as wide as normal closed with ≥60% of its range as one wick                                            | Rolling 25h of 15m candles                     |
 | `strength`    | The move net of the board's median 5m move is ≥3σ **and** ≥0.3%                                                       | As `momentum`, minus the board median          |
 
 `volatility` only ever reports an expansion, and `compression` only a
@@ -84,12 +84,12 @@ family either way, so nothing about the ring turns on it.
 
 ### Flow — whether anyone was behind it
 
-| Signal          | Fires when                                                                             | Source                                                             |
-| --------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `volume`        | Bar volume is ≥3σ above normal **and** ≥1.5× the mean                                  | Session candles; the forming bar is extrapolated once ≥20% elapsed |
-| `taker`         | The buy/sell split of market orders is ≥3σ from its own history **and** at least 57/43 | `taker-volume-contract`, 100×5m bars, polled every 5m              |
-| `open-interest` | The 5m open interest move is ≥3σ **and** ≥0.15%                                        | `open-interest` feed, 5m buffer                                    |
-| `liquidation`   | ≥0.05% of open interest was closed out by the exchange in 5m — _fixed band_            | `liquidation-orders` feed, 5m buffer                               |
+| Signal          | Fires when                                                                             | Source                                                                        |
+| --------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `volume`        | Bar volume is ≥3σ above normal **and** ≥1.5× the mean                                  | Rolling 25h of 15m candles; the forming bar is extrapolated once ≥20% elapsed |
+| `taker`         | The buy/sell split of market orders is ≥3σ from its own history **and** at least 57/43 | `taker-volume-contract`, 100×5m bars, polled every 5m                         |
+| `open-interest` | The 5m open interest move is ≥3σ **and** ≥0.15%                                        | `open-interest` feed, 5m buffer                                               |
+| `liquidation`   | ≥0.05% of open interest was closed out by the exchange in 5m — _fixed band_            | `liquidation-orders` feed, 5m buffer                                          |
 
 `volume` says how much changed hands; `taker` says which side was crossing the
 spread to make it happen. Before `taker` existed the side was being inferred

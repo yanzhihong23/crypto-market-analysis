@@ -1,5 +1,4 @@
-import { OkxInstrument, OkxKline, OpenTime, Period } from '../types/okx'
-import { sessionStartMs } from '../utils/session'
+import { OkxInstrument, OkxKline, Period } from '../types/okx'
 
 import { okxGet, okxProxyGet } from './util'
 
@@ -149,23 +148,22 @@ export const fetchOkxOpenInterestHistory = ({
 export const fetchOkxInstruments = (): Promise<OkxInstrument[]> =>
   okxGet('/public/instruments', { instType: 'SWAP' })
 
+/**
+ * Candles, newest first, the newest of them still forming.
+ *
+ * No session cut. It used to take an `openTime` and paginate from that
+ * session's open, which made the series a different length at every hour of the
+ * day — and the statistics read off it need a fixed number of bars, not a
+ * fixed starting point. Whoever wants a session slices for one.
+ */
 export const fetchOkxKlines = ({
   instId,
   period = Period.MINUTE_15,
-  openTime,
   limit = 96,
 }: {
   instId: string
   period?: Period
-  openTime?: OpenTime
   /** Capped at 300 by the endpoint. */
   limit?: number
-}): Promise<OkxKline[]> => {
-  // 减去1秒，确保获取到开盘时间的k线
-  const before =
-    openTime && openTime !== OpenTime.OPEN24H
-      ? sessionStartMs(openTime) - 1000
-      : undefined
-
-  return okxGet('/market/candles', { instId, bar: period, before, limit })
-}
+}): Promise<OkxKline[]> =>
+  okxGet('/market/candles', { instId, bar: period, limit })

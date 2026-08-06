@@ -3,8 +3,29 @@ import { useCallback } from 'react'
 
 import { fetchOkxKlines } from '../apis'
 import { useTickerStore } from '../store/useTickerStore'
+import { OkxKline, OpenTime } from '../types/okx'
+import { sessionKlines } from '../utils/session'
 
 const POLL_INTERVAL_MS = 1000 * 60
+
+/**
+ * Quarter hours held per symbol. Twenty-five hours, which covers any of the
+ * three sessions in full — each is at most a day long — with a bar of margin at
+ * the boundary.
+ *
+ * Fetched uncut and sliced where a session is wanted, rather than cut here.
+ * Cutting here is what left the statistics taken off these bars short of the
+ * twenty closed bars a baseline needs for the first five hours of every
+ * session, which took `volume`, `volatility` and `rejection` off the whole
+ * board daily.
+ */
+const BARS = 100
+
+/** What has changed hands since the session opened, in the quote currency. */
+const sessionVolumeOf = (klines: OkxKline[], openTime: OpenTime) =>
+  sessionKlines(klines, openTime)
+    .reduce((sum, kline) => sum + Number(kline[7]), 0)
+    .toString()
 
 export default function useOkxKlinesUpdater() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -12,12 +33,18 @@ export default function useOkxKlinesUpdater() {
   const openTime = useTickerStore((state) => state.openTime)
   const setKlines = useTickerStore((state) => state.setKlines)
 
+  // Held in a ref so the fetch does not have to be rebuilt when the session
+  // moves. The candles it asks for no longer depend on the session at all;
+  // only the figure derived from them does.
+  const openTimeRef = useRef(openTime)
+  openTimeRef.current = openTime
+
   const updateKlinesByInstId = useCallback(
     async (instId: string) => {
-      const kline = await fetchOkxKlines({ instId, openTime })
-      setKlines(instId, kline, kline.reduce((a, b) => +a + +b[7], 0).toString())
+      const kline = await fetchOkxKlines({ instId, limit: BARS })
+      setKlines(instId, kline, sessionVolumeOf(kline, openTimeRef.current))
     },
-    [setKlines, openTime],
+    [setKlines],
   )
 
   const updateAllRef = useRef<() => Promise<void>>(async () => {})
@@ -65,8 +92,6 @@ export default function useOkxKlinesUpdater() {
     void Promise.all(addedInstIds.map((id) => updateKlinesByInstId(id)))
   }, [instIds, updateKlinesByInstId])
 
-  // Refetches on an open change as well as on mount: the candles are cut to the
-  // session, so every one of them is for the wrong window once it moves.
   useEffect(() => {
     void updateAllRef.current()
 
@@ -74,6 +99,27 @@ export default function useOkxKlinesUpdater() {
       if (timerRef.current) {
         clearTimeout(timerRef.current)
         timerRef.current = null
+      }
+    }
+  }, [])
+
+  // A session change re-slices what is already held rather than refetching it.
+  // The candles are the same twenty-five hours whichever session is selected,
+  // and the only thing that moves is the volume summed out of them — this used
+  // to walk the whole watchlist against the exchange to arrive back at the same
+  // bars. The sparkline re-slices on its own, since it reads the session too.
+  const firstSliceRef = useRef(true)
+
+  useEffect(() => {
+    if (firstSliceRef.current) {
+      firstSliceRef.current = false
+      return
+    }
+
+    const state = useTickerStore.getState()
+    for (const [instId, klines] of Object.entries(state.klineData)) {
+      if (klines?.length) {
+        state.setKlines(instId, klines, sessionVolumeOf(klines, openTime))
       }
     }
   }, [openTime])

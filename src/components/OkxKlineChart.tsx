@@ -1,12 +1,19 @@
 import { memo, useMemo, useRef } from 'react'
 
 import { useKlineData } from '../hooks/useTickerField'
+import { useTickerStore } from '../store/useTickerStore'
 import type { OkxKline } from '../types/okx'
+import { sessionKlines } from '../utils/session'
 
 import TinyAreaChart from './TinyAreaChart'
 
 function OkxKlineChart({ instId }: { instId: string }) {
   const instKlineData = useKlineData(instId)
+  // The candles are held uncut, because the statistics taken off them have no
+  // business starting where a day is considered to. The line does: it sits
+  // under a percent measured from the session's own open, and the two would
+  // describe different stretches otherwise.
+  const openTime = useTickerStore((state) => state.openTime)
   const lastGoodKlinesRef = useRef<OkxKline[]>([])
 
   const data = useMemo(() => {
@@ -20,7 +27,7 @@ function OkxKlineChart({ instId }: { instId: string }) {
 
     if (!source.length) return []
 
-    const list = source.slice().reverse()
+    const list = sessionKlines(source, openTime).reverse()
     const result: Array<{ c: string; ts: string }> = []
     for (let i = 0; i < list.length; i++) {
       const row = list[i]
@@ -36,7 +43,7 @@ function OkxKlineChart({ instId }: { instId: string }) {
     }
 
     return result
-  }, [instKlineData])
+  }, [instKlineData, openTime])
 
   return (
     <TinyAreaChart data={data} xKey="ts" yKey="c" width={'100%'} height={100} />
