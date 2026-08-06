@@ -208,17 +208,17 @@ the board to carry something that usually is not there.
 
 ## Cadence and cost
 
-| Source                                                      | Cadence                                                                              |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `tickers`, `open-interest`, `funding-rate`, `index-tickers` | Websocket, per instrument                                                            |
-| `liquidation-orders`                                        | Websocket, **one subscription for every swap**, filtered to the watchlist on arrival |
-| Candles                                                     | Polled every minute                                                                  |
-| Account ratio, taker split, divergence                      | Polled every 5 minutes                                                               |
-| Momentum baseline and coil                                  | Polled every 30 minutes, off one uncut 100×5m fetch                                  |
-| Funding baseline and the week's carry                       | Refetched when older than 6 hours, off one 100-settlement fetch                      |
-| Open interest session open                                  | Polled every 30 minutes                                                              |
-| Backdrop: 300 daily candles, 100 days of open interest      | Polled hourly, first pass delayed 30s; the candles are dropped once reduced          |
-| BTC's daily benchmark                                       | The same hourly walk, first and whether or not BTC is watched                        |
+| Source                                                      | Cadence                                                                                              |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `tickers`, `open-interest`, `funding-rate`, `index-tickers` | Websocket, per instrument                                                                            |
+| `liquidation-orders`                                        | Websocket, **one subscription for every swap**, filtered to the watchlist on arrival                 |
+| Candles                                                     | Polled every minute                                                                                  |
+| Account ratio, taker split, divergence                      | Polled every 5 minutes                                                                               |
+| Momentum baseline and coil                                  | Polled every 30 minutes, off one uncut 100×5m fetch                                                  |
+| Funding baseline and the week's carry                       | Refetched once the settlement it was fetched ahead of has been charged, off one 100-settlement fetch |
+| Open interest session open                                  | Polled every 30 minutes                                                                              |
+| Backdrop: 300 daily candles, 100 days of open interest      | Polled hourly, first pass delayed 30s; the candles are dropped once reduced                          |
+| BTC's daily benchmark                                       | The same hourly walk, first and whether or not BTC is watched                                        |
 
 Statistics requests go through a limiter: one queue per path, 500ms between
 requests to the same path, against an allowance of five per two seconds. It is

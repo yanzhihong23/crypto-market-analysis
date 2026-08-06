@@ -107,8 +107,22 @@ interface TickerStore {
     shiftBaseline: Baseline | null,
     previous: string,
     carry: number | null,
+    settlesAt: number,
   ) => void
   fundingBaselineAt: Record<string, number>
+  /**
+   * When the settlement that was still ahead at the moment the history above
+   * was fetched falls due, off the live channel's own `fundingTime`.
+   *
+   * It is what makes `fundingPrev` mean what it says. That figure is the rate
+   * the last settlement actually charged, and it only moves when this history
+   * is refetched — so a clock-based staleness alone let a settlement land and
+   * go unrecorded, and `funding-shift` then measured the live rate against the
+   * settlement *before* last while comparing it to the spread of single
+   * settlement steps. Past this stamp the history is short of a row whatever
+   * the clock says, and that is the moment to go back for it.
+   */
+  fundingSettlesAt: Record<string, number>
   /**
    * The spread of this instrument's own five-minute returns. The move itself is
    * taken off the live buffer, which holds no history to compare against and
@@ -278,12 +292,14 @@ export const useTickerStore = create<TickerStore>()(
       fundingPrev: {},
       fundingCarry: {},
       fundingBaselineAt: {},
+      fundingSettlesAt: {},
       setFundingBaseline: (
         instId: string,
         baseline: Baseline | null,
         shiftBaseline: Baseline | null,
         previous: string,
         carry: number | null,
+        settlesAt: number,
       ) =>
         set((state) => ({
           fundingBaseline: { ...state.fundingBaseline, [instId]: baseline },
@@ -296,6 +312,10 @@ export const useTickerStore = create<TickerStore>()(
           fundingBaselineAt: {
             ...state.fundingBaselineAt,
             [instId]: Date.now(),
+          },
+          fundingSettlesAt: {
+            ...state.fundingSettlesAt,
+            [instId]: settlesAt,
           },
         })),
       momentumBaseline: {},
