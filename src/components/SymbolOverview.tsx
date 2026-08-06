@@ -1,6 +1,6 @@
 import { Box, IconButton } from '@mui/material'
 import RemoveIcon from '@mui/icons-material/Remove'
-import { v4 as uuid } from 'uuid'
+import { useId } from 'react'
 
 import { useMessages } from '../i18n'
 
@@ -26,7 +26,9 @@ function SymbolOverview({
   onPeriodChange: (value: string) => void
   onRemove?: () => void
 }) {
-  const syncId = uuid()
+  // Stable for the life of the overview: a fresh id every render re-registers
+  // the three charts with Recharts' sync bus on every tick of the price.
+  const syncId = useId()
   const t = useMessages()
 
   return (

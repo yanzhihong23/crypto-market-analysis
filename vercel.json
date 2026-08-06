@@ -6,7 +6,7 @@
       "destination": "https://www.okx.com/api/v5/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/).*)",
       "destination": "/index.html"
     }
   ],
@@ -17,6 +17,15 @@
         {
           "key": "CDN-Cache-Control",
           "value": "max-age=30"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
       ]
     }

@@ -42,6 +42,10 @@ export default function useOkxKlinesUpdater() {
   const updateKlinesByInstId = useCallback(
     async (instId: string) => {
       const kline = await fetchOkxKlines({ instId, limit: BARS })
+      // The getter returns the exchange's error body when the code is not `0`,
+      // and that is not an array. Treating it as candles would throw inside
+      // `sessionVolumeOf` and abort the whole walk of the watchlist.
+      if (!Array.isArray(kline)) return
       setKlines(instId, kline, sessionVolumeOf(kline, openTimeRef.current))
     },
     [setKlines],
