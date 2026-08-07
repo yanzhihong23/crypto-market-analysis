@@ -34,7 +34,7 @@ Back to the [README](../README.md) · the board’s readings are described in [s
 | Bar to entry                  | Two sources        |
 | Default state                 | Flat is a position |
 
-> Indicators are different projections of the same price, and stacking more of the same kind does not raise your hit rate. A combination that works is trend/structure + momentum + volatility or volume, each answering a different question. The trap specific to perpetuals is treating leverage or margin used as "risk" — the real risk is what the account loses when the stop is hit. Crypto moves enough that a stop often needs 1%–3% of price to breathe, so the textbook "never more than 1%" tends to leave a position too small to be worth taking; fix the risk percentage instead, size back from ATR or the invalidation level, and set a separate daily loss limit (say 4%–6%) as the actual fuse.
+> Indicators are different projections of the same price, and stacking more of the same kind does not raise your hit rate. A combination that works is trend/structure + momentum + volatility or volume, each answering a different question. The trap specific to perpetuals is treating leverage or margin used as "risk" — the real risk is what the account loses when the stop is hit. Fix the risk percentage, size back from ATR or the invalidation level, and set a separate daily loss limit (say 4%–6%) as the actual fuse. What that percentage should be is not a question of whether the position comes out big enough to bother with — 1% risk against a 2% stop is half your equity in notional — but of how deep a drawdown you are buying with the size of each win.
 
 ## How to read the board
 
@@ -239,7 +239,7 @@ What each reading is for. The names on the left are the ones in signals.md; on t
 ### Size and risk
 
 - Risk = stop distance × position ÷ equity. Not leverage, and not how much margin is tied up.
-- On perpetuals 1%–2% per trade is normal, with a hard cap near 3%. The textbook "never more than 1%" often leaves a position too small to be worth taking.
+- On perpetuals 1%–2% per trade is normal, and going past 3% needs a stated reason. Do not let "1% is too small to bother with" be that reason: 1% risk against a 2% stop is half your equity in notional.
 - Set stop width from structure or 1.5–2×ATR — default 14 periods, on the timeframe you are executing on rather than the structural one — and size back from it. Deciding how big you want to be and then fitting a stop around it is the usual road to liquidation.
 - Down 4%–6% on the day ends the session. That one is hard, because it is the rule that constrains money directly.
 - Three losses in a row means stop and review, not necessarily stop trading: at a 45% hit rate roughly one in six sets of three comes out that way, so it usually says the regime moved or execution slipped rather than that the system is broken.
@@ -256,6 +256,16 @@ What each reading is for. The names on the left are the ones in signals.md; on t
 - Never: revenge trades, averaging down, an unplanned feeling that it is going up.
 - Never: full size into data releases, listings or maintenance windows.
 - Flat is allowed. With no structure and no agreement, watching is not an obligation to trade.
+
+What the risk percentage really decides is how deep the drawdowns go. At a 45% hit rate the longest losing streak in 250 trades is about nine (ln(250) ÷ ln(1 ÷ 0.55)). The middle column is what that streak alone costs; the right-hand one is the peak-to-trough drawdown to expect once the scattered losses around it are counted too.
+
+| Risk per trade | Nine losses in a row | Realistic peak-to-trough |
+| -------------- | -------------------- | ------------------------ |
+| 1%             | 8.6%                 | 13%–17%                  |
+| 2%             | 16.6%                | 25%–33%                  |
+| 3%             | 24.0%                | 36%–48%                  |
+
+These are orders of magnitude, not promises, and they assume every loss is exactly 1R — wicks and slippage on a perpetual make the realised average nearer 1.2R, so each number wants nudging up. The use of the table is this: choosing 2% is accepting a 25%–30% drawdown in an ordinary year, in advance. If that is not acceptable, the number comes down now. Changing the rule while the drawdown is happening is not risk management.
 
 ## Checklist before you enter
 
