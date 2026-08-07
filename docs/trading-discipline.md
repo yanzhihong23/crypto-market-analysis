@@ -15,7 +15,7 @@ Back to the [README](../README.md) · the board’s readings are described in [s
 - [Recipes](#combinations-you-can-use-as-they-are)
 - [What not to do](#combinations-to-avoid-and-what-to-reach-for-instead)
 - [Market regime](#regime-first-then-strategy-then-indicators)
-- [Margin and funding](#perpetuals-margin-liquidation-funding)
+- [Perpetual mechanics](#perpetuals-price-margin-liquidation-funding)
 - [Leverage and symbols](#leverage-bands-and-choosing-what-to-trade)
 - [Execution and exits](#execution-exits-and-adding)
 - [Timing and events](#timing-and-events)
@@ -56,14 +56,14 @@ At least two independent kinds of evidence pointing the same way: a structural b
 
 ## Candles and structure
 
-| Subject                  | What to do                                                                                                                                |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Timeframe alignment      | Only take trades with the higher timeframe. Against it, nothing more than a bounce or pullback scalp, at half size.                       |
-| Levels first             | Prior highs and lows, round numbers, the daily and weekly open, high-volume nodes. No clear invalidation level means no trade.            |
-| Spotting a fake break    | Thin volume on the break, a long wick rejecting it, no close holding above — treat it as a fake first.                                    |
-| Expansion vs compression | The first high-volume candle out of a tight range carries the most information; chasing after a violent move rarely pays.                 |
-| Wicks and closes         | Read the close against the body, not the intraday extreme. A long wick is a rejection; a close that holds is acceptance.                  |
-| Relative strength        | Pick the leader or the laggard within a group: what stays strong while the market is weak is the better long, and the reverse for shorts. |
+| Subject                  | What to do                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Timeframe alignment      | Only take trades with the higher timeframe. Against it, nothing more than a bounce or pullback scalp, at half size.                                                                                                                                                                                                                                                                                       |
+| Levels first             | Prior highs and lows, round numbers, the daily and weekly open, high-volume nodes. On a perpetual there is a second layer: those are also where the stops are, so being swept through before the move goes the other way is the norm rather than an accident. Expect it — entering on the reclaim after the sweep beats resting a stop just behind the level. No clear invalidation level means no trade. |
+| Spotting a fake break    | Thin volume on the break, a long wick rejecting it, no close holding above — treat it as a fake first.                                                                                                                                                                                                                                                                                                    |
+| Expansion vs compression | The first high-volume candle out of a tight range carries the most information; chasing after a violent move rarely pays.                                                                                                                                                                                                                                                                                 |
+| Wicks and closes         | Read the close against the body, not the intraday extreme. But separate two kinds of long wick here: one with volume, landing on a level, with no follow-through, is a rejection; one that happens inside a liquidation cascade, running through a shelf of stops and snapping back, is a clearing wick — it carries no direction, only a measurement of what was resting there.                          |
+| Relative strength        | Pick the leader or the laggard within a group: what stays strong while the market is weak is the better long, and the reverse for shorts.                                                                                                                                                                                                                                                                 |
 
 ## What each indicator actually answers
 
@@ -104,6 +104,14 @@ Choose indicators by the role they play before arguing about parameters. Running
 - **Target**: The previous structural low or high, or the midline. A reversal trade does not chase a distant target.
 - **Caution**: In a strong trend divergence can print several times in a row. Small size, tight stop.
 
+### Squeeze reversal (perpetuals only)
+
+- **Setup**: Funding extreme on one side and staying there, open interest high — one side is crowded enough to be paying to stay.
+- **Trigger**: A liquidation cascade drives price through a level while open interest drops hard: positions being cleared out, not new money arriving.
+- **Entry**: Wait for the liquidations to stop and for price to reclaim the swept level, then take the side that was squeezed out.
+- **Target**: Where the squeezed leg began, or the last consolidation. A squeeze travels fast — do not mistake it for the start of a trend.
+- **Invalidation**: A close still on the swept side, or a second cascade right behind the first — the clearing is not finished.
+
 ### Mean reversion (range-bound market)
 
 - **Setup**: Price oscillating in a defined range, averages tangled, ADX low, no clear trend.
@@ -133,26 +141,42 @@ Choose indicators by the role they play before arguing about parameters. Running
 
 The same indicators perform very differently across regimes. Work out what kind of market you are in before deciding whether to trade trend, breakout or reversion.
 
-| Regime             | How to recognise it                                                                                 | Suits                                                        | Avoid                                          |
-| ------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------- |
-| Trend              | Higher highs or lower lows, price holding one side of the averages, ADX elevated or bands expanding | Trend pullbacks, breakout continuation, trailing stops       | Picking tops and bottoms, mean reversion       |
-| Range              | Clear boundaries, tangled averages, frequent fake breaks                                            | Fading the edges, small size in and out                      | Chasing breakouts, sitting through a wide stop |
-| Chop               | Long wicks both ways, direction reversing, volume confirming nothing                                | Flat, or a token position                                    | Anything that needs a clean trend              |
-| Extreme volatility | ATR spiking, liquidation cascades, spreads widening, wicks                                          | Cutting size, managing what you already hold, waiting it out | Opening size, moving stops further away        |
+| Regime             | How to recognise it                                                                                 | Suits                                                                                              | Avoid                                                               |
+| ------------------ | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Trend              | Higher highs or lower lows, price holding one side of the averages, ADX elevated or bands expanding | Trend pullbacks, breakout continuation, trailing stops                                             | Picking tops and bottoms, mean reversion                            |
+| Range              | Clear boundaries, tangled averages, frequent fake breaks                                            | Fading the edges, small size in and out                                                            | Chasing breakouts, sitting through a wide stop                      |
+| Chop               | Long wicks both ways, direction reversing, volume confirming nothing                                | Flat, or a token position                                                                          | Anything that needs a clean trend                                   |
+| Crowded trend      | A real trend, but with funding extreme on one side and open interest piling up alongside it         | Trade with it on a shorter leash and bank earlier; or wait for the squeeze and take the other side | Adding where funding peaks — that is the seat at the end of the run |
+| Extreme volatility | ATR spiking, liquidation cascades, spreads widening, wicks                                          | Cutting size, managing what you already hold, waiting it out                                       | Opening size, moving stops further away                             |
 
-## Perpetuals: margin, liquidation, funding
+## Perpetuals: price, margin, liquidation, funding
 
-### Margin mode
+This is where perpetuals actually differ from spot. Everything above about structure and indicators holds in any market; what follows holds only here — and none of it is trivia. Each one is a specific way your plan gets ended for you by the exchange.
 
-- Isolated caps the worst case at the margin in that position — right for testing an idea and for trades you are unsure of.
-- Cross shares the account balance and rides out more noise, but one position out of control can take the account with it. Start on isolated.
-- Work out the liquidation price before you enter: it should sit well beyond the invalidation level, not just past the stop.
+### Mark price and trigger price
+
+- Liquidation is always computed on the mark price, which tracks an index rather than the last trade on this book. That is why a wick can pierce your liquidation price on the chart and leave you alive — the chart is drawing last price.
+- Which price triggers your stop is your choice. On mark, a wick through a thin book cannot take you out; on last, it fills you for real. Defaults differ by exchange, so check it once before you enter — this is the single easiest way to get stopped out for nothing.
+- The cost is that mark lags slightly and confirms a real break a beat later. Triggering on mark with the stop just outside structure beats triggering on last with the stop pushed further away.
+
+### Margin and liquidation
+
+- Isolated caps the worst case at the margin in that position — right for testing an idea and for trades you are unsure of. Cross shares the account balance and rides out more noise, but one position out of control can take the account with it.
+- Isolated liquidation sits roughly (1 ÷ leverage − maintenance margin rate) from entry. At 10× with a 0.5% maintenance rate that is about 9.5%, not 10% — and the missing slice is exactly where you needed it.
+- Liquidation has to sit well beyond the invalidation level. If it lands near the stop, how the trade ends is no longer decided by your plan.
 
 ### Funding
 
 - Funding is a cost of carry, not a direction signal. Extreme funding says one side is crowded, and crowded can last a long time.
-- If the plan holds through a settlement, put the expected funding into the payoff. If it eats more R than the trade is worth, do not hold overnight.
-- Funding, basis and the long/short ratio all extreme the same way reads as a squeeze setup, not as a reason to chase.
+- It is charged on notional, not on margin — it scales with the position, not with your risk. On a position whose stop is 1% of price, a 0.05% rate takes 5% of your R every settlement, which is 15% across a day.
+- Most contracts settle every 8 hours, some every 4 or every 1. Price it into the payoff if the plan crosses one. Funding, basis and the long/short ratio all extreme the same way is a squeeze setup, not a reason to chase.
+
+| Also waiting to bite | What it is                                                                                                                                    | What to do                                                                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Tiered margin        | The larger the position, the higher the maintenance rate and the lower the leverage allowed. Liquidation is closer than 1 ÷ leverage suggests | Recompute the liquidation price every time the position crosses a tier; the intuition from small size does not carry                   |
+| Auto-deleveraging    | When the insurance fund cannot cover a bankrupt position, the exchange force-closes profitable ones instead, ranked by profit and leverage    | Deep in profit on high leverage puts you at the front of that queue. Scaling out of a big move beats letting the system pick your exit |
+| Position mode        | In one-way mode an order larger than the position flips you to the other side; hedge mode holds both, and pays funding on both                | One-way by default. Hedge mode is usually a way to postpone admitting you are wrong, not a hedge                                       |
+| Reduce-only          | The flag that means close, never open. Without it an oversized closing order turns a long straight into a short                               | Set it on every stop and target. It is a one-time setting, not a per-trade decision                                                    |
 
 ## Leverage bands and choosing what to trade
 
@@ -179,29 +203,32 @@ Leverage does not set risk — risk is stop distance × position ÷ equity, as a
 | Expect slippage | On wicks, liquidation cascades and data releases the fill can be some way from the chart. Leave room for it in the size.                                                                                                                                                                                                                    |
 | Scaling out     | Take 30%–50% at the first target, then move the stop to break-even or to structure — whichever is further out. Break-even usually sits much closer than the invalidation level, so moving there unconditionally hands the rest of the position to the noise. Trail the remainder by structure rather than holding it all for a perfect top. |
 | Adding          | Pyramid only into profit, and only when the new tranche has its own invalidation. Never average down a loser — that is swapping a bigger risk for a guess.                                                                                                                                                                                  |
+| Reduce-only     | Every stop and every target goes out reduce-only. In one-way mode an oversized closing order flips you to the other side — that is not a stop, that is an unplanned new position.                                                                                                                                                           |
 | Trading costs   | Fees are the tax you pay on every trade, and the one this page is most likely to let you forget after pricing funding and slippage: roughly 0.1% round trip taking liquidity, which against a 0.8% stop is over 12% of your R. The tighter the stop and the higher the frequency, the more it decides.                                      |
 | Minimum payoff  | Do the arithmetic before entering: if the stop is 1R, the target should be at least 1.5R–2R, otherwise the hit rate has to be extraordinary. Count R net — fees, funding and expected slippage come off first.                                                                                                                              |
 | Expectancy      | Hit rate × average win − loss rate × average loss has to be positive to survive, and it has to be computed net of costs; the gross number is a lie over any length of time. Recording money instead of R hides a system that is decaying.                                                                                                   |
 
 ## Timing and events
 
-| Window                                  | What to watch                                                                                                                                                  |
-| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Around funding settlement               | Volatility tends to pick up, and when funding is extreme, watch for forced closes and fake breaks. With no clear edge, stay out for 15–30 minutes either side. |
-| Macro data (CPI, FOMC)                  | Spreads and slippage get worse and invalidation levels get swept. Cut size beforehand, or only manage what you hold.                                           |
-| Weekends and holidays                   | Liquidity thins, fake breaks and wicks multiply. Half size, or raise the bar for entry.                                                                        |
-| Listings, maintenance, on-chain trouble | Exchange notices, suspended deposits and withdrawals, contracts being delisted — when in doubt, open nothing.                                                  |
+| Window                                  | What to watch                                                                                                                                                                                                                                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Around funding settlement               | Volatility tends to pick up, and when funding is extreme, watch for forced closes and fake breaks. With no clear edge, stay out for 15–30 minutes either side.                                                                                                                              |
+| Macro data (CPI, FOMC)                  | Spreads and slippage get worse and invalidation levels get swept. Cut size beforehand, or only manage what you hold.                                                                                                                                                                        |
+| Weekends and holidays                   | Liquidity thins, fake breaks and wicks multiply. Half size, or raise the bar for entry.                                                                                                                                                                                                     |
+| Session                                 | Asia tends to grind inside a range, Europe opens a direction, and the US session brings both the widest move of the day and the most fakes. The same recipe does not perform the same across them — break the review down by session, which tells you more than breaking it down by symbol. |
+| Listings, maintenance, on-chain trouble | Exchange notices, suspended deposits and withdrawals, contracts being delisted — when in doubt, open nothing.                                                                                                                                                                               |
 
 ## The usual ways it goes wrong
 
-| Situation                               | Why it costs you                                                      | How to stop it                                                                                                          |
-| --------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Widening the stop past invalidation     | "A little more room" means the risk on the trade is no longer defined | Fix R first, then the stop. Move the stop and you have to resize                                                        |
-| Sizing up right after a big win         | Excitement inflates the position and one giveback costs a week        | The next trade after a big win goes back to standard size. No raising risk again that day                               |
-| Switching symbols after a losing streak | Revenge in a different market — no edge, just a different table       | A losing streak means stopping to review before deciding whether to trade on. Changing symbol does not count as a break |
-| Right on direction, stopped out anyway  | The direction was fine but the size or leverage was not               | Direction and size are two decisions. Leverage serves the invalidation level, not your confidence                       |
-| Treating open profit as realised        | Sizing up on unrealised gains, then falling apart on the drawdown     | Only a closed trade is a win. Open profit does not join the balance you size the next one from                          |
-| Chasing a liquidation cascade           | Liquidation-driven moves end quickly and you take the last of it      | Cascades can be scalped; do not mistake one for the start of a trend                                                    |
+| Situation                               | Why it costs you                                                                                         | How to stop it                                                                                                          |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Widening the stop past invalidation     | "A little more room" means the risk on the trade is no longer defined                                    | Fix R first, then the stop. Move the stop and you have to resize                                                        |
+| Sizing up right after a big win         | Excitement inflates the position and one giveback costs a week                                           | The next trade after a big win goes back to standard size. No raising risk again that day                               |
+| Switching symbols after a losing streak | Revenge in a different market — no edge, just a different table                                          | A losing streak means stopping to review before deciding whether to trade on. Changing symbol does not count as a break |
+| Right on direction, stopped out anyway  | The direction was fine but the size or leverage was not                                                  | Direction and size are two decisions. Leverage serves the invalidation level, not your confidence                       |
+| Treating open profit as realised        | Sizing up on unrealised gains, then falling apart on the drawdown                                        | Only a closed trade is a win. Open profit does not join the balance you size the next one from                          |
+| Liquidated rather than stopped out      | Leverage too high, or the stop set to trigger on last price, and the exchange acts before your plan does | Liquidation stays well beyond invalidation, and stops trigger on mark. Do not let a single wick make the decision       |
+| Chasing a liquidation cascade           | Liquidation-driven moves end quickly and you take the last of it                                         | Cascades can be scalped; do not mistake one for the start of a trend                                                    |
 
 ## Working with the Vigil board (optional rules)
 
@@ -275,7 +302,8 @@ These are orders of magnitude, not promises, and they assume every loss is exact
 - [ ] **Structure and invalidation**: Where is the level? At what price are you wrong?
 - [ ] **Agreement**: Do at least two of trend, momentum and volume point the same way?
 - [ ] **Sizing**: Have you divided the risk amount by the stop distance (ATR will do)?
-- [ ] **Liquidation price**: Isolated or cross, does liquidation sit well beyond invalidation?
+- [ ] **Liquidation price**: Isolated or cross, does liquidation sit well beyond invalidation? (About 1 ÷ leverage − maintenance rate.)
+- [ ] **Trigger and mode**: Is the stop placed? Does it trigger on mark or last? Is reduce-only on?
 - [ ] **Holding period**: If it crosses a funding settlement, is the trade still worth the cost?
 - [ ] **Event window**: Anything in the next hour — data, maintenance, a volatility spike?
 - [ ] **Board check**: On Vigil: two signal families, or one reading of noise?
@@ -311,6 +339,7 @@ Leverage needed is the minimum this position requires, not a recommendation — 
 | Trigger and invalidation  | Pullback to EMA20; stop on a close below the prior low            |
 | Planned R                 | 1% of equity at risk (default band); 2R target, remainder trailed |
 | Actual fills and slippage | Entry, exit, whether it was swept                                 |
+| Costs                     | Fees + funding + slippage, recorded in R                          |
 | Result (R)                | +1.8R or −1R                                                      |
 | Discipline tag            | To plan / cut early / stop moved / revenge / averaged down        |
 | Screenshots               | One before and one after; review the chart, not your memory       |

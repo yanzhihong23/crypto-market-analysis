@@ -62,7 +62,7 @@ export const disciplineEn: DisciplineContent = {
             ],
             [
               'Levels first',
-              'Prior highs and lows, round numbers, the daily and weekly open, high-volume nodes. No clear invalidation level means no trade.',
+              'Prior highs and lows, round numbers, the daily and weekly open, high-volume nodes. On a perpetual there is a second layer: those are also where the stops are, so being swept through before the move goes the other way is the norm rather than an accident. Expect it — entering on the reclaim after the sweep beats resting a stop just behind the level. No clear invalidation level means no trade.',
             ],
             [
               'Spotting a fake break',
@@ -74,7 +74,7 @@ export const disciplineEn: DisciplineContent = {
             ],
             [
               'Wicks and closes',
-              'Read the close against the body, not the intraday extreme. A long wick is a rejection; a close that holds is acceptance.',
+              'Read the close against the body, not the intraday extreme. But separate two kinds of long wick here: one with volume, landing on a level, with no follow-through, is a rejection; one that happens inside a liquidation cascade, running through a shelf of stops and snapping back, is a clearing wick — it carries no direction, only a measurement of what was resting there.',
             ],
             [
               'Relative strength',
@@ -220,6 +220,31 @@ export const disciplineEn: DisciplineContent = {
               ],
             },
             {
+              title: 'Squeeze reversal (perpetuals only)',
+              lines: [
+                {
+                  label: 'Setup',
+                  text: 'Funding extreme on one side and staying there, open interest high — one side is crowded enough to be paying to stay.',
+                },
+                {
+                  label: 'Trigger',
+                  text: 'A liquidation cascade drives price through a level while open interest drops hard: positions being cleared out, not new money arriving.',
+                },
+                {
+                  label: 'Entry',
+                  text: 'Wait for the liquidations to stop and for price to reclaim the swept level, then take the side that was squeezed out.',
+                },
+                {
+                  label: 'Target',
+                  text: 'Where the squeezed leg began, or the last consolidation. A squeeze travels fast — do not mistake it for the start of a trend.',
+                },
+                {
+                  label: 'Invalidation',
+                  text: 'A close still on the swept side, or a second cascade right behind the first — the clearing is not finished.',
+                },
+              ],
+            },
+            {
               title: 'Mean reversion (range-bound market)',
               lines: [
                 {
@@ -328,6 +353,12 @@ export const disciplineEn: DisciplineContent = {
               'Anything that needs a clean trend',
             ],
             [
+              'Crowded trend',
+              'A real trend, but with funding extreme on one side and open interest piling up alongside it',
+              'Trade with it on a shorter leash and bank earlier; or wait for the squeeze and take the other side',
+              'Adding where funding peaks — that is the seat at the end of the run',
+            ],
+            [
               'Extreme volatility',
               'ATR spiking, liquidation cascades, spreads widening, wicks',
               'Cutting size, managing what you already hold, waiting it out',
@@ -340,28 +371,66 @@ export const disciplineEn: DisciplineContent = {
 
     {
       id: 'perp',
-      label: 'Margin and funding',
-      title: 'Perpetuals: margin, liquidation, funding',
+      label: 'Perpetual mechanics',
+      title: 'Perpetuals: price, margin, liquidation, funding',
       blocks: [
+        {
+          kind: 'paragraph',
+          text: 'This is where perpetuals actually differ from spot. Everything above about structure and indicators holds in any market; what follows holds only here — and none of it is trivia. Each one is a specific way your plan gets ended for you by the exchange.',
+        },
         {
           kind: 'rules',
           items: [
             {
-              title: 'Margin mode',
+              title: 'Mark price and trigger price',
               items: [
-                'Isolated caps the worst case at the margin in that position — right for testing an idea and for trades you are unsure of.',
-                'Cross shares the account balance and rides out more noise, but one position out of control can take the account with it. Start on isolated.',
-                'Work out the liquidation price before you enter: it should sit well beyond the invalidation level, not just past the stop.',
+                'Liquidation is always computed on the mark price, which tracks an index rather than the last trade on this book. That is why a wick can pierce your liquidation price on the chart and leave you alive — the chart is drawing last price.',
+                'Which price triggers your stop is your choice. On mark, a wick through a thin book cannot take you out; on last, it fills you for real. Defaults differ by exchange, so check it once before you enter — this is the single easiest way to get stopped out for nothing.',
+                'The cost is that mark lags slightly and confirms a real break a beat later. Triggering on mark with the stop just outside structure beats triggering on last with the stop pushed further away.',
+              ],
+            },
+            {
+              title: 'Margin and liquidation',
+              items: [
+                'Isolated caps the worst case at the margin in that position — right for testing an idea and for trades you are unsure of. Cross shares the account balance and rides out more noise, but one position out of control can take the account with it.',
+                'Isolated liquidation sits roughly (1 ÷ leverage − maintenance margin rate) from entry. At 10× with a 0.5% maintenance rate that is about 9.5%, not 10% — and the missing slice is exactly where you needed it.',
+                'Liquidation has to sit well beyond the invalidation level. If it lands near the stop, how the trade ends is no longer decided by your plan.',
               ],
             },
             {
               title: 'Funding',
               items: [
                 'Funding is a cost of carry, not a direction signal. Extreme funding says one side is crowded, and crowded can last a long time.',
-                'If the plan holds through a settlement, put the expected funding into the payoff. If it eats more R than the trade is worth, do not hold overnight.',
-                'Funding, basis and the long/short ratio all extreme the same way reads as a squeeze setup, not as a reason to chase.',
+                'It is charged on notional, not on margin — it scales with the position, not with your risk. On a position whose stop is 1% of price, a 0.05% rate takes 5% of your R every settlement, which is 15% across a day.',
+                'Most contracts settle every 8 hours, some every 4 or every 1. Price it into the payoff if the plan crosses one. Funding, basis and the long/short ratio all extreme the same way is a squeeze setup, not a reason to chase.',
               ],
             },
+          ],
+        },
+        {
+          kind: 'table',
+          headers: ['Also waiting to bite', 'What it is', 'What to do'],
+          rows: [
+            [
+              'Tiered margin',
+              'The larger the position, the higher the maintenance rate and the lower the leverage allowed. Liquidation is closer than 1 ÷ leverage suggests',
+              'Recompute the liquidation price every time the position crosses a tier; the intuition from small size does not carry',
+            ],
+            [
+              'Auto-deleveraging',
+              'When the insurance fund cannot cover a bankrupt position, the exchange force-closes profitable ones instead, ranked by profit and leverage',
+              'Deep in profit on high leverage puts you at the front of that queue. Scaling out of a big move beats letting the system pick your exit',
+            ],
+            [
+              'Position mode',
+              'In one-way mode an order larger than the position flips you to the other side; hedge mode holds both, and pays funding on both',
+              'One-way by default. Hedge mode is usually a way to postpone admitting you are wrong, not a hedge',
+            ],
+            [
+              'Reduce-only',
+              'The flag that means close, never open. Without it an oversized closing order turns a long straight into a short',
+              'Set it on every stop and target. It is a one-time setting, not a per-trade decision',
+            ],
           ],
         },
       ],
@@ -452,6 +521,10 @@ export const disciplineEn: DisciplineContent = {
               'Pyramid only into profit, and only when the new tranche has its own invalidation. Never average down a loser — that is swapping a bigger risk for a guess.',
             ],
             [
+              'Reduce-only',
+              'Every stop and every target goes out reduce-only. In one-way mode an oversized closing order flips you to the other side — that is not a stop, that is an unplanned new position.',
+            ],
+            [
               'Trading costs',
               'Fees are the tax you pay on every trade, and the one this page is most likely to let you forget after pricing funding and slippage: roughly 0.1% round trip taking liquidity, which against a 0.8% stop is over 12% of your R. The tighter the stop and the higher the frequency, the more it decides.',
             ],
@@ -488,6 +561,10 @@ export const disciplineEn: DisciplineContent = {
             [
               'Weekends and holidays',
               'Liquidity thins, fake breaks and wicks multiply. Half size, or raise the bar for entry.',
+            ],
+            [
+              'Session',
+              'Asia tends to grind inside a range, Europe opens a direction, and the US session brings both the widest move of the day and the most fakes. The same recipe does not perform the same across them — break the review down by session, which tells you more than breaking it down by symbol.',
             ],
             [
               'Listings, maintenance, on-chain trouble',
@@ -531,6 +608,11 @@ export const disciplineEn: DisciplineContent = {
               'Treating open profit as realised',
               'Sizing up on unrealised gains, then falling apart on the drawdown',
               'Only a closed trade is a win. Open profit does not join the balance you size the next one from',
+            ],
+            [
+              'Liquidated rather than stopped out',
+              'Leverage too high, or the stop set to trigger on last price, and the exchange acts before your plan does',
+              'Liquidation stays well beyond invalidation, and stops trigger on mark. Do not let a single wick make the decision',
             ],
             [
               'Chasing a liquidation cascade',
@@ -775,7 +857,12 @@ export const disciplineEn: DisciplineContent = {
             {
               id: 'liquidation',
               label: 'Liquidation price',
-              text: 'Isolated or cross, does liquidation sit well beyond invalidation?',
+              text: 'Isolated or cross, does liquidation sit well beyond invalidation? (About 1 ÷ leverage − maintenance rate.)',
+            },
+            {
+              id: 'trigger',
+              label: 'Trigger and mode',
+              text: 'Is the stop placed? Does it trigger on mark or last? Is reduce-only on?',
             },
             {
               id: 'holding',
@@ -854,6 +941,7 @@ export const disciplineEn: DisciplineContent = {
               '1% of equity at risk (default band); 2R target, remainder trailed',
             ],
             ['Actual fills and slippage', 'Entry, exit, whether it was swept'],
+            ['Costs', 'Fees + funding + slippage, recorded in R'],
             ['Result (R)', '+1.8R or −1R'],
             [
               'Discipline tag',
