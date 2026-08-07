@@ -34,6 +34,7 @@ export const zh: Messages = {
     okx: 'OKX',
     binance: 'Binance',
     charts: '图表',
+    discipline: '纪律',
   },
 
   navMenu: {

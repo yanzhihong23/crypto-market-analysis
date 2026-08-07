@@ -46,6 +46,7 @@ export const en = {
     okx: 'OKX',
     binance: 'Binance',
     charts: 'Charts',
+    discipline: 'Discipline',
   },
 
   navMenu: {

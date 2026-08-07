@@ -13,4 +13,5 @@ export const NAV_ITEMS: { key: keyof Messages['nav']; path: string }[] = [
   { key: 'okx', path: '/' },
   { key: 'binance', path: '/binance' },
   { key: 'charts', path: '/charts' },
+  { key: 'discipline', path: '/discipline' },
 ]

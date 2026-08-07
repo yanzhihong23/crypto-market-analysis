@@ -12,6 +12,8 @@ an alert fires on the edge rather than on the state.
 - **[Signals](docs/signals.md)** — what each of the sixteen readings measures,
   when it fires, and what has to agree before a card claims its ring.
   ([中文](docs/signals.zh.md))
+- **[Trading discipline](docs/trading-discipline.zh.md)** — chart-reading workflow,
+  indicator combinations, and risk rules. Prefer the in-app page at `/discipline`.
 
 ## Running it
 
@@ -40,11 +42,12 @@ checked against conventional-commit rules.
 
 ## What is on it
 
-| Page       |                                                                   |
-| ---------- | ----------------------------------------------------------------- |
-| `/`        | OKX perpetuals — the watchlist, its signals and per-symbol charts |
-| `/binance` | Binance perpetuals                                                |
-| `/charts`  | Symbol overview charts                                            |
+| Page          |                                                                   |
+| ------------- | ----------------------------------------------------------------- |
+| `/`           | OKX perpetuals — the watchlist, its signals and per-symbol charts |
+| `/binance`    | Binance perpetuals                                                |
+| `/charts`     | Symbol overview charts                                            |
+| `/discipline` | Chart-reading tips and trading discipline                         |
 
 The interface is available in English and Chinese, switched from the top bar.
 
