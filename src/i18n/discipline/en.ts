@@ -8,13 +8,13 @@ export const disciplineEn: DisciplineContent = {
 
   stats: [
     { value: 'Structure first', label: 'Reading order' },
-    { value: '1%–2%', label: 'Risk per trade (hard cap ~3%)' },
+    { value: '1%', label: 'Base risk per trade (2% ceiling)' },
     { value: 'Two sources', label: 'Bar to entry' },
     { value: 'Flat is a position', label: 'Default state' },
   ],
 
   principle:
-    'Indicators are different projections of the same price, and stacking more of the same kind does not raise your hit rate. A combination that works is trend/structure + momentum + volatility or volume, each answering a different question. The trap specific to perpetuals is treating leverage or margin used as "risk" — the real risk is what the account loses when the stop is hit. Fix the risk percentage, size back from ATR or the invalidation level, and set a separate daily loss limit (say 4%–6%) as the actual fuse. What that percentage should be is not a question of whether the position comes out big enough to bother with — 1% risk against a 2% stop is half your equity in notional — but of how deep a drawdown you are buying with the size of each win.',
+    'Indicators are different projections of the same price, and stacking more of the same kind does not raise your hit rate. A combination that works is trend/structure + momentum + volatility or volume, each answering a different question. The trap specific to perpetuals is treating leverage or margin used as "risk" — the real risk is what the account loses when the stop is hit. Fix the risk percentage, size back from ATR or the invalidation level, and set a separate daily loss limit (4R–6R) as the actual fuse. What that percentage should be is not a question of whether the position comes out big enough to bother with — 1% risk against a 2% stop is half your equity in notional — but of how deep a drawdown you are buying with the size of each win.',
 
   sections: [
     {
@@ -673,9 +673,9 @@ export const disciplineEn: DisciplineContent = {
               title: 'Size and risk',
               items: [
                 'Risk = stop distance × position ÷ equity. Not leverage, and not how much margin is tied up.',
-                'On perpetuals 1%–2% per trade is normal, and going past 3% needs a stated reason. Do not let "1% is too small to bother with" be that reason: 1% risk against a 2% stop is half your equity in notional.',
+                'Base 1%, ceiling 2%, chosen from the table below. What decides it is whether you have a measured sample, not how much you want to make — and do not let "1% is too small to bother with" be the reason to go up: 1% risk against a 2% stop is half your equity in notional.',
                 'Set stop width from structure or 1.5–2×ATR — default 14 periods, on the timeframe you are executing on rather than the structural one — and size back from it. Deciding how big you want to be and then fitting a stop around it is the usual road to liquidation.',
-                'Down 4%–6% on the day ends the session. That one is hard, because it is the rule that constrains money directly.',
+                'Down 4R–6R on the day ends the session. That one is hard, because it is the rule that constrains money directly; in R rather than a fixed percentage so that it follows you when the band changes.',
                 'Three losses in a row means stop and review, not necessarily stop trading: at a 45% hit rate roughly one in six sets of three comes out that way, so it usually says the regime moved or execution slipped rather than that the system is broken.',
                 'Correlated positions on the same side (BTC+ETH) count as one risk.',
               ],
@@ -700,24 +700,41 @@ export const disciplineEn: DisciplineContent = {
         },
         {
           kind: 'paragraph',
-          text: 'What the risk percentage really decides is how deep the drawdowns go. At a 45% hit rate the longest losing streak in 250 trades is about nine (ln(250) ÷ ln(1 ÷ 0.55)). The middle column is what that streak alone costs; the right-hand one is the peak-to-trough drawdown to expect once the scattered losses around it are counted too.',
+          text: 'Which band you pick is not a preference, it is buying the size of each win with the depth of the drawdown. At a 45% hit rate the longest losing streak in 250 trades runs about nine (ln(250) ÷ ln(1 ÷ 0.55)): that streak alone costs 8.6% at 1%, 16.6% at 2% and 24.0% at 3%. Count the scattered losses around it and an ordinary year looks like the right-hand column.',
         },
         {
           kind: 'table',
           headers: [
             'Risk per trade',
-            'Nine losses in a row',
-            'Realistic peak-to-trough',
+            'When this band applies',
+            'Peak-to-trough in an ordinary year',
           ],
           rows: [
-            ['1%', '8.6%', '13%–17%'],
-            ['2%', '16.6%', '25%–33%'],
-            ['3%', '24.0%', '36%–48%'],
+            [
+              '0.5%',
+              'Calibrating: fewer than 50 trades recorded in R, or expectancy not yet positive. On an unproven system, more risk only reaches the answer faster',
+              '7%–9%',
+            ],
+            [
+              '1%',
+              'The default. A verified system traded at any real frequency',
+              '13%–17%',
+            ],
+            [
+              '2%',
+              'The ceiling. Verified and low frequency — a few trades a week, not a few a day — and you accept the right-hand column now',
+              '25%–33%',
+            ],
+            [
+              '3%',
+              'Not a band but an exception. Write down why this one is worth it; if you cannot, there is no reason',
+              '36%–48%',
+            ],
           ],
         },
         {
           kind: 'paragraph',
-          text: 'These are orders of magnitude, not promises, and they assume every loss is exactly 1R — wicks and slippage on a perpetual make the realised average nearer 1.2R, so each number wants nudging up. The use of the table is this: choosing 2% is accepting a 25%–30% drawdown in an ordinary year, in advance. If that is not acceptable, the number comes down now. Changing the rule while the drawdown is happening is not risk management.',
+          text: 'These are orders of magnitude, not promises, and they assume every loss is exactly 1R — wicks and slippage on a perpetual make the realised average nearer 1.2R, so the right-hand column wants nudging up. There is one way to use this: choosing 2% is accepting a 25%–30% drawdown now, not when it arrives. If that is not acceptable, the number comes down today. Changing the rule while the drawdown is happening is not risk management.',
         },
       ],
     },
@@ -834,7 +851,7 @@ export const disciplineEn: DisciplineContent = {
             ],
             [
               'Planned R',
-              '1.5% of equity at risk; 2R target, remainder trailed',
+              '1% of equity at risk (default band); 2R target, remainder trailed',
             ],
             ['Actual fills and slippage', 'Entry, exit, whether it was swept'],
             ['Result (R)', '+1.8R or −1R'],
