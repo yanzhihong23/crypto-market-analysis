@@ -12,8 +12,9 @@ an alert fires on the edge rather than on the state.
 - **[Signals](docs/signals.md)** — what each of the sixteen readings measures,
   when it fires, and what has to agree before a card claims its ring.
   ([中文](docs/signals.zh.md))
-- **[Trading discipline](docs/trading-discipline.zh.md)** — chart-reading workflow,
+- **[Trading discipline](docs/trading-discipline.md)** — chart-reading workflow,
   indicator combinations, and risk rules. Prefer the in-app page at `/discipline`.
+  ([中文](docs/trading-discipline.zh.md))
 
 ## Running it
 
@@ -36,6 +37,7 @@ endpoint.
 | `pnpm build`   | Typecheck, then build                                         |
 | `pnpm preview` | Serve the build                                               |
 | `pnpm lint`    | ESLint with `--fix`                                           |
+| `pnpm docs`    | Reprint `docs/trading-discipline*.md` from the page's content |
 
 Commits run Prettier and ESLint over the staged files, and the message is
 checked against conventional-commit rules.

@@ -422,10 +422,12 @@ const theme = createTheme({
     },
     MuiAlert: {
       styleOverrides: {
+        // No width or margin here. This used to pin every outlined alert to
+        // 480px with 40px of outer margin, which suits a toast floating in a
+        // corner and nothing else — dropped in a page column it stayed 480
+        // wide while the rest of the column filled the width, and on a phone
+        // it pushed the text off the right edge. Let the container decide.
         outlined: {
-          width: '480px',
-          marginBottom: '40px',
-          marginRight: '40px',
           fontWeight: 600,
         },
       },

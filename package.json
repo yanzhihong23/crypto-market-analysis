@@ -16,6 +16,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint src/ --fix",
+    "docs": "node scripts/discipline-docs.ts && prettier --write docs/trading-discipline.md docs/trading-discipline.zh.md",
     "prepare": "husky"
   },
   "dependencies": {
