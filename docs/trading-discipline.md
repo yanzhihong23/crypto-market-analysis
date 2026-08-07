@@ -12,6 +12,7 @@ Back to the [README](../README.md) · the board’s readings are described in [s
 - [Reading order](#how-to-read-the-board)
 - [Price structure](#candles-and-structure)
 - [Indicators](#what-each-indicator-actually-answers)
+- [Perpetual data](#perpetual-data-the-half-a-chart-cannot-show)
 - [Recipes](#combinations-you-can-use-as-they-are)
 - [What not to do](#combinations-to-avoid-and-what-to-reach-for-instead)
 - [Market regime](#regime-first-then-strategy-then-indicators)
@@ -67,16 +68,51 @@ At least two independent kinds of evidence pointing the same way: a structural b
 
 ## What each indicator actually answers
 
-Choose indicators by the role they play before arguing about parameters. Running two of the same kind — RSI and Stochastic, say — is close to counting the same evidence twice.
+Choose indicators by the role they play before arguing about parameters. Running two of the same kind — RSI and Stochastic, say — is close to counting the same evidence twice. Everything in this table is a rearrangement of price; the layer that only exists on a perpetual — funding, open interest, basis, liquidations — is not here, it has the next section to itself.
 
-| Role                       | Usual tools                                                           | How to use it / how not to                                                                                                                                                                                                                                   |
-| -------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Trend and location         | MA / EMA (20·50·200), Ichimoku, VWAP, ADX                             | Price above the averages with the averages stacked bullish leans long; take the pullback that holds. Do not use a moving average cross as your only entry. ADX says how strong a trend is and never which way: under 20 read it as no trend, over 25 as one. |
-| Momentum                   | MACD, RSI, ROC, Stochastic                                            | Read direction and divergence: a new price high the oscillator does not follow means momentum is fading. Do not fight overbought readings in the middle of a trend.                                                                                          |
-| Volatility and channels    | Bollinger, Keltner, ATR, Donchian                                     | A break out of narrow bands often runs; ATR sets stop width. Do not chase a push through the band once the bands are already wide.                                                                                                                           |
-| Volume                     | Volume, OBV, VWAP, volume profile                                     | A breakout needs volume to confirm; a quiet pullback is healthy. Price and volume disagreeing is a warning.                                                                                                                                                  |
-| Structural helpers         | Fibonacci retracement/extension, pivots, horizontal supply and demand | A retracement level carries more weight where it lands on a prior high or low. Fibonacci alone is not a system.                                                                                                                                              |
-| Perpetuals only (optional) | Funding, long/short ratio, open interest, basis                       | Extreme funding and crowded positioning are usually contrarian clues; price up with open interest up is what a new trend looks like.                                                                                                                         |
+| Role                    | Usual tools                                                           | How to use it / how not to                                                                                                                                                                                                                                   |
+| ----------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Trend and location      | MA / EMA (20·50·200), Ichimoku, VWAP, ADX                             | Price above the averages with the averages stacked bullish leans long; take the pullback that holds. Do not use a moving average cross as your only entry. ADX says how strong a trend is and never which way: under 20 read it as no trend, over 25 as one. |
+| Momentum                | MACD, RSI, ROC, Stochastic                                            | Read direction and divergence: a new price high the oscillator does not follow means momentum is fading. Do not fight overbought readings in the middle of a trend.                                                                                          |
+| Volatility and channels | Bollinger, Keltner, ATR, Donchian                                     | A break out of narrow bands often runs; ATR sets stop width. Do not chase a push through the band once the bands are already wide.                                                                                                                           |
+| Volume                  | Volume, OBV, VWAP, volume profile                                     | A breakout needs volume to confirm; a quiet pullback is healthy. Price and volume disagreeing is a warning.                                                                                                                                                  |
+| Structural helpers      | Fibonacci retracement/extension, pivots, horizontal supply and demand | A retracement level carries more weight where it lands on a prior high or low. Fibonacci alone is not a system.                                                                                                                                              |
+
+## Perpetual data: the half a chart cannot show
+
+Every row in the table above is a rearrangement of price, and would compute the same in any market. Funding, open interest, basis, the long/short ratio and liquidations are not: they describe positioning — who is holding what, at what carrying cost, and how fragile it is. A candle structurally cannot contain that, and it is the closest thing to an edge available to a retail trader here, precisely because it is not a lagging transform of price. Which is why it gets a section rather than a seventh row.
+
+| Reading                                      | What it says                                                   | How to use it                                                                                                                                |
+| -------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Funding                                      | Which side is paying to hold, and how much                     | Price it into R as a cost first. Sustained extremes mean one side is crowded — raise your guard for the reverse, but it cannot time anything |
+| Open interest                                | How many contracts are open: money arriving or money leaving   | Always read against price, per the quadrants below. On its own it means nothing                                                              |
+| Basis                                        | How far the contract sits from the spot index                  | An extreme premium is the contract chasing spot. Convergence is certain; its timing is not, so it is not an entry                            |
+| Long/short ratio and elite-retail divergence | Crowding at the account level, and which side each group is on | Read the deviation from its own history, never the absolute level. A widening split tends to show up near turns                              |
+| Liquidations                                 | Who is being removed involuntarily                             | A risk switch, and the trigger for the squeeze recipe. Never trend confirmation                                                              |
+| Taker direction                              | Who is crossing the spread to get filled                       | One of the firmer pieces of directional evidence. Extreme readings cluster at the end of a move                                              |
+| Spread                                       | What getting in and out costs right now                        | A cost, not a signal. When it widens is not when you open something new                                                                      |
+
+### Price against open interest: the four quadrants
+
+| Combination         | What is happening                  | What it means                                                                                                          |
+| ------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Price up, OI up     | New long money arriving            | The most trend-like combination there is. Hold with it, stop by structure                                              |
+| Price up, OI down   | Shorts closing                     | Short covering, and the fuel is finite. Not a trend start — prefer trimming into strength                              |
+| Price down, OI up   | New short money arriving           | The fall has participation. Treat bounces as retracements rather than bottoms                                          |
+| Price down, OI down | Longs closing or being cleared out | Deleveraging, and it often lands near a durable low — but wait for the liquidations to stop before calling it an entry |
+
+| Taken together                             | What it usually is                                             | What to do                                                                          |
+| ------------------------------------------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Funding extreme + OI high + price stalling | Crowding has run out of room and a squeeze is building         | Stop adding, shorten the hold, and have the squeeze-reversal recipe ready           |
+| Funding mild + OI rising with price        | A healthy trend with money arriving normally                   | Trade with it at a normal holding period; no reason to leave early                  |
+| Liquidations spiking + OI collapsing       | The clearing is happening right now                            | Do not chase direction. Wait for it to stop and for the swept level to be reclaimed |
+| Basis and funding disagreeing              | Spot and the contract are arguing; the evidence is not aligned | Lower your confidence in the trade — half size, or skip it                          |
+
+### What this layer cannot do
+
+- It describes positioning, not the future. Crowding runs for weeks, and extreme funding is never an entry by itself.
+- It changes your bar and your size, not your direction — direction still comes from structure.
+- Read every one of these as a deviation from its own history rather than an absolute: what counts as normal funding, basis or ratio differs wildly between contracts.
 
 ## Combinations you can use as they are
 
@@ -242,7 +278,7 @@ The board is a noise filter, not a signal generator. Written into the rules it i
 | Liquidations and extreme funding   | Filters or contrarian clues, never trend confirmation. With funding extreme, cut size or shorten the hold.                                    |
 | Watchlist breadth                  | Strength only computes with 8 or more symbols on the board; below that relative strength is distorted, so do not size up on it.               |
 
-What each reading is for. The names on the left are the ones in signals.md; on the right is where the reading belongs in a trade. Most of them are filters or timing — very few can be read as direction.
+What each reading is for. The names on the left are the ones in signals.md; on the right is where the reading belongs in a trade. This table is about what a ring should make you do; how the readings themselves are interpreted, the perpetual ones especially, is the perpetual data section above. Most of them are filters or timing — very few can be read as direction.
 
 | Reading                 | Use it as                                                                                 | Do not use it as                                                                   |
 | ----------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
