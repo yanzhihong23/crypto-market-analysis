@@ -69,22 +69,23 @@ At least two independent kinds of evidence pointing the same way: a structural b
 
 Choose indicators by the role they play before arguing about parameters. Running two of the same kind — RSI and Stochastic, say — is close to counting the same evidence twice.
 
-| Role                       | Usual tools                                                           | How to use it / how not to                                                                                                                                          |
-| -------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Trend and location         | MA / EMA (20·50·200), Ichimoku, VWAP                                  | Price above the averages with the averages stacked bullish leans long; take the pullback that holds. Do not use a moving average cross as your only entry.          |
-| Momentum                   | MACD, RSI, ROC, Stochastic                                            | Read direction and divergence: a new price high the oscillator does not follow means momentum is fading. Do not fight overbought readings in the middle of a trend. |
-| Volatility and channels    | Bollinger, Keltner, ATR, Donchian                                     | A break out of narrow bands often runs; ATR sets stop width. Do not chase a push through the band once the bands are already wide.                                  |
-| Volume                     | Volume, OBV, VWAP, volume profile                                     | A breakout needs volume to confirm; a quiet pullback is healthy. Price and volume disagreeing is a warning.                                                         |
-| Structural helpers         | Fibonacci retracement/extension, pivots, horizontal supply and demand | A retracement level carries more weight where it lands on a prior high or low. Fibonacci alone is not a system.                                                     |
-| Perpetuals only (optional) | Funding, long/short ratio, open interest, basis                       | Extreme funding and crowded positioning are usually contrarian clues; price up with open interest up is what a new trend looks like.                                |
+| Role                       | Usual tools                                                           | How to use it / how not to                                                                                                                                                                                                                                   |
+| -------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Trend and location         | MA / EMA (20·50·200), Ichimoku, VWAP, ADX                             | Price above the averages with the averages stacked bullish leans long; take the pullback that holds. Do not use a moving average cross as your only entry. ADX says how strong a trend is and never which way: under 20 read it as no trend, over 25 as one. |
+| Momentum                   | MACD, RSI, ROC, Stochastic                                            | Read direction and divergence: a new price high the oscillator does not follow means momentum is fading. Do not fight overbought readings in the middle of a trend.                                                                                          |
+| Volatility and channels    | Bollinger, Keltner, ATR, Donchian                                     | A break out of narrow bands often runs; ATR sets stop width. Do not chase a push through the band once the bands are already wide.                                                                                                                           |
+| Volume                     | Volume, OBV, VWAP, volume profile                                     | A breakout needs volume to confirm; a quiet pullback is healthy. Price and volume disagreeing is a warning.                                                                                                                                                  |
+| Structural helpers         | Fibonacci retracement/extension, pivots, horizontal supply and demand | A retracement level carries more weight where it lands on a prior high or low. Fibonacci alone is not a system.                                                                                                                                              |
+| Perpetuals only (optional) | Funding, long/short ratio, open interest, basis                       | Extreme funding and crowded positioning are usually contrarian clues; price up with open interest up is what a new trend looks like.                                                                                                                         |
 
 ## Combinations you can use as they are
 
 ### Trend pullback (trending market)
 
 - **Setup**: Price above EMA20/50 for longs, below for shorts, with the higher-timeframe MACD histogram on the same side.
-- **Entry**: A pullback into EMA20 or the Bollinger midline, RSI turning up out of oversold without breaking the prior low.
+- **Entry**: A pullback into EMA20 or the Bollinger midline, RSI turning back up from the middle of its range (around 40–50) without breaking the prior low.
 - **Filter**: Volume drying up into the pullback and picking back up on the resumption; ATR normal, not blown out.
+- **Target**: The prior high, or the last leg projected from here. Check it clears 1.5R before taking it.
 - **Invalidation**: A close below the moving average being tested, or below the prior swing low.
 
 ### Breakout continuation (after compression)
@@ -92,6 +93,7 @@ Choose indicators by the role they play before arguing about parameters. Running
 - **Setup**: Bollinger bandwidth or ATR near recent lows — volatility compressed.
 - **Entry**: A close through the range, the Donchian channel or the prior high, on clearly expanded volume.
 - **Confirmation**: The MACD histogram flipping the way of the break, or price holding the right side of VWAP or the broken average.
+- **Target**: The height of the range projected from the break. If that is under 1.5R, let it go.
 - **Invalidation**: A long wick through the level that closes back inside, or volume dying immediately after the break.
 
 ### Divergence reversal (range or late trend)
@@ -99,6 +101,7 @@ Choose indicators by the role they play before arguing about parameters. Running
 - **Setup**: The higher timeframe has gone sideways or the trend has flattened — not the middle of a one-way move.
 - **Signal**: Price makes a new high or low that RSI or MACD does not follow.
 - **Entry**: Wait for structure to confirm — a short-term trendline break or a reclaimed key candle — rather than entering the moment divergence appears.
+- **Target**: The previous structural low or high, or the midline. A reversal trade does not chase a distant target.
 - **Caution**: In a strong trend divergence can print several times in a row. Small size, tight stop.
 
 ### Mean reversion (range-bound market)
@@ -153,29 +156,32 @@ The same indicators perform very differently across regimes. Work out what kind 
 
 ## Leverage bands and choosing what to trade
 
-| Band   | Roughly for                                                  | Watch out                                                                                           |
-| ------ | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| 2–5×   | Learning, testing, wider daily and 4H structures             | Where most people should spend most of their time. Low leverage is not low risk — still size by R   |
-| 5–10×  | Short-term trades on liquid majors with a close invalidation | The stop has to be mechanical; slippage and wicks eat the buffer fast                               |
-| 10–20× | Little more than a bet on the next tick                      | Negative expectancy unless the stop is very close and the size very small. Off the table day to day |
-| 20×+   | Casino                                                       | One noise stop-out damages the account and your head. Nothing to do with a trading system           |
+Leverage does not set risk — risk is stop distance × position ÷ equity, as above. Leverage sets something else: how close liquidation sits to your entry. So there is only one test for choosing it. Liquidation has to be well beyond the invalidation level, with room left over for a wick. The distances below are the rough isolated case (about 1 ÷ leverage), before maintenance margin and unrealised profit, both of which bring it closer in practice.
 
-| Tier                | How to choose                                       | Sizing                                                                 |
-| ------------------- | --------------------------------------------------- | ---------------------------------------------------------------------- |
-| Majors (BTC/ETH)    | Tight spreads, real depth, behaviour that repeats   | Fine as the default. Count correlated positions as one risk            |
-| Large-cap alts      | Correlated to BTC but with more beta                | Smaller than BTC. More fake breaks, so raise the bar for confirmation  |
-| Illiquid small caps | Easy to stop-hunt, easy to wick, easy to manipulate | Skip by default. If you must: isolated, tiny R, nothing held overnight |
+| Band   | Liquidation from entry (isolated) | Which means                                                                                                                                                                                          |
+| ------ | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2–5×   | About 20%–50%                     | Liquidation effectively cannot come before the stop, so stop width is set purely by structure. Most trades belong here not because it is "safe" but because it takes liquidation out of the decision |
+| 5–10×  | About 10%–20%                     | Still well outside most structural invalidations; suits short-term trades where the level was already close                                                                                          |
+| 10–20× | About 5%–10%                      | Now the same order of magnitude as a normal stop. One wick can reach liquidation before it reaches the stop — and that trade did not end in R                                                        |
+| 20×+   | Under 5%                          | Liquidation sits inside the noise and the stop stops meaning anything: what gets closed is the position, not the plan                                                                                |
+
+| Tier                | How to choose                                                                | Sizing                                                                 |
+| ------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Majors (BTC/ETH)    | Tight spreads, real depth, behaviour that repeats                            | Fine as the default. Count correlated positions as one risk            |
+| Large-cap alts      | Move with BTC but further — higher beta: BTC does 1%, these often do 1.5%–3% | Smaller than BTC. More fake breaks, so raise the bar for confirmation  |
+| Illiquid small caps | Easy to stop-hunt, easy to wick, easy to manipulate                          | Skip by default. If you must: isolated, tiny R, nothing held overnight |
 
 ## Execution, exits and adding
 
-| Subject         | What to do                                                                                                                                                 |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Stop order type | Stop-market when it is moving fast, because getting out is the point; stop-limit is fine in good liquidity if you accept it may not fill.                  |
-| Expect slippage | On wicks, liquidation cascades and data releases the fill can be some way from the chart. Leave room for it in the size.                                   |
-| Scaling out     | Take 30%–50% at the first target and move the stop to break-even; trail the rest by structure. Do not hold everything waiting for a perfect top.           |
-| Adding          | Pyramid only into profit, and only when the new tranche has its own invalidation. Never average down a loser — that is swapping a bigger risk for a guess. |
-| Minimum payoff  | Do the arithmetic before entering: if the stop is 1R, the target should be at least 1.5R–2R, otherwise the hit rate has to be extraordinary.               |
-| Expectancy      | Hit rate × average win − loss rate × average loss has to be positive to survive. Recording money instead of R hides a system that is decaying.             |
+| Subject         | What to do                                                                                                                                                                                                                                                                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stop order type | Stop-market when it is moving fast, because getting out is the point; stop-limit is fine in good liquidity if you accept it may not fill.                                                                                                                                                                                                   |
+| Expect slippage | On wicks, liquidation cascades and data releases the fill can be some way from the chart. Leave room for it in the size.                                                                                                                                                                                                                    |
+| Scaling out     | Take 30%–50% at the first target, then move the stop to break-even or to structure — whichever is further out. Break-even usually sits much closer than the invalidation level, so moving there unconditionally hands the rest of the position to the noise. Trail the remainder by structure rather than holding it all for a perfect top. |
+| Adding          | Pyramid only into profit, and only when the new tranche has its own invalidation. Never average down a loser — that is swapping a bigger risk for a guess.                                                                                                                                                                                  |
+| Trading costs   | Fees are the tax you pay on every trade, and the one this page is most likely to let you forget after pricing funding and slippage: roughly 0.1% round trip taking liquidity, which against a 0.8% stop is over 12% of your R. The tighter the stop and the higher the frequency, the more it decides.                                      |
+| Minimum payoff  | Do the arithmetic before entering: if the stop is 1R, the target should be at least 1.5R–2R, otherwise the hit rate has to be extraordinary. Count R net — fees, funding and expected slippage come off first.                                                                                                                              |
+| Expectancy      | Hit rate × average win − loss rate × average loss has to be positive to survive, and it has to be computed net of costs; the gross number is a lie over any length of time. Recording money instead of R hides a system that is decaying.                                                                                                   |
 
 ## Timing and events
 
@@ -188,14 +194,14 @@ The same indicators perform very differently across regimes. Work out what kind 
 
 ## The usual ways it goes wrong
 
-| Situation                               | Why it costs you                                                      | How to stop it                                                                                    |
-| --------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Widening the stop past invalidation     | "A little more room" means the risk on the trade is no longer defined | Fix R first, then the stop. Move the stop and you have to resize                                  |
-| Sizing up right after a big win         | Excitement inflates the position and one giveback costs a week        | The next trade after a big win goes back to standard size. No raising risk again that day         |
-| Switching symbols after a losing streak | Revenge in a different market — no edge, just a different table       | A losing streak ends the session. Changing symbol does not count as a break                       |
-| Right on direction, stopped out anyway  | The direction was fine but the size or leverage was not               | Direction and size are two decisions. Leverage serves the invalidation level, not your confidence |
-| Treating open profit as realised        | Sizing up on unrealised gains, then falling apart on the drawdown     | Only a closed trade is a win. Open profit does not join the balance you size the next one from    |
-| Chasing a liquidation cascade           | Liquidation-driven moves end quickly and you take the last of it      | Cascades can be scalped; do not mistake one for the start of a trend                              |
+| Situation                               | Why it costs you                                                      | How to stop it                                                                                                          |
+| --------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Widening the stop past invalidation     | "A little more room" means the risk on the trade is no longer defined | Fix R first, then the stop. Move the stop and you have to resize                                                        |
+| Sizing up right after a big win         | Excitement inflates the position and one giveback costs a week        | The next trade after a big win goes back to standard size. No raising risk again that day                               |
+| Switching symbols after a losing streak | Revenge in a different market — no edge, just a different table       | A losing streak means stopping to review before deciding whether to trade on. Changing symbol does not count as a break |
+| Right on direction, stopped out anyway  | The direction was fine but the size or leverage was not               | Direction and size are two decisions. Leverage serves the invalidation level, not your confidence                       |
+| Treating open profit as realised        | Sizing up on unrealised gains, then falling apart on the drawdown     | Only a closed trade is a win. Open profit does not join the balance you size the next one from                          |
+| Chasing a liquidation cascade           | Liquidation-driven moves end quickly and you take the last of it      | Cascades can be scalped; do not mistake one for the start of a trend                                                    |
 
 ## Working with the Vigil board (optional rules)
 
@@ -234,8 +240,10 @@ What each reading is for. The names on the left are the ones in signals.md; on t
 
 - Risk = stop distance × position ÷ equity. Not leverage, and not how much margin is tied up.
 - On perpetuals 1%–2% per trade is normal, with a hard cap near 3%. The textbook "never more than 1%" often leaves a position too small to be worth taking.
-- Set stop width from structure or 1.5–2×ATR and size back from it. Deciding how big you want to be and then fitting a stop around it is the usual road to liquidation.
-- Down 4%–6% on the day, or three losses in a row, ends the session. Correlated positions on the same side (BTC+ETH) count as one risk.
+- Set stop width from structure or 1.5–2×ATR — default 14 periods, on the timeframe you are executing on rather than the structural one — and size back from it. Deciding how big you want to be and then fitting a stop around it is the usual road to liquidation.
+- Down 4%–6% on the day ends the session. That one is hard, because it is the rule that constrains money directly.
+- Three losses in a row means stop and review, not necessarily stop trading: at a 45% hit rate roughly one in six sets of three comes out that way, so it usually says the regime moved or execution slipped rather than that the system is broken.
+- Correlated positions on the same side (BTC+ETH) count as one risk.
 
 ### Entries and exits
 

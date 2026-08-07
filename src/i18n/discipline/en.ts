@@ -100,8 +100,8 @@ export const disciplineEn: DisciplineContent = {
           rows: [
             [
               'Trend and location',
-              'MA / EMA (20·50·200), Ichimoku, VWAP',
-              'Price above the averages with the averages stacked bullish leans long; take the pullback that holds. Do not use a moving average cross as your only entry.',
+              'MA / EMA (20·50·200), Ichimoku, VWAP, ADX',
+              'Price above the averages with the averages stacked bullish leans long; take the pullback that holds. Do not use a moving average cross as your only entry. ADX says how strong a trend is and never which way: under 20 read it as no trend, over 25 as one.',
             ],
             [
               'Momentum',
@@ -150,11 +150,18 @@ export const disciplineEn: DisciplineContent = {
                 },
                 {
                   label: 'Entry',
-                  text: 'A pullback into EMA20 or the Bollinger midline, RSI turning up out of oversold without breaking the prior low.',
+                  // Not "out of oversold": in an uptrend a pullback to EMA20
+                  // rarely takes RSI under 30, and the page says a page
+                  // earlier not to fight oversold readings mid-trend.
+                  text: 'A pullback into EMA20 or the Bollinger midline, RSI turning back up from the middle of its range (around 40–50) without breaking the prior low.',
                 },
                 {
                   label: 'Filter',
                   text: 'Volume drying up into the pullback and picking back up on the resumption; ATR normal, not blown out.',
+                },
+                {
+                  label: 'Target',
+                  text: 'The prior high, or the last leg projected from here. Check it clears 1.5R before taking it.',
                 },
                 {
                   label: 'Invalidation',
@@ -178,6 +185,10 @@ export const disciplineEn: DisciplineContent = {
                   text: 'The MACD histogram flipping the way of the break, or price holding the right side of VWAP or the broken average.',
                 },
                 {
+                  label: 'Target',
+                  text: 'The height of the range projected from the break. If that is under 1.5R, let it go.',
+                },
+                {
                   label: 'Invalidation',
                   text: 'A long wick through the level that closes back inside, or volume dying immediately after the break.',
                 },
@@ -197,6 +208,10 @@ export const disciplineEn: DisciplineContent = {
                 {
                   label: 'Entry',
                   text: 'Wait for structure to confirm — a short-term trendline break or a reclaimed key candle — rather than entering the moment divergence appears.',
+                },
+                {
+                  label: 'Target',
+                  text: 'The previous structural low or high, or the midline. A reversal trade does not chase a distant target.',
                 },
                 {
                   label: 'Caution',
@@ -358,28 +373,32 @@ export const disciplineEn: DisciplineContent = {
       title: 'Leverage bands and choosing what to trade',
       blocks: [
         {
+          kind: 'paragraph',
+          text: 'Leverage does not set risk — risk is stop distance × position ÷ equity, as above. Leverage sets something else: how close liquidation sits to your entry. So there is only one test for choosing it. Liquidation has to be well beyond the invalidation level, with room left over for a wick. The distances below are the rough isolated case (about 1 ÷ leverage), before maintenance margin and unrealised profit, both of which bring it closer in practice.',
+        },
+        {
           kind: 'table',
-          headers: ['Band', 'Roughly for', 'Watch out'],
+          headers: ['Band', 'Liquidation from entry (isolated)', 'Which means'],
           rows: [
             [
               '2–5×',
-              'Learning, testing, wider daily and 4H structures',
-              'Where most people should spend most of their time. Low leverage is not low risk — still size by R',
+              'About 20%–50%',
+              'Liquidation effectively cannot come before the stop, so stop width is set purely by structure. Most trades belong here not because it is "safe" but because it takes liquidation out of the decision',
             ],
             [
               '5–10×',
-              'Short-term trades on liquid majors with a close invalidation',
-              'The stop has to be mechanical; slippage and wicks eat the buffer fast',
+              'About 10%–20%',
+              'Still well outside most structural invalidations; suits short-term trades where the level was already close',
             ],
             [
               '10–20×',
-              'Little more than a bet on the next tick',
-              'Negative expectancy unless the stop is very close and the size very small. Off the table day to day',
+              'About 5%–10%',
+              'Now the same order of magnitude as a normal stop. One wick can reach liquidation before it reaches the stop — and that trade did not end in R',
             ],
             [
               '20×+',
-              'Casino',
-              'One noise stop-out damages the account and your head. Nothing to do with a trading system',
+              'Under 5%',
+              'Liquidation sits inside the noise and the stop stops meaning anything: what gets closed is the position, not the plan',
             ],
           ],
         },
@@ -394,7 +413,7 @@ export const disciplineEn: DisciplineContent = {
             ],
             [
               'Large-cap alts',
-              'Correlated to BTC but with more beta',
+              'Move with BTC but further — higher beta: BTC does 1%, these often do 1.5%–3%',
               'Smaller than BTC. More fake breaks, so raise the bar for confirmation',
             ],
             [
@@ -426,19 +445,23 @@ export const disciplineEn: DisciplineContent = {
             ],
             [
               'Scaling out',
-              'Take 30%–50% at the first target and move the stop to break-even; trail the rest by structure. Do not hold everything waiting for a perfect top.',
+              'Take 30%–50% at the first target, then move the stop to break-even or to structure — whichever is further out. Break-even usually sits much closer than the invalidation level, so moving there unconditionally hands the rest of the position to the noise. Trail the remainder by structure rather than holding it all for a perfect top.',
             ],
             [
               'Adding',
               'Pyramid only into profit, and only when the new tranche has its own invalidation. Never average down a loser — that is swapping a bigger risk for a guess.',
             ],
             [
+              'Trading costs',
+              'Fees are the tax you pay on every trade, and the one this page is most likely to let you forget after pricing funding and slippage: roughly 0.1% round trip taking liquidity, which against a 0.8% stop is over 12% of your R. The tighter the stop and the higher the frequency, the more it decides.',
+            ],
+            [
               'Minimum payoff',
-              'Do the arithmetic before entering: if the stop is 1R, the target should be at least 1.5R–2R, otherwise the hit rate has to be extraordinary.',
+              'Do the arithmetic before entering: if the stop is 1R, the target should be at least 1.5R–2R, otherwise the hit rate has to be extraordinary. Count R net — fees, funding and expected slippage come off first.',
             ],
             [
               'Expectancy',
-              'Hit rate × average win − loss rate × average loss has to be positive to survive. Recording money instead of R hides a system that is decaying.',
+              'Hit rate × average win − loss rate × average loss has to be positive to survive, and it has to be computed net of costs; the gross number is a lie over any length of time. Recording money instead of R hides a system that is decaying.',
             ],
           ],
         },
@@ -497,7 +520,7 @@ export const disciplineEn: DisciplineContent = {
             [
               'Switching symbols after a losing streak',
               'Revenge in a different market — no edge, just a different table',
-              'A losing streak ends the session. Changing symbol does not count as a break',
+              'A losing streak means stopping to review before deciding whether to trade on. Changing symbol does not count as a break',
             ],
             [
               'Right on direction, stopped out anyway',
@@ -651,8 +674,10 @@ export const disciplineEn: DisciplineContent = {
               items: [
                 'Risk = stop distance × position ÷ equity. Not leverage, and not how much margin is tied up.',
                 'On perpetuals 1%–2% per trade is normal, with a hard cap near 3%. The textbook "never more than 1%" often leaves a position too small to be worth taking.',
-                'Set stop width from structure or 1.5–2×ATR and size back from it. Deciding how big you want to be and then fitting a stop around it is the usual road to liquidation.',
-                'Down 4%–6% on the day, or three losses in a row, ends the session. Correlated positions on the same side (BTC+ETH) count as one risk.',
+                'Set stop width from structure or 1.5–2×ATR — default 14 periods, on the timeframe you are executing on rather than the structural one — and size back from it. Deciding how big you want to be and then fitting a stop around it is the usual road to liquidation.',
+                'Down 4%–6% on the day ends the session. That one is hard, because it is the rule that constrains money directly.',
+                'Three losses in a row means stop and review, not necessarily stop trading: at a 45% hit rate roughly one in six sets of three comes out that way, so it usually says the regime moved or execution slipped rather than that the system is broken.',
+                'Correlated positions on the same side (BTC+ETH) count as one risk.',
               ],
             },
             {
