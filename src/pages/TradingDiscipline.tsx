@@ -71,10 +71,14 @@ function Card({
   children: React.ReactNode
 }) {
   return (
-    <Paper
-      variant="outlined"
-      sx={{ p: 2, borderColor: 'surface.border', height: '100%' }}
-    >
+    // No `height: 100%` here. A grid item already stretches to its row, so it
+    // bought nothing — and it is a percentage resolved against a row whose
+    // height is decided by this very card. Blink shrugs that off; WebKit
+    // resolved it against something further up, inflated every card to about
+    // three times its content, and left the section's own height measured
+    // from before the inflation, so the next heading drew on top of it. On an
+    // iPad the whole page came apart from this one line.
+    <Paper variant="outlined" sx={{ p: 2, borderColor: 'surface.border' }}>
       <Stack
         direction="row"
         sx={{
@@ -164,7 +168,14 @@ function SimpleTable({
                     color: j === 0 ? 'text.primary' : 'text.secondary',
                     fontWeight: j === 0 ? 500 : 400,
                     verticalAlign: 'top',
-                    maxWidth: j === 0 ? 160 : undefined,
+                    // The cap keeps the subject column from eating the row.
+                    // The floor is what stops WebKit reading the cap as
+                    // licence to collapse the column to min-content — which,
+                    // for text that breaks between any two characters, is one
+                    // character per line. On an iPad the subject column came
+                    // out as a vertical strip.
+                    minWidth: j === 0 ? 88 : undefined,
+                    maxWidth: j === 0 ? 220 : undefined,
                   }}
                 >
                   {cell}
@@ -724,7 +735,11 @@ export default function TradingDiscipline() {
             display: { xs: 'none', md: 'block' },
             position: 'sticky',
             top: 88,
-            maxHeight: 'calc(100vh - 104px)',
+            // Dynamic viewport units, because on a tablet `vh` is the height
+            // the page would have with the browser chrome collapsed — the
+            // contents would run past the bottom of what you can actually see
+            // and the last few entries would be unreachable.
+            maxHeight: 'calc(100dvh - 104px)',
             overflowY: 'auto',
           }}
         >
