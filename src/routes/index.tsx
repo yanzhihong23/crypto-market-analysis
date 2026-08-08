@@ -13,6 +13,9 @@ const BinancePerpetualMarket = lazyPage(
   () => import('../pages/BinancePerpetualMarket'),
 )
 const OkxPerpetual = lazyPage(() => import('../pages/OkxPerpetual'))
+const TechnicalIndicators = lazyPage(
+  () => import('../pages/TechnicalIndicators'),
+)
 const TradingDiscipline = lazyPage(() => import('../pages/TradingDiscipline'))
 
 export default function Pages() {
@@ -45,6 +48,7 @@ export default function Pages() {
               <Route path="/" element={<OkxPerpetual />} />
               <Route path="/binance" element={<BinancePerpetualMarket />} />
               <Route path="/charts" element={<Charts />} />
+              <Route path="/indicators" element={<TechnicalIndicators />} />
               <Route path="/discipline" element={<TradingDiscipline />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
