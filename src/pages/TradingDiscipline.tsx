@@ -841,7 +841,7 @@ export default function TradingDiscipline() {
               <Button
                 component={RouterLink}
                 to={content.related.href}
-                variant="outlined"
+                variant="contained"
                 size="small"
               >
                 {content.related.cta}

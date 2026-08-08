@@ -915,7 +915,7 @@ export const indicatorsEn: IndicatorsContent = {
   related: {
     label: 'Next',
     href: '/discipline',
-    text: 'Indicators are the manuals; recipes, regime switches, sizing and behaviour live on the Discipline page.',
+    text: 'Indicators are the manuals; recipes, regime switches, sizing and behaviour live on the Discipline page. Volume-price, Elliott, Wyckoff and kin sit on the Theories page as the coordinate system.',
     cta: 'Open trading discipline',
   },
 

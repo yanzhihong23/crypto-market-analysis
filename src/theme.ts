@@ -354,23 +354,31 @@ const theme = createTheme({
       variants: [
         {
           props: { variant: 'contained', color: 'primary' },
-          style: {
+          style: ({ theme }) => ({
             '&:hover': {
-              background: '#6172F3',
+              background: theme.vars.palette.primary.main,
+              filter: 'brightness(1.08)',
             },
             '&:disabled': {
-              color: '#fff',
-              background: '#C7D7FE',
+              color: theme.vars.palette.primary.contrastText,
+              background: theme.vars.palette.action.disabledBackground,
               cursor: 'not-allowed',
+              filter: 'none',
             },
-          },
+          }),
         },
         {
           props: { variant: 'outlined', color: 'primary' },
-          style: {
-            color: '#364152',
-            borderColor: '#CDD5DF',
-          },
+          // Was hardcoded to the light scheme's ink (#364152) — on a dark
+          // surface that read as an empty pill with invisible label text.
+          style: ({ theme }) => ({
+            color: theme.vars.palette.primary.main,
+            borderColor: theme.vars.palette.primary.main,
+            '&:hover': {
+              borderColor: theme.vars.palette.primary.main,
+              backgroundColor: theme.vars.palette.action.hover,
+            },
+          }),
         },
       ],
     },

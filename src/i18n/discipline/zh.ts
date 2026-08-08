@@ -1074,7 +1074,7 @@ export const disciplineZh: DisciplineContent = {
   related: {
     label: '工具说明书',
     href: '/indicators',
-    text: '常用指标的原理、公式、盘面读法与对错示意图在「指标」页；本页负责配方与纪律。',
+    text: '常用指标的原理、公式、盘面读法与对错示意图在「指标」页；量价、波浪、威科夫等理论在「理论」页；本页负责配方与纪律。',
     cta: '打开技术指标',
   },
 

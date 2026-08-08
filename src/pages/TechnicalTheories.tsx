@@ -17,22 +17,20 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { Link as RouterLink } from 'react-router'
 
-import IndicatorDiagram from '../components/IndicatorDiagram'
+import TheoryDiagram from '../components/TheoryDiagram'
 import { useLocale } from '../i18n'
 import {
-  INDICATORS,
-  type IndicatorsContent,
-  type Indicator,
-  type Category,
-  type MisreadItem,
-} from '../i18n/indicators'
-import { MONO_STACK } from '../fonts'
+  THEORIES,
+  type TheoriesContent,
+  type Theory,
+  type TheorySection,
+} from '../i18n/theories'
 
 /**
- * Matches the discipline page: the app bar is fixed at 64, and below `md` the
+ * Matches the indicators page: the app bar is fixed at 64, and below `md` the
  * section chips sit under it (~44). Anchored headings and the scroll spy share
  * the same clearance so the highlight and the heading stay in agreement.
  */
@@ -114,39 +112,6 @@ function SimpleTable({
   )
 }
 
-function FormulaBlock({ lines }: { lines: string[] }) {
-  return (
-    <Paper
-      variant="outlined"
-      sx={{
-        p: 1.5,
-        borderColor: 'surface.border',
-        bgcolor: 'surface.subtle',
-      }}
-    >
-      <Stack sx={{ gap: 0.75 }}>
-        {lines.map((line) => (
-          <Typography
-            key={line}
-            component="code"
-            sx={{
-              fontFamily: MONO_STACK,
-              fontSize: 13,
-              lineHeight: 1.55,
-              color: 'text.primary',
-              display: 'block',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
-          >
-            {line}
-          </Typography>
-        ))}
-      </Stack>
-    </Paper>
-  )
-}
-
 function Bullets({ items }: { items: string[] }) {
   return (
     <Stack component="ul" sx={{ gap: 0.75, m: 0, pl: 2.25 }}>
@@ -160,20 +125,6 @@ function Bullets({ items }: { items: string[] }) {
           {item}
         </Typography>
       ))}
-    </Stack>
-  )
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <Stack sx={{ gap: 0.75 }}>
-      <Typography
-        variant="caption"
-        sx={{ fontWeight: 600, color: 'text.secondary', letterSpacing: 0.2 }}
-      >
-        {label}
-      </Typography>
-      {children}
     </Stack>
   )
 }
@@ -200,142 +151,127 @@ function SignalList({
   )
 }
 
-function IndicatorCard({
-  indicator,
-  fields,
+function TheorySectionBlock({
+  section,
   labelJoin,
 }: {
-  indicator: Indicator
-  fields: IndicatorsContent['fields']
+  section: TheorySection
   labelJoin: string
 }) {
   return (
-    <Paper
-      id={indicator.id}
-      variant="outlined"
-      component="article"
-      sx={{
-        p: { xs: 2, sm: 2.5 },
-        borderColor: 'surface.border',
-        scrollMarginTop: { xs: HEADER_OFFSET.xs, md: HEADER_OFFSET.md },
-      }}
-    >
-      <Stack
-        direction={{ xs: 'column', md: 'row' }}
-        sx={{ gap: 2.5, alignItems: 'stretch' }}
-      >
-        <Stack sx={{ gap: 2, flex: 1, minWidth: 0 }}>
-          <Stack
-            direction="row"
-            sx={{
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 1,
-              flexWrap: 'wrap',
-            }}
-          >
-            <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
-              {indicator.name}
-            </Typography>
-            <Chip
-              size="small"
-              label={indicator.tag}
-              sx={{ bgcolor: 'surface.subtle', flexShrink: 0 }}
-            />
-          </Stack>
-
-          <Field label={fields.principle}>
-            <Typography variant="body2" color="text.secondary">
-              {indicator.principle}
-            </Typography>
-          </Field>
-
-          <Field label={fields.formula}>
-            <FormulaBlock lines={indicator.formula} />
-          </Field>
-
-          <Field label={fields.params}>
-            <Typography variant="body2" color="text.secondary">
-              {indicator.params}
-            </Typography>
-          </Field>
-
-          <Field label={fields.signals}>
-            <SignalList items={indicator.signals} labelJoin={labelJoin} />
-          </Field>
-
-          <Field label={fields.regime}>
-            <Typography variant="body2" color="text.secondary">
-              {indicator.regime}
-            </Typography>
-          </Field>
-
-          <Field label={fields.usage}>
-            <Bullets items={indicator.usage} />
-          </Field>
-
-          <Field label={fields.pitfalls}>
-            <Bullets items={indicator.pitfalls} />
-          </Field>
-        </Stack>
-
-        <Box
-          sx={{
-            flex: { md: '0 0 280px' },
-            width: { xs: '100%', md: 280 },
-            alignSelf: { md: 'flex-start' },
-            position: { md: 'sticky' },
-            top: { md: HEADER_OFFSET.md },
-          }}
-        >
-          <IndicatorDiagram id={indicator.diagram} />
-        </Box>
-      </Stack>
-    </Paper>
-  )
-}
-
-function CategorySection({
-  category,
-  fields,
-  labelJoin,
-}: {
-  category: Category
-  fields: IndicatorsContent['fields']
-  labelJoin: string
-}) {
-  return (
-    <Stack
-      id={category.id}
-      component="section"
-      sx={{
-        gap: 2,
-        scrollMarginTop: { xs: HEADER_OFFSET.xs, md: HEADER_OFFSET.md },
-      }}
-    >
-      <Stack sx={{ gap: 0.75 }}>
-        <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
-          {category.title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {category.intro}
-        </Typography>
-      </Stack>
-      <Stack sx={{ gap: 2 }}>
-        {category.indicators.map((indicator) => (
-          <IndicatorCard
-            key={indicator.id}
-            indicator={indicator}
-            fields={fields}
-            labelJoin={labelJoin}
-          />
+    <Stack sx={{ gap: 1.5 }}>
+      <Typography variant="subtitle1" component="h4" sx={{ fontWeight: 600 }}>
+        {section.title}
+      </Typography>
+      <Stack sx={{ gap: 1 }}>
+        {section.body.map((paragraph) => (
+          <Typography key={paragraph} variant="body2" color="text.secondary">
+            {paragraph}
+          </Typography>
         ))}
       </Stack>
+      {section.points ? (
+        <SignalList items={section.points} labelJoin={labelJoin} />
+      ) : null}
+      {section.diagram ? (
+        <Stack
+          sx={{ gap: 0.75, alignItems: { xs: 'stretch', sm: 'flex-start' } }}
+        >
+          <TheoryDiagram id={section.diagram} />
+          {section.caption ? (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ maxWidth: 560, lineHeight: 1.5 }}
+            >
+              {section.caption}
+            </Typography>
+          ) : null}
+        </Stack>
+      ) : null}
     </Stack>
   )
 }
 
-function PathSection({ path }: { path: IndicatorsContent['path'] }) {
+function TheoryArticle({
+  theory,
+  fields,
+  labelJoin,
+}: {
+  theory: Theory
+  fields: TheoriesContent['fields']
+  labelJoin: string
+}) {
+  return (
+    <Stack
+      id={theory.id}
+      component="article"
+      sx={{
+        gap: 2.5,
+        scrollMarginTop: { xs: HEADER_OFFSET.xs, md: HEADER_OFFSET.md },
+      }}
+    >
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 1,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
+          {theory.name}
+        </Typography>
+        <Chip
+          size="small"
+          label={theory.tag}
+          sx={{ bgcolor: 'surface.subtle', flexShrink: 0 }}
+        />
+      </Stack>
+
+      <Typography variant="body2" color="text.secondary">
+        {theory.lede}
+      </Typography>
+
+      {theory.sections.map((section) => (
+        <Paper
+          key={section.title}
+          variant="outlined"
+          sx={{ p: { xs: 2, sm: 2.5 }, borderColor: 'surface.border' }}
+        >
+          <TheorySectionBlock section={section} labelJoin={labelJoin} />
+        </Paper>
+      ))}
+
+      <Paper
+        variant="outlined"
+        sx={{ p: 2, borderColor: 'surface.border', bgcolor: 'surface.subtle' }}
+      >
+        <Typography sx={{ fontWeight: 600, mb: 1.25 }}>
+          {theory.playbook.title}
+        </Typography>
+        <SignalList items={theory.playbook.steps} labelJoin={labelJoin} />
+      </Paper>
+
+      <Stack sx={{ gap: 0.75 }}>
+        <Typography
+          variant="caption"
+          sx={{ fontWeight: 600, color: 'text.secondary', letterSpacing: 0.2 }}
+        >
+          {fields.pitfalls}
+        </Typography>
+        <Bullets items={theory.pitfalls} />
+      </Stack>
+
+      <Alert severity="info" variant="outlined">
+        {theory.summary}
+      </Alert>
+    </Stack>
+  )
+}
+
+function PathSection({ path }: { path: TheoriesContent['path'] }) {
   return (
     <Stack
       id={path.id}
@@ -399,11 +335,7 @@ function PathSection({ path }: { path: IndicatorsContent['path'] }) {
   )
 }
 
-function CompareSection({
-  compare,
-}: {
-  compare: IndicatorsContent['compare']
-}) {
+function CompareSection({ compare }: { compare: TheoriesContent['compare'] }) {
   return (
     <Stack
       id={compare.id}
@@ -437,155 +369,7 @@ function CompareSection({
   )
 }
 
-function DivergenceSection({
-  divergence,
-  labelJoin,
-}: {
-  divergence: IndicatorsContent['divergence']
-  labelJoin: string
-}) {
-  return (
-    <Stack
-      id={divergence.id}
-      component="section"
-      sx={{
-        gap: 2,
-        scrollMarginTop: { xs: HEADER_OFFSET.xs, md: HEADER_OFFSET.md },
-      }}
-    >
-      <Stack sx={{ gap: 0.75 }}>
-        <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
-          {divergence.title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {divergence.intro}
-        </Typography>
-      </Stack>
-
-      <Stack
-        direction={{ xs: 'column', md: 'row' }}
-        sx={{ gap: 2.5, alignItems: 'stretch' }}
-      >
-        <Stack sx={{ gap: 2, flex: 1, minWidth: 0 }}>
-          <Field label={divergence.howTitle}>
-            <SignalList items={divergence.how} labelJoin={labelJoin} />
-          </Field>
-
-          <Typography sx={{ fontWeight: 600 }}>
-            {divergence.kindsTitle}
-          </Typography>
-          <Box
-            sx={{
-              display: 'grid',
-              gap: 1.5,
-              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-            }}
-          >
-            {divergence.kinds.map((kind) => (
-              <Paper
-                key={kind.title}
-                variant="outlined"
-                sx={{ p: 2, borderColor: 'surface.border' }}
-              >
-                <Typography sx={{ fontWeight: 600, mb: 1 }}>
-                  {kind.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {kind.body}
-                </Typography>
-              </Paper>
-            ))}
-          </Box>
-
-          <Field label={divergence.rulesTitle}>
-            <Bullets items={divergence.rules} />
-          </Field>
-
-          <Alert severity="info" variant="outlined">
-            <Typography sx={{ fontWeight: 600, mb: 0.5 }}>
-              {divergence.noteTitle}
-            </Typography>
-            <Bullets items={divergence.noteItems} />
-          </Alert>
-        </Stack>
-
-        <Box
-          sx={{
-            flex: { md: '0 0 280px' },
-            width: { xs: '100%', md: 280 },
-            alignSelf: { md: 'flex-start' },
-            position: { md: 'sticky' },
-            top: { md: HEADER_OFFSET.md },
-          }}
-        >
-          <IndicatorDiagram id={divergence.diagram} />
-        </Box>
-      </Stack>
-    </Stack>
-  )
-}
-
-function MisreadCard({ item }: { item: MisreadItem }) {
-  return (
-    <Paper variant="outlined" sx={{ p: 2, borderColor: 'surface.border' }}>
-      <Typography sx={{ fontWeight: 600, mb: 1.25 }}>{item.title}</Typography>
-      <IndicatorDiagram
-        id={item.diagram}
-        okLabel={item.okLabel}
-        badLabel={item.badLabel}
-      />
-      <Stack sx={{ gap: 1, mt: 1.5 }}>
-        <Typography variant="body2" color="text.secondary">
-          <Box component="span" sx={{ color: 'market.up', fontWeight: 600 }}>
-            {item.okLabel}
-            {' · '}
-          </Box>
-          {item.okCaption}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          <Box component="span" sx={{ color: 'market.down', fontWeight: 600 }}>
-            {item.badLabel}
-            {' · '}
-          </Box>
-          {item.badCaption}
-        </Typography>
-      </Stack>
-    </Paper>
-  )
-}
-
-function MisreadsSection({
-  misreads,
-}: {
-  misreads: IndicatorsContent['misreads']
-}) {
-  return (
-    <Stack
-      id={misreads.id}
-      component="section"
-      sx={{
-        gap: 2,
-        scrollMarginTop: { xs: HEADER_OFFSET.xs, md: HEADER_OFFSET.md },
-      }}
-    >
-      <Stack sx={{ gap: 0.75 }}>
-        <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
-          {misreads.title}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {misreads.intro}
-        </Typography>
-      </Stack>
-      <Stack sx={{ gap: 2 }}>
-        {misreads.items.map((item) => (
-          <MisreadCard key={item.id} item={item} />
-        ))}
-      </Stack>
-    </Stack>
-  )
-}
-
-function RelatedCard({ related }: { related: IndicatorsContent['related'] }) {
+function RelatedCard({ related }: { related: TheoriesContent['related'] }) {
   return (
     <Paper
       variant="outlined"
@@ -717,21 +501,19 @@ function MobileToc({
 }
 
 /**
- * Reference board for common technical indicators: classified by role, each
- * with principle, formula, parameters, usage, and a schematic diagram. Copy
- * lives in `i18n/indicators` so it stays out of the main message bundle.
+ * Reference board for mainstream technical-analysis theories: each school with
+ * principle, concepts, chart readings and a schematic. Copy lives in
+ * `i18n/theories` so it stays out of the main message bundle.
  */
-export default function TechnicalIndicators() {
+export default function TechnicalTheories() {
   const locale = useLocale()
-  const content = INDICATORS[locale]
+  const content = THEORIES[locale]
 
   const entries = [
     { id: content.path.id, label: content.path.label },
     { id: content.overview.id, label: content.overview.label },
-    ...content.categories.map((c) => ({ id: c.id, label: c.label })),
+    ...content.theories.map((t) => ({ id: t.id, label: t.name })),
     { id: content.compare.id, label: content.compare.label },
-    { id: content.divergence.id, label: content.divergence.label },
-    { id: content.misreads.id, label: content.misreads.label },
     { id: content.combine.id, label: content.combine.label },
   ]
 
@@ -744,10 +526,8 @@ export default function TechnicalIndicators() {
     const ids = [
       content.path.id,
       content.overview.id,
-      ...content.categories.map((c) => c.id),
+      ...content.theories.map((t) => t.id),
       content.compare.id,
-      content.divergence.id,
-      content.misreads.id,
       content.combine.id,
     ]
     let frame = 0
@@ -869,11 +649,11 @@ export default function TechnicalIndicators() {
             />
           </Stack>
 
-          {content.categories.map((category) => (
-            <Stack key={category.id} sx={{ gap: 3 }}>
+          {content.theories.map((theory) => (
+            <Stack key={theory.id} sx={{ gap: 3 }}>
               <Divider />
-              <CategorySection
-                category={category}
+              <TheoryArticle
+                theory={theory}
                 fields={content.fields}
                 labelJoin={content.labelJoin}
               />
@@ -882,15 +662,6 @@ export default function TechnicalIndicators() {
 
           <Divider />
           <CompareSection compare={content.compare} />
-
-          <Divider />
-          <DivergenceSection
-            divergence={content.divergence}
-            labelJoin={content.labelJoin}
-          />
-
-          <Divider />
-          <MisreadsSection misreads={content.misreads} />
 
           <Divider />
 

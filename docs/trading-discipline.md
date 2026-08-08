@@ -68,7 +68,7 @@ At least two independent kinds of evidence pointing the same way: a structural b
 
 ## What each indicator actually answers
 
-Choose indicators by the role they play before arguing about parameters. Running two of the same kind — RSI and Stochastic, say — is close to counting the same evidence twice. Everything in this table is a rearrangement of price; the layer that only exists on a perpetual — funding, open interest, basis, liquidations — is not here, it has the next section to itself.
+Choose indicators by the role they play before arguing about parameters. Running two of the same kind — RSI and Stochastic, say — is close to counting the same evidence twice. Everything in this table is a rearrangement of price; the layer that only exists on a perpetual — funding, open interest, basis, liquidations — is not here, it has the next section to itself. Principles, formulas, chart readings and schematics live on the in-app Indicators page.
 
 | Role                    | Usual tools                                                           | How to use it / how not to                                                                                                                                                                                                                                   |
 | ----------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -385,6 +385,8 @@ Leverage needed is the minimum this position requires, not a recommendation — 
 > Structure sets direction, indicators agree or you pass; only trade a plan that has an invalidation level.
 
 No plan, no order · No stop, no position · No stacked duplicates · Never average down · Never revenge · Name the regime first · Flat is a position
+
+**Tool manuals:** Principles, formulas, chart readings and misread schematics live on the Indicators page; volume-price, Elliott, Wyckoff and kin live on Theories; this page owns recipes and discipline. → [`/indicators`](/indicators)
 
 ---
 

@@ -853,7 +853,7 @@ export const indicatorsZh: IndicatorsContent = {
   related: {
     label: '下一步',
     href: '/discipline',
-    text: '指标是说明书；组合配方、市况切换、仓位与行为纪律在「纪律」页。',
+    text: '指标是说明书；组合配方、市况切换、仓位与行为纪律在「纪律」页。量价、波浪、威科夫等坐标系见「理论」页。',
     cta: '打开交易纪律',
   },
 

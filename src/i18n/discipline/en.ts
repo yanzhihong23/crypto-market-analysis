@@ -1111,7 +1111,7 @@ export const disciplineEn: DisciplineContent = {
   related: {
     label: 'Tool manuals',
     href: '/indicators',
-    text: 'Principles, formulas, chart readings and misread schematics live on the Indicators page; this page owns recipes and discipline.',
+    text: 'Principles, formulas, chart readings and misread schematics live on the Indicators page; volume-price, Elliott, Wyckoff and kin live on Theories; this page owns recipes and discipline.',
     cta: 'Open technical indicators',
   },
 
