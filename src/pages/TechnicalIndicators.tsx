@@ -175,12 +175,36 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
+function SignalList({
+  items,
+  labelJoin,
+}: {
+  items: { label: string; text: string }[]
+  labelJoin: string
+}) {
+  return (
+    <Stack sx={{ gap: 1 }}>
+      {items.map((item) => (
+        <Typography key={item.label} variant="body2" color="text.secondary">
+          <Box component="span" sx={{ color: 'text.primary', fontWeight: 500 }}>
+            {item.label}
+            {labelJoin}
+          </Box>
+          {item.text}
+        </Typography>
+      ))}
+    </Stack>
+  )
+}
+
 function IndicatorCard({
   indicator,
   fields,
+  labelJoin,
 }: {
   indicator: Indicator
   fields: IndicatorsContent['fields']
+  labelJoin: string
 }) {
   return (
     <Paper
@@ -233,6 +257,16 @@ function IndicatorCard({
             </Typography>
           </Field>
 
+          <Field label={fields.signals}>
+            <SignalList items={indicator.signals} labelJoin={labelJoin} />
+          </Field>
+
+          <Field label={fields.regime}>
+            <Typography variant="body2" color="text.secondary">
+              {indicator.regime}
+            </Typography>
+          </Field>
+
           <Field label={fields.usage}>
             <Bullets items={indicator.usage} />
           </Field>
@@ -261,9 +295,11 @@ function IndicatorCard({
 function CategorySection({
   category,
   fields,
+  labelJoin,
 }: {
   category: Category
   fields: IndicatorsContent['fields']
+  labelJoin: string
 }) {
   return (
     <Stack
@@ -288,6 +324,7 @@ function CategorySection({
             key={indicator.id}
             indicator={indicator}
             fields={fields}
+            labelJoin={labelJoin}
           />
         ))}
       </Stack>
@@ -546,7 +583,11 @@ export default function TechnicalIndicators() {
           {content.categories.map((category) => (
             <Stack key={category.id} sx={{ gap: 3 }}>
               <Divider />
-              <CategorySection category={category} fields={content.fields} />
+              <CategorySection
+                category={category}
+                fields={content.fields}
+                labelJoin={content.labelJoin}
+              />
             </Stack>
           ))}
 

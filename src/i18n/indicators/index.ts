@@ -4,7 +4,13 @@ import { indicatorsEn } from './en'
 import { indicatorsZh } from './zh'
 import type { IndicatorsContent } from './types'
 
-export type { IndicatorsContent, Category, Indicator, DiagramId } from './types'
+export type {
+  IndicatorsContent,
+  Category,
+  Indicator,
+  DiagramId,
+  SignalLine,
+} from './types'
 
 /**
  * Kept out of `Messages` on purpose — several pages of prose that only one

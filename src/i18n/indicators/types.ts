@@ -18,6 +18,8 @@ export type DiagramId =
   | 'vwap'
   | 'fibonacci'
 
+export type SignalLine = { label: string; text: string }
+
 export type Indicator = {
   id: string
   name: string
@@ -28,6 +30,13 @@ export type Indicator = {
   formula: string[]
   /** Typical defaults, not prescriptions. */
   params: string
+  /**
+   * Concrete chart readings: what you see on the pane, and what to do with it.
+   * Kept as labelled lines so a scan can stop at the labels.
+   */
+  signals: SignalLine[]
+  /** When this tool is on vs when to mute it. */
+  regime: string
   usage: string[]
   pitfalls: string[]
   diagram: DiagramId
@@ -45,6 +54,11 @@ export type IndicatorsContent = {
   title: string
   lede: string
   tocLabel: string
+  /**
+   * Between a signal label and its text. Stored with the words because the
+   * punctuation is part of the language (full-width vs ASCII colon).
+   */
+  labelJoin: string
   stats: { value: string; label: string }[]
   principle: string
   /** Section labels used by the field headings on each card. */
@@ -52,6 +66,8 @@ export type IndicatorsContent = {
     principle: string
     formula: string
     params: string
+    signals: string
+    regime: string
     usage: string
     pitfalls: string
   }
