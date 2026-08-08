@@ -95,7 +95,7 @@ export const disciplineZh: DisciplineContent = {
       blocks: [
         {
           kind: 'paragraph',
-          text: '先按「角色」选指标，再谈参数。同类指标（如 RSI 与 Stochastic）同时用几乎等于重复计数。这张表里全是价格的再加工——合约独有的那层数据（费率、持仓量、基差、强平）不在这里，它在下一节。',
+          text: '先按「角色」选指标，再谈参数。同类指标（如 RSI 与 Stochastic）同时用几乎等于重复计数。这张表里全是价格的再加工——合约独有的那层数据（费率、持仓量、基差、强平）不在这里，它在下一节。原理、公式、盘面读法与示意图见应用内「指标」页。',
         },
         {
           kind: 'table',
@@ -1069,6 +1069,13 @@ export const disciplineZh: DisciplineContent = {
     ],
     disclaimer:
       '通用交易规范整理，不构成投资建议。参数与周期需按品种波动自行校准。',
+  },
+
+  related: {
+    label: '工具说明书',
+    href: '/indicators',
+    text: '常用指标的原理、公式、盘面读法与对错示意图在「指标」页；本页负责配方与纪律。',
+    cta: '打开技术指标',
   },
 
   docs: {

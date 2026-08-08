@@ -21,6 +21,7 @@ import {
   useTheme,
 } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
+import { Link as RouterLink } from 'react-router'
 import { useLocalStorage } from 'usehooks-ts'
 
 import { useLocale } from '../i18n'
@@ -813,6 +814,40 @@ export default function TradingDiscipline() {
               ))}
             </Stack>
           </Paper>
+
+          {content.related ? (
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2.5,
+                borderColor: 'surface.border',
+                bgcolor: 'surface.subtle',
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                sx={{ mb: 0.75 }}
+              >
+                {content.related.label}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mb: 1.5 }}
+              >
+                {content.related.text}
+              </Typography>
+              <Button
+                component={RouterLink}
+                to={content.related.href}
+                variant="outlined"
+                size="small"
+              >
+                {content.related.cta}
+              </Button>
+            </Paper>
+          ) : null}
 
           <Typography variant="caption" color="text.disabled">
             {content.closing.disclaimer}

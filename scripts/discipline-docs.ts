@@ -130,9 +130,14 @@ function render(content: DisciplineContent) {
       `## ${closing.label}`,
       `> ${closing.oneLiner}`,
       closing.chips.join(' · '),
+      content.related
+        ? `**${content.related.label}:** ${content.related.text} → [\`${content.related.href}\`](${content.related.href})`
+        : null,
       '---',
       closing.disclaimer,
-    ].join('\n\n') + '\n'
+    ]
+      .filter((line): line is string => line != null)
+      .join('\n\n') + '\n'
   )
 }
 

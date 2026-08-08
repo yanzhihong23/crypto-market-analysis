@@ -590,7 +590,327 @@ function FibonacciDiagram() {
   )
 }
 
-const DIAGRAMS: Record<DiagramId, () => ReactNode> = {
+function DivergenceDiagram() {
+  const p = useDiagramPalette()
+  return (
+    <Frame title="Divergence">
+      {/* Price making higher highs */}
+      <path
+        d="M40 120 C80 100, 120 70, 160 55 S220 40, 260 35"
+        fill="none"
+        stroke={p.price}
+        strokeWidth="2.2"
+      />
+      <circle cx="160" cy="55" r="3.5" fill={p.price} />
+      <circle cx="260" cy="35" r="3.5" fill={p.price} />
+      <Label x="28" y="28" text="Price HH" fill={p.price} />
+      {/* Oscillator lower highs */}
+      <line
+        x1="28"
+        x2="380"
+        y1="130"
+        y2="130"
+        stroke={p.grid}
+        strokeWidth="1"
+      />
+      <path
+        d="M40 170 C90 155, 130 140, 160 135 S220 145, 260 155"
+        fill="none"
+        stroke={p.accent}
+        strokeWidth="2.2"
+      />
+      <circle cx="160" cy="135" r="3.5" fill={p.accent} />
+      <circle cx="260" cy="155" r="3.5" fill={p.accent} />
+      <Label x="28" y="118" text="Oscillator LH" fill={p.accent} />
+      <Label x="280" y="100" text="warn — wait structure" fill={p.muted} />
+    </Frame>
+  )
+}
+
+function PairFrame({
+  title,
+  okLabel,
+  badLabel,
+  ok,
+  bad,
+}: {
+  title: string
+  okLabel: string
+  badLabel: string
+  ok: ReactNode
+  bad: ReactNode
+}) {
+  const p = useDiagramPalette()
+  return (
+    <Box
+      sx={{
+        border: '1px solid',
+        borderColor: 'surface.border',
+        borderRadius: '8px',
+        bgcolor: 'surface.subtle',
+        overflow: 'hidden',
+        maxWidth: 520,
+      }}
+    >
+      <Box
+        sx={{
+          px: 1.5,
+          py: 0.75,
+          borderBottom: '1px solid',
+          borderColor: 'surface.border',
+          typography: 'caption',
+          color: 'text.secondary',
+          fontWeight: 600,
+        }}
+      >
+        {title}
+      </Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 0,
+        }}
+      >
+        <Box sx={{ borderRight: '1px solid', borderColor: 'surface.border' }}>
+          <Box
+            sx={{
+              px: 1.25,
+              pt: 1,
+              typography: 'caption',
+              fontWeight: 600,
+              color: 'market.up',
+            }}
+          >
+            {okLabel}
+          </Box>
+          <Box sx={{ px: 0.5, pb: 1 }}>
+            <svg viewBox="0 0 200 140" width="100%" height="auto" aria-hidden>
+              <rect width="200" height="140" fill="transparent" />
+              {[40, 70, 100].map((y) => (
+                <line
+                  key={y}
+                  x1="12"
+                  x2="188"
+                  y1={y}
+                  y2={y}
+                  stroke={p.grid}
+                  strokeWidth="1"
+                />
+              ))}
+              {ok}
+            </svg>
+          </Box>
+        </Box>
+        <Box>
+          <Box
+            sx={{
+              px: 1.25,
+              pt: 1,
+              typography: 'caption',
+              fontWeight: 600,
+              color: 'market.down',
+            }}
+          >
+            {badLabel}
+          </Box>
+          <Box sx={{ px: 0.5, pb: 1 }}>
+            <svg viewBox="0 0 200 140" width="100%" height="auto" aria-hidden>
+              <rect width="200" height="140" fill="transparent" />
+              {[40, 70, 100].map((y) => (
+                <line
+                  key={y}
+                  x1="12"
+                  x2="188"
+                  y1={y}
+                  y2={y}
+                  stroke={p.grid}
+                  strokeWidth="1"
+                />
+              ))}
+              {bad}
+            </svg>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  )
+}
+
+function MaPairDiagram({
+  okLabel,
+  badLabel,
+}: {
+  okLabel: string
+  badLabel: string
+}) {
+  const p = useDiagramPalette()
+  return (
+    <PairFrame
+      title="MA read"
+      okLabel={okLabel}
+      badLabel={badLabel}
+      ok={
+        <>
+          <path
+            d="M16 100 C40 95, 60 70, 90 55 S130 50, 160 40 S180 38, 188 42"
+            fill="none"
+            stroke={p.price}
+            strokeWidth="2"
+          />
+          <path
+            d="M16 105 C50 100, 90 85, 130 70 S170 58, 188 55"
+            fill="none"
+            stroke={p.accent}
+            strokeWidth="1.6"
+            strokeDasharray="4 3"
+          />
+          <circle cx="118" cy="68" r="3.5" fill={p.up} />
+        </>
+      }
+      bad={
+        <>
+          <path
+            d="M16 70 C40 50, 55 90, 80 55 S110 95, 130 50 S160 100, 188 60"
+            fill="none"
+            stroke={p.price}
+            strokeWidth="2"
+          />
+          <path
+            d="M16 75 C45 60, 70 80, 95 65 S140 85, 188 70"
+            fill="none"
+            stroke={p.accent}
+            strokeWidth="1.6"
+            strokeDasharray="4 3"
+          />
+          <circle cx="55" cy="88" r="3" fill={p.down} />
+          <circle cx="110" cy="92" r="3" fill={p.down} />
+          <circle cx="160" cy="98" r="3" fill={p.down} />
+        </>
+      }
+    />
+  )
+}
+
+function RsiPairDiagram({
+  okLabel,
+  badLabel,
+}: {
+  okLabel: string
+  badLabel: string
+}) {
+  const p = useDiagramPalette()
+  return (
+    <PairFrame
+      title="RSI read"
+      okLabel={okLabel}
+      badLabel={badLabel}
+      ok={
+        <>
+          <line
+            x1="12"
+            x2="188"
+            y1="50"
+            y2="50"
+            stroke={p.muted}
+            strokeWidth="1"
+            strokeDasharray="3 3"
+          />
+          <path
+            d="M16 45 C40 40, 70 70, 100 85 S140 70, 170 55 S180 50, 188 48"
+            fill="none"
+            stroke={p.accent}
+            strokeWidth="2"
+          />
+          <circle cx="100" cy="85" r="3.5" fill={p.up} />
+        </>
+      }
+      bad={
+        <>
+          <rect
+            x="12"
+            y="28"
+            width="176"
+            height="28"
+            fill={p.down}
+            opacity="0.12"
+          />
+          <path
+            d="M16 90 C40 70, 60 40, 90 32 S130 30, 160 28 S180 30, 188 32"
+            fill="none"
+            stroke={p.accent}
+            strokeWidth="2"
+          />
+          <circle cx="90" cy="32" r="3.5" fill={p.down} />
+          <Label x="100" y="120" text="fade OB in trend" fill={p.muted} />
+        </>
+      }
+    />
+  )
+}
+
+function BollingerPairDiagram({
+  okLabel,
+  badLabel,
+}: {
+  okLabel: string
+  badLabel: string
+}) {
+  const p = useDiagramPalette()
+  return (
+    <PairFrame
+      title="Bollinger read"
+      okLabel={okLabel}
+      badLabel={badLabel}
+      ok={
+        <>
+          <path
+            d="M16 45 C50 42, 90 40, 130 38 S170 36, 188 35"
+            fill="none"
+            stroke={p.accent}
+            strokeWidth="1.2"
+          />
+          <path
+            d="M16 75 C50 72, 90 70, 130 68 S170 66, 188 65"
+            fill="none"
+            stroke={p.muted}
+            strokeWidth="1"
+            strokeDasharray="3 3"
+          />
+          <path
+            d="M16 55 C45 48, 80 42, 120 38 S160 34, 188 33"
+            fill="none"
+            stroke={p.price}
+            strokeWidth="2"
+          />
+        </>
+      }
+      bad={
+        <>
+          <path
+            d="M16 45 C50 42, 90 40, 130 38 S170 36, 188 35"
+            fill="none"
+            stroke={p.accent}
+            strokeWidth="1.2"
+          />
+          <path
+            d="M16 55 C40 48, 70 42, 100 38 S150 50, 188 70"
+            fill="none"
+            stroke={p.price}
+            strokeWidth="2"
+          />
+          <circle cx="100" cy="38" r="3.5" fill={p.down} />
+          <Label x="108" y="120" text="fade the touch" fill={p.muted} />
+        </>
+      }
+    />
+  )
+}
+
+const SINGLE_DIAGRAMS: Record<
+  Exclude<DiagramId, 'divergence' | 'ma-pair' | 'rsi-pair' | 'bollinger-pair'>,
+  () => ReactNode
+> = {
   ma: MaDiagram,
   macd: MacdDiagram,
   adx: AdxDiagram,
@@ -603,7 +923,22 @@ const DIAGRAMS: Record<DiagramId, () => ReactNode> = {
   fibonacci: FibonacciDiagram,
 }
 
-export default function IndicatorDiagram({ id }: { id: DiagramId }) {
-  const Diagram = DIAGRAMS[id]
+export default function IndicatorDiagram({
+  id,
+  okLabel = 'OK',
+  badLabel = 'Bad',
+}: {
+  id: DiagramId
+  okLabel?: string
+  badLabel?: string
+}) {
+  if (id === 'divergence') return <DivergenceDiagram />
+  if (id === 'ma-pair')
+    return <MaPairDiagram okLabel={okLabel} badLabel={badLabel} />
+  if (id === 'rsi-pair')
+    return <RsiPairDiagram okLabel={okLabel} badLabel={badLabel} />
+  if (id === 'bollinger-pair')
+    return <BollingerPairDiagram okLabel={okLabel} badLabel={badLabel} />
+  const Diagram = SINGLE_DIAGRAMS[id]
   return <Diagram />
 }

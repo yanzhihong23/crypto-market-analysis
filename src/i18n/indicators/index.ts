@@ -10,6 +10,8 @@ export type {
   Indicator,
   DiagramId,
   SignalLine,
+  MisreadItem,
+  CompareTable,
 } from './types'
 
 /**

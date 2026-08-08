@@ -26,6 +26,39 @@ export const indicatorsEn: IndicatorsContent = {
     pitfalls: 'Common traps',
   },
 
+  path: {
+    id: 'path',
+    label: 'Path',
+    title: 'Build a minimal kit first, then open the rest',
+    intro:
+      'Do not read every card end to end. Follow the order below until the pane can “boot”, then come back for the manuals.',
+    steps: [
+      {
+        title: 'Averages + ATR',
+        body: 'EMA20/50 for regime and pullbacks; ATR as the stop and size ruler. Without these, oscillators stay decoration.',
+      },
+      {
+        title: 'One momentum tool',
+        body: 'Keep RSI or MACD — not both as votes. Regime bias and pullback zones → RSI; trend fuel and histogram → MACD.',
+      },
+      {
+        title: 'Add volume',
+        body: 'Confirm breaks and pullbacks with relative volume; on perps, layer open interest. A quiet leave of a key level defaults to watch-only.',
+      },
+      {
+        title: 'The rest on demand',
+        body: 'Bollinger for squeezes, ADX to switch tactics, VWAP as the day anchor, Fibonacci for location. Leave them off until needed.',
+      },
+    ],
+    toolboxTitle: 'Default minimal stack (write it into the plan)',
+    toolboxItems: [
+      'Main pane: EMA20 + EMA50 + volume',
+      'Lower pane: RSI or MACD — pick one',
+      'Risk: ATR(14) for stop width and size',
+      'Optional: Bollinger when you need a squeeze read',
+    ],
+  },
+
   overview: {
     id: 'overview',
     label: 'Map',
@@ -627,6 +660,216 @@ export const indicatorsEn: IndicatorsContent = {
     },
   ],
 
+  compare: {
+    id: 'compare',
+    label: 'Compare',
+    title: 'One per family: how to choose',
+    intro:
+      '“Pick one” is easy to miss inside the cards. These tables flatten the pairs that most often double-count — scan once, lock the primary tool.',
+    tables: [
+      {
+        title: 'SMA vs EMA',
+        headers: ['Axis', 'SMA', 'EMA'],
+        rows: [
+          [
+            'Weighting',
+            'Equal across the window',
+            'Heavier on the recent side',
+          ],
+          ['Turns', 'Slower, fewer fakes', 'Earlier, noisier'],
+          [
+            'Better for',
+            'Long context (e.g. 200)',
+            'Execution and pullbacks (e.g. 20/50)',
+          ],
+          [
+            'Watch',
+            'Same period ≠ the same line as EMA',
+            'Wicks yank it more easily',
+          ],
+        ],
+      },
+      {
+        title: 'RSI vs Stochastic',
+        headers: ['Axis', 'RSI', 'Stochastic'],
+        rows: [
+          [
+            'Measures',
+            'Which side’s magnitude won',
+            'Where the close sits in the recent range',
+          ],
+          ['Temper', 'Smoother; regime bias', 'Hugs the channel; short turns'],
+          [
+            'In trends',
+            'Mid-line + pullback zones; allow persistence',
+            'Crosses spam fades — de-weight',
+          ],
+          [
+            'In ranges',
+            'Leaving extremes can trigger',
+            'Home field: edges + extreme crosses',
+          ],
+          [
+            'Pick when',
+            'You want bullish/bearish environment',
+            'You want snappy turn sensitivity',
+          ],
+        ],
+      },
+      {
+        title: 'MACD vs RSI',
+        headers: ['Axis', 'MACD', 'RSI'],
+        rows: [
+          [
+            'Role',
+            'Trend momentum and acceleration (hist)',
+            '0–100 location and stretch',
+          ],
+          [
+            'Anchor',
+            'Zero line splits momentum zones',
+            '50 line as regime bias',
+          ],
+          [
+            'Divergence',
+            'Often DIF/hist vs price',
+            'Often swing highs vs price',
+          ],
+          [
+            'Pick when',
+            'Holding with trend; is fuel still there?',
+            'Pullback zones, range extremes, mid-line filter',
+          ],
+        ],
+      },
+      {
+        title: 'Bollinger vs ATR',
+        headers: ['Axis', 'Bollinger', 'ATR'],
+        rows: [
+          [
+            'What it draws',
+            'Statistical channel (avg ± kσ)',
+            'A volatility ruler (true range)',
+          ],
+          [
+            'Main job',
+            'Squeeze, walking the band, relative place',
+            'Stop width, size, trails',
+          ],
+          [
+            'Direction?',
+            'Readable location, still not a forecast',
+            'Almost never gives direction',
+          ],
+          [
+            'Together',
+            'Both can flag a vol-regime shift',
+            'When the regime shifts, recompute risk — not two independent “signals”',
+          ],
+        ],
+      },
+    ],
+  },
+
+  divergence: {
+    id: 'divergence',
+    label: 'Divergence',
+    title: 'Divergence: one reading shared across tools',
+    intro:
+      'RSI, MACD and volume all mention divergence. It is not a private Easter egg of one indicator — it is the same idea: price makes a new extreme and the comparison series does not. Here is how to count it, which kinds exist, and why it is not an auto-reversal.',
+    howTitle: 'How to count it',
+    how: [
+      {
+        label: 'Mark the swings',
+        text: 'Two clear price highs (bearish divergence) or lows (bullish); skip fuzzy wiggles.',
+      },
+      {
+        label: 'Compare the pair',
+        text: 'Over the same span, check RSI highs, MACD DIF/hist, or volume/OBV for a matching extreme.',
+      },
+      {
+        label: 'Bearish divergence',
+        text: 'Higher price highs, lower oscillator highs → upside fuel may be fading.',
+      },
+      {
+        label: 'Bullish divergence',
+        text: 'Lower price lows, higher oscillator lows → downside fuel may be fading.',
+      },
+      {
+        label: 'Confirm',
+        text: 'Divergence warns; trade after structure breaks, a rejecting bar, or a level fails — do not book a reversal the day it prints.',
+      },
+    ],
+    kindsTitle: 'Regular vs hidden',
+    kinds: [
+      {
+        title: 'Regular divergence',
+        body: 'Price and the oscillator disagree: price high without oscillator high, or price low with a higher oscillator low. Exhaustion warning — often near swing ends or range edges.',
+      },
+      {
+        title: 'Hidden divergence',
+        body: 'Often read as with-trend continuation (e.g. higher price lows with lower RSI lows in an uptrend). Harder to spot, more fakes — master regular first.',
+      },
+    ],
+    rulesTitle: 'Rules of use',
+    rules: [
+      'Divergence can print several times while price keeps going — it cuts certainty; it does not guarantee a flip.',
+      'Only score divergence at pre-marked places (prior highs/lows, range edges, Fib confluence); blank-space divergence is weak.',
+      'Momentum divergence plus a quiet new high is louder than a bare oscillator divergence.',
+      'Do not “double-count” RSI and MACD divergence — still one family of momentum evidence.',
+    ],
+    noteTitle: 'Boundary with signals',
+    noteItems: [
+      'Divergence answers “fuel may be thin”, not “click here now”.',
+      'Persistence in a strong trend (stuck in the extreme zone) is not divergence, and not a reason to fade.',
+      'Wick-driven spikes: wait for the close before counting a swing point.',
+    ],
+    diagram: 'divergence',
+  },
+
+  misreads: {
+    id: 'misreads',
+    label: 'Misreads',
+    title: 'The read that pays vs the habit that costs',
+    intro:
+      'Left is the reading that usually earns; right is the expensive habit on the same tool. Remember the shape — cheaper than rereading a paragraph.',
+    items: [
+      {
+        id: 'ma-pair',
+        title: 'Moving averages',
+        okLabel: 'With-trend pullback',
+        badLabel: 'Chase crosses in chop',
+        okCaption:
+          'In a trend, hold a pullback to the average; read the close, not the wick.',
+        badCaption:
+          'Every golden/death cross while averages are tangled — fees and fake-outs.',
+        diagram: 'ma-pair',
+      },
+      {
+        id: 'rsi-pair',
+        title: 'RSI',
+        okLabel: 'Trend pullback zone',
+        badLabel: 'Fade OB in a trend',
+        okCaption:
+          'In an uptrend, RSI back to 40–50 then turning up is a pullback, not a bottom pick.',
+        badCaption:
+          'Shorting because RSI is stuck overbought — strong trends run that for a long time.',
+        diagram: 'rsi-pair',
+      },
+      {
+        id: 'bollinger-pair',
+        title: 'Bollinger',
+        okLabel: 'Walking the band',
+        badLabel: 'Fade every touch',
+        okCaption:
+          'Riding the upper band is strength; wait for mid-band pullback or structure to break.',
+        badCaption:
+          'Selling every upper-band tag — one of the expensive habits in a trend.',
+        diagram: 'bollinger-pair',
+      },
+    ],
+  },
+
   combine: {
     id: 'combine',
     label: 'Combine',
@@ -667,6 +910,13 @@ export const indicatorsEn: IndicatorsContent = {
       'One primary tool per family; a second is at most a veto, never an extra vote.',
       'Name the regime (trend / range / extreme vol) before deciding whether this stack is even on.',
     ],
+  },
+
+  related: {
+    label: 'Next',
+    href: '/discipline',
+    text: 'Indicators are the manuals; recipes, regime switches, sizing and behaviour live on the Discipline page.',
+    cta: 'Open trading discipline',
   },
 
   closing: {

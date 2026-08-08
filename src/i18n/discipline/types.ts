@@ -104,6 +104,16 @@ export type DisciplineContent = {
     chips: string[]
     disclaimer: string
   }
+  /**
+   * Optional bridge to another in-app reference page. Rendered on the board;
+   * the markdown printer turns it into a link line when present.
+   */
+  related?: {
+    label: string
+    href: string
+    text: string
+    cta: string
+  }
   /** For the generated markdown only — the page is the recommended reading. */
   docs: {
     preferPage: string

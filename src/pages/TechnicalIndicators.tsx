@@ -1,6 +1,7 @@
 import {
   Alert,
   Box,
+  Button,
   ButtonBase,
   Chip,
   Divider,
@@ -17,6 +18,7 @@ import {
   useTheme,
 } from '@mui/material'
 import { useEffect, useState, type ReactNode } from 'react'
+import { Link as RouterLink } from 'react-router'
 
 import IndicatorDiagram from '../components/IndicatorDiagram'
 import { useLocale } from '../i18n'
@@ -25,6 +27,7 @@ import {
   type IndicatorsContent,
   type Indicator,
   type Category,
+  type MisreadItem,
 } from '../i18n/indicators'
 import { MONO_STACK } from '../fonts'
 
@@ -332,6 +335,280 @@ function CategorySection({
   )
 }
 
+function PathSection({ path }: { path: IndicatorsContent['path'] }) {
+  return (
+    <Stack
+      id={path.id}
+      component="section"
+      sx={{
+        gap: 1.5,
+        scrollMarginTop: { xs: HEADER_OFFSET.xs, md: HEADER_OFFSET.md },
+      }}
+    >
+      <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
+        {path.title}
+      </Typography>
+      <Typography variant="body2" color="text.secondary">
+        {path.intro}
+      </Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1.5,
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+        }}
+      >
+        {path.steps.map((step, i) => (
+          <Paper
+            key={step.title}
+            variant="outlined"
+            sx={{ p: 2, borderColor: 'surface.border' }}
+          >
+            <Stack
+              direction="row"
+              sx={{
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 1,
+                mb: 1,
+              }}
+            >
+              <Typography sx={{ fontWeight: 600 }}>{step.title}</Typography>
+              <Chip
+                size="small"
+                label={String(i + 1)}
+                sx={{ bgcolor: 'surface.subtle', flexShrink: 0 }}
+              />
+            </Stack>
+            <Typography variant="body2" color="text.secondary">
+              {step.body}
+            </Typography>
+          </Paper>
+        ))}
+      </Box>
+      <Paper
+        variant="outlined"
+        sx={{ p: 2, borderColor: 'surface.border', bgcolor: 'surface.subtle' }}
+      >
+        <Typography sx={{ fontWeight: 600, mb: 1 }}>
+          {path.toolboxTitle}
+        </Typography>
+        <Bullets items={path.toolboxItems} />
+      </Paper>
+    </Stack>
+  )
+}
+
+function CompareSection({
+  compare,
+}: {
+  compare: IndicatorsContent['compare']
+}) {
+  return (
+    <Stack
+      id={compare.id}
+      component="section"
+      sx={{
+        gap: 2,
+        scrollMarginTop: { xs: HEADER_OFFSET.xs, md: HEADER_OFFSET.md },
+      }}
+    >
+      <Stack sx={{ gap: 0.75 }}>
+        <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
+          {compare.title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {compare.intro}
+        </Typography>
+      </Stack>
+      {compare.tables.map((table) => (
+        <Paper
+          key={table.title}
+          variant="outlined"
+          sx={{ p: 2, borderColor: 'surface.border' }}
+        >
+          <Typography sx={{ fontWeight: 600, mb: 1.25 }}>
+            {table.title}
+          </Typography>
+          <SimpleTable headers={table.headers} rows={table.rows} />
+        </Paper>
+      ))}
+    </Stack>
+  )
+}
+
+function DivergenceSection({
+  divergence,
+  labelJoin,
+}: {
+  divergence: IndicatorsContent['divergence']
+  labelJoin: string
+}) {
+  return (
+    <Stack
+      id={divergence.id}
+      component="section"
+      sx={{
+        gap: 2,
+        scrollMarginTop: { xs: HEADER_OFFSET.xs, md: HEADER_OFFSET.md },
+      }}
+    >
+      <Stack sx={{ gap: 0.75 }}>
+        <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
+          {divergence.title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {divergence.intro}
+        </Typography>
+      </Stack>
+
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        sx={{ gap: 2.5, alignItems: 'stretch' }}
+      >
+        <Stack sx={{ gap: 2, flex: 1, minWidth: 0 }}>
+          <Field label={divergence.howTitle}>
+            <SignalList items={divergence.how} labelJoin={labelJoin} />
+          </Field>
+
+          <Typography sx={{ fontWeight: 600 }}>
+            {divergence.kindsTitle}
+          </Typography>
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 1.5,
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            }}
+          >
+            {divergence.kinds.map((kind) => (
+              <Paper
+                key={kind.title}
+                variant="outlined"
+                sx={{ p: 2, borderColor: 'surface.border' }}
+              >
+                <Typography sx={{ fontWeight: 600, mb: 1 }}>
+                  {kind.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {kind.body}
+                </Typography>
+              </Paper>
+            ))}
+          </Box>
+
+          <Field label={divergence.rulesTitle}>
+            <Bullets items={divergence.rules} />
+          </Field>
+
+          <Alert severity="info" variant="outlined">
+            <Typography sx={{ fontWeight: 600, mb: 0.5 }}>
+              {divergence.noteTitle}
+            </Typography>
+            <Bullets items={divergence.noteItems} />
+          </Alert>
+        </Stack>
+
+        <Box
+          sx={{
+            flex: { md: '0 0 280px' },
+            width: { xs: '100%', md: 280 },
+            alignSelf: { md: 'flex-start' },
+            position: { md: 'sticky' },
+            top: { md: HEADER_OFFSET.md },
+          }}
+        >
+          <IndicatorDiagram id={divergence.diagram} />
+        </Box>
+      </Stack>
+    </Stack>
+  )
+}
+
+function MisreadCard({ item }: { item: MisreadItem }) {
+  return (
+    <Paper variant="outlined" sx={{ p: 2, borderColor: 'surface.border' }}>
+      <Typography sx={{ fontWeight: 600, mb: 1.25 }}>{item.title}</Typography>
+      <IndicatorDiagram
+        id={item.diagram}
+        okLabel={item.okLabel}
+        badLabel={item.badLabel}
+      />
+      <Stack sx={{ gap: 1, mt: 1.5 }}>
+        <Typography variant="body2" color="text.secondary">
+          <Box component="span" sx={{ color: 'market.up', fontWeight: 600 }}>
+            {item.okLabel}
+            {' · '}
+          </Box>
+          {item.okCaption}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          <Box component="span" sx={{ color: 'market.down', fontWeight: 600 }}>
+            {item.badLabel}
+            {' · '}
+          </Box>
+          {item.badCaption}
+        </Typography>
+      </Stack>
+    </Paper>
+  )
+}
+
+function MisreadsSection({
+  misreads,
+}: {
+  misreads: IndicatorsContent['misreads']
+}) {
+  return (
+    <Stack
+      id={misreads.id}
+      component="section"
+      sx={{
+        gap: 2,
+        scrollMarginTop: { xs: HEADER_OFFSET.xs, md: HEADER_OFFSET.md },
+      }}
+    >
+      <Stack sx={{ gap: 0.75 }}>
+        <Typography variant="h5" component="h2" sx={{ fontWeight: 600 }}>
+          {misreads.title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {misreads.intro}
+        </Typography>
+      </Stack>
+      <Stack sx={{ gap: 2 }}>
+        {misreads.items.map((item) => (
+          <MisreadCard key={item.id} item={item} />
+        ))}
+      </Stack>
+    </Stack>
+  )
+}
+
+function RelatedCard({ related }: { related: IndicatorsContent['related'] }) {
+  return (
+    <Paper
+      variant="outlined"
+      sx={{ p: 2.5, borderColor: 'surface.border', bgcolor: 'surface.subtle' }}
+    >
+      <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.75 }}>
+        {related.label}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+        {related.text}
+      </Typography>
+      <Button
+        component={RouterLink}
+        to={related.href}
+        variant="outlined"
+        size="small"
+      >
+        {related.cta}
+      </Button>
+    </Paper>
+  )
+}
+
 function TableOfContents({
   label,
   entries,
@@ -449,8 +726,12 @@ export default function TechnicalIndicators() {
   const content = INDICATORS[locale]
 
   const entries = [
+    { id: content.path.id, label: content.path.label },
     { id: content.overview.id, label: content.overview.label },
     ...content.categories.map((c) => ({ id: c.id, label: c.label })),
+    { id: content.compare.id, label: content.compare.label },
+    { id: content.divergence.id, label: content.divergence.label },
+    { id: content.misreads.id, label: content.misreads.label },
     { id: content.combine.id, label: content.combine.label },
   ]
 
@@ -461,8 +742,12 @@ export default function TechnicalIndicators() {
 
   useEffect(() => {
     const ids = [
+      content.path.id,
       content.overview.id,
       ...content.categories.map((c) => c.id),
+      content.compare.id,
+      content.divergence.id,
+      content.misreads.id,
       content.combine.id,
     ]
     let frame = 0
@@ -557,6 +842,10 @@ export default function TechnicalIndicators() {
             {content.principle}
           </Alert>
 
+          <PathSection path={content.path} />
+
+          <Divider />
+
           <Stack
             id={content.overview.id}
             component="section"
@@ -592,6 +881,18 @@ export default function TechnicalIndicators() {
           ))}
 
           <Divider />
+          <CompareSection compare={content.compare} />
+
+          <Divider />
+          <DivergenceSection
+            divergence={content.divergence}
+            labelJoin={content.labelJoin}
+          />
+
+          <Divider />
+          <MisreadsSection misreads={content.misreads} />
+
+          <Divider />
 
           <Stack
             id={content.combine.id}
@@ -621,6 +922,8 @@ export default function TechnicalIndicators() {
               <Bullets items={content.combine.noteItems} />
             </Alert>
           </Stack>
+
+          <RelatedCard related={content.related} />
 
           <Paper
             variant="outlined"

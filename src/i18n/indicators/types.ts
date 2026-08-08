@@ -17,6 +17,10 @@ export type DiagramId =
   | 'volume'
   | 'vwap'
   | 'fibonacci'
+  | 'divergence'
+  | 'ma-pair'
+  | 'rsi-pair'
+  | 'bollinger-pair'
 
 export type SignalLine = { label: string; text: string }
 
@@ -50,6 +54,22 @@ export type Category = {
   indicators: Indicator[]
 }
 
+export type CompareTable = {
+  title: string
+  headers: string[]
+  rows: string[][]
+}
+
+export type MisreadItem = {
+  id: string
+  title: string
+  okLabel: string
+  badLabel: string
+  okCaption: string
+  badCaption: string
+  diagram: Extract<DiagramId, 'ma-pair' | 'rsi-pair' | 'bollinger-pair'>
+}
+
 export type IndicatorsContent = {
   title: string
   lede: string
@@ -71,6 +91,16 @@ export type IndicatorsContent = {
     usage: string
     pitfalls: string
   }
+  /** Suggested order before opening every card. */
+  path: {
+    id: string
+    label: string
+    title: string
+    intro: string
+    steps: { title: string; body: string }[]
+    toolboxTitle: string
+    toolboxItems: string[]
+  }
   overview: {
     id: string
     label: string
@@ -80,6 +110,38 @@ export type IndicatorsContent = {
     rows: string[][]
   }
   categories: Category[]
+  /** Same-family picks so learners stop double-counting. */
+  compare: {
+    id: string
+    label: string
+    title: string
+    intro: string
+    tables: CompareTable[]
+  }
+  /** Cross-cutting idea taught once, not ten times. */
+  divergence: {
+    id: string
+    label: string
+    title: string
+    intro: string
+    howTitle: string
+    how: SignalLine[]
+    kindsTitle: string
+    kinds: { title: string; body: string }[]
+    rulesTitle: string
+    rules: string[]
+    noteTitle: string
+    noteItems: string[]
+    diagram: Extract<DiagramId, 'divergence'>
+  }
+  /** Side-by-side schematics: the read that pays vs the habit that costs. */
+  misreads: {
+    id: string
+    label: string
+    title: string
+    intro: string
+    items: MisreadItem[]
+  }
   combine: {
     id: string
     label: string
@@ -89,6 +151,13 @@ export type IndicatorsContent = {
     rows: string[][]
     noteTitle: string
     noteItems: string[]
+  }
+  /** App navigation to the recipes/risk page — not a new indicator. */
+  related: {
+    label: string
+    href: string
+    text: string
+    cta: string
   }
   closing: {
     label: string

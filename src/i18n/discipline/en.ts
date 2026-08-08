@@ -92,7 +92,7 @@ export const disciplineEn: DisciplineContent = {
       blocks: [
         {
           kind: 'paragraph',
-          text: 'Choose indicators by the role they play before arguing about parameters. Running two of the same kind — RSI and Stochastic, say — is close to counting the same evidence twice. Everything in this table is a rearrangement of price; the layer that only exists on a perpetual — funding, open interest, basis, liquidations — is not here, it has the next section to itself.',
+          text: 'Choose indicators by the role they play before arguing about parameters. Running two of the same kind — RSI and Stochastic, say — is close to counting the same evidence twice. Everything in this table is a rearrangement of price; the layer that only exists on a perpetual — funding, open interest, basis, liquidations — is not here, it has the next section to itself. Principles, formulas, chart readings and schematics live on the in-app Indicators page.',
         },
         {
           kind: 'table',
@@ -1106,6 +1106,13 @@ export const disciplineEn: DisciplineContent = {
     ],
     disclaimer:
       'General trading practice, not investment advice. Parameters and timeframes need calibrating to what you trade.',
+  },
+
+  related: {
+    label: 'Tool manuals',
+    href: '/indicators',
+    text: 'Principles, formulas, chart readings and misread schematics live on the Indicators page; this page owns recipes and discipline.',
+    cta: 'Open technical indicators',
   },
 
   docs: {
