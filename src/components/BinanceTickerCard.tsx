@@ -1,4 +1,4 @@
-import { Avatar, Chip, Stack, Tooltip, Typography } from '@mui/material'
+import { Chip, Stack, Tooltip, Typography } from '@mui/material'
 
 import { FullTicker } from '../types'
 import { compactNumberFormatter, formatNumber } from '../utils'
@@ -7,6 +7,7 @@ import { numericFont } from '../fonts'
 import { describeDeviation, isAnomalous } from '../utils/signals'
 import { useMessages } from '../i18n'
 
+import BinanceSymbolAvatar from './BinanceSymbolAvatar'
 import TickerContainer from './TickerContainer'
 import PriceRange from './PriceRange'
 import { metricChipSx, signalChipSx } from './metricChipSx'
@@ -31,13 +32,7 @@ export default function BinanceTickerCard({ t }: { t: FullTicker }) {
   return (
     <TickerContainer up={up} changePercent={+t.P}>
       <Stack direction="row" sx={{ alignItems: 'center', gap: 1, zIndex: 2 }}>
-        <Avatar
-          src={`/logos/${t.s}.png`}
-          sx={{ width: 24, height: 24, fontSize: 12 }}
-          alt=""
-        >
-          {t.s.charAt(0)}
-        </Avatar>
+        <BinanceSymbolAvatar symbol={t.s} />
         <Typography sx={{ fontSize: 17, fontWeight: 600, letterSpacing: 0.2 }}>
           {t.s.replace('USDT', '')}
         </Typography>
