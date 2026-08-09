@@ -1,4 +1,4 @@
-import { Stack } from '@mui/material'
+import { FormControlLabel, Stack, Switch, Tooltip } from '@mui/material'
 
 import { OpenTime, SortBy } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
@@ -28,8 +28,10 @@ const openTimeOptions = (t: Messages): SegmentedOption<OpenTime>[] => [
 export default function OkxMarketToolbar() {
   const openTime = useTickerStore((state) => state.openTime)
   const sortBy = useTickerStore((state) => state.sortBy)
+  const klineVolume = useTickerStore((state) => state.klineVolume)
   const setOpenTime = useTickerStore((state) => state.setOpenTime)
   const setSortBy = useTickerStore((state) => state.setSortBy)
+  const setKlineVolume = useTickerStore((state) => state.setKlineVolume)
   const t = useMessages()
 
   return (
@@ -56,6 +58,33 @@ export default function OkxMarketToolbar() {
         options={openTimeOptions(t)}
         onChange={setOpenTime}
       />
+      {/* A switch rather than a third segmented track: the other two each pick
+          one of several readings of the board, and this one only says whether a
+          layer is drawn. The label goes after the control so it lines up with
+          the labels to its left, which sit before their tracks. */}
+      <Tooltip title={t.toolbar.klineVolumeHint} arrow>
+        <FormControlLabel
+          control={
+            <Switch
+              size="small"
+              checked={klineVolume}
+              onChange={(event) => setKlineVolume(event.target.checked)}
+            />
+          }
+          label={t.toolbar.klineVolume}
+          sx={{
+            ml: 0,
+            mr: 0,
+            '& .MuiFormControlLabel-label': {
+              // The switch's own padding is all that separates it from its
+              // label otherwise, and the two read as one glyph.
+              ml: 0.5,
+              fontSize: 13,
+              color: 'text.secondary',
+            },
+          }}
+        />
+      </Tooltip>
     </Stack>
   )
 }

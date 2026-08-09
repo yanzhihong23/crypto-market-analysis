@@ -201,6 +201,14 @@ interface TickerStore {
   setOpenTime: (openTime: OpenTime) => void
   sortBy: SortBy
   setSortBy: (sortBy: SortBy) => void
+  /**
+   * Whether the card's sparkline carries volume behind it. A preference rather
+   * than a fixed choice because the bars are texture: on a board of a dozen
+   * cards they say which stretch of the session traded, and on a board of a
+   * hundred they are a hundred more shapes to look past.
+   */
+  klineVolume: boolean
+  setKlineVolume: (klineVolume: boolean) => void
 }
 
 export const useTickerStore = create<TickerStore>()(
@@ -386,6 +394,8 @@ export const useTickerStore = create<TickerStore>()(
       setOpenTime: (openTime: OpenTime) => set({ openTime }),
       sortBy: SortBy.VOLUME,
       setSortBy: (sortBy: SortBy) => set({ sortBy }),
+      klineVolume: true,
+      setKlineVolume: (klineVolume: boolean) => set({ klineVolume }),
     }),
     {
       name: 'tickers',

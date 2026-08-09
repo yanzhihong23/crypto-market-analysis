@@ -1,9 +1,11 @@
-import { memo, useId } from 'react'
+import { memo, useId, useMemo } from 'react'
 import { useTheme } from '@mui/material/styles'
 import {
   ResponsiveContainer,
   AreaChart,
+  ComposedChart,
   Area,
+  Bar,
   ReferenceLine,
   YAxis,
   XAxis,
@@ -13,12 +15,20 @@ function BaseAreaChart({
   data,
   xKey,
   yKey,
+  volumeKey,
   width = '99%',
   height = 300,
 }: {
   data: { [key: string]: number | string }[]
   xKey: string
   yKey: string
+  /**
+   * When set, volume rides under the series as a background histogram: no axis,
+   * no tooltip, no scale. At this size a bar cannot be read as a figure — the
+   * card carries the day's total as a chip for that — so this is only here to
+   * say which stretch of the session the trading happened in.
+   */
+  volumeKey?: string
   label?: string
   width?: number | `${number}%`
   height?: number | `${number}%`
@@ -41,9 +51,27 @@ function BaseAreaChart({
     ? theme.vars.palette.market.upChart
     : theme.vars.palette.market.downChart
 
+  // Concrete numbers only: a domain callback that recharts re-invokes on every
+  // layout pass was enough to hang the renderer when the detail chart hosted
+  // volume bars, and this one runs once per card on the board.
+  const volumeDomain = useMemo((): [number, number] | undefined => {
+    if (!volumeKey || !data.length) return undefined
+    let peak = 0
+    for (const row of data) {
+      const n = Number(row[volumeKey])
+      if (Number.isFinite(n) && n > peak) peak = n
+    }
+    return [0, (peak || 1) * 4]
+  }, [data, volumeKey])
+
+  // Recharts wants every axis and every series to agree on ids the moment a
+  // second axis exists, and to leave them all undefined when it does not.
+  const valueAxis = volumeKey ? 'value' : undefined
+  const Chart = volumeKey ? ComposedChart : AreaChart
+
   return (
     <ResponsiveContainer width={width} height={height}>
-      <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+      <Chart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor={color} stopOpacity={0.35} />
@@ -51,18 +79,48 @@ function BaseAreaChart({
           </linearGradient>
         </defs>
         <XAxis dataKey={xKey} hide />
-        <YAxis type="number" domain={['auto', 'auto']} hide />
+        <YAxis
+          yAxisId={valueAxis}
+          type="number"
+          domain={['auto', 'auto']}
+          hide
+        />
+        {/* Four times the peak parks the tallest bar a quarter of the way up,
+            which is as far as it can go before it starts reading as the chart
+            rather than as its background. */}
+        {volumeKey && volumeDomain && (
+          <YAxis
+            yAxisId="volume"
+            orientation="right"
+            domain={volumeDomain}
+            allowDataOverflow
+            hide
+          />
+        )}
         {/* Declared before the area so the stroke crosses over it rather than
             being cut by it. Neutral, because the colour on this chart already
             means direction and this line is what direction is measured from. */}
         {Number.isFinite(open) && (
           <ReferenceLine
+            yAxisId={valueAxis}
             y={open}
             stroke={theme.vars.palette.surface.marker}
             strokeDasharray="3 3"
           />
         )}
+        {/* Under the area, and neutral: the bars are texture, and the one
+            colour on this chart already means the direction of the price. */}
+        {volumeKey && (
+          <Bar
+            yAxisId="volume"
+            dataKey={volumeKey}
+            fill={theme.vars.palette.text.secondary}
+            fillOpacity={0.25}
+            isAnimationActive={false}
+          />
+        )}
         <Area
+          yAxisId={valueAxis}
           type="monotone"
           dataKey={yKey}
           stroke={color}
@@ -71,7 +129,7 @@ function BaseAreaChart({
           fill={`url(#${gradientId})`}
           activeDot={false}
         />
-      </AreaChart>
+      </Chart>
     </ResponsiveContainer>
   )
 }

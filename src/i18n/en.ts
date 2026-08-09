@@ -119,6 +119,11 @@ export const en = {
     open24h: '24H',
     openUtc0: 'UTC+0',
     openUtc8: 'UTC+8',
+    // Not `Volume`, which is already what the sort by turnover is called two
+    // controls to the left. These are the bars, and saying so tells the two
+    // apart without either of them getting longer.
+    klineVolume: 'Volume bars',
+    klineVolumeHint: 'Volume behind the sparkline on every card',
   },
 
   card: {

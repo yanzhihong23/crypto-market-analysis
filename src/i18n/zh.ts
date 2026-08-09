@@ -96,6 +96,8 @@ export const zh: Messages = {
     open24h: '24H',
     openUtc0: 'UTC+0',
     openUtc8: 'UTC+8',
+    klineVolume: '量柱',
+    klineVolumeHint: '在每张卡片的走势图背后画出成交量',
   },
 
   card: {
