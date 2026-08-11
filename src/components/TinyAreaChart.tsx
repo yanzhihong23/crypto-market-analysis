@@ -119,6 +119,13 @@ function BaseAreaChart({
             isAnimationActive={false}
           />
         )}
+        {/* Off, like the bars behind it. Recharts starts its animation from a
+            state update inside the render it is mounted in, and every card on
+            the board re-renders together whenever a symbol is added or removed
+            — thirty of those in one pass is more nested updates than React
+            allows, and the whole board came down with error #185. It bought
+            nothing either: the line is redrawn every minute by the candle poll,
+            so the sweep was running over a shape that had barely moved. */}
         <Area
           yAxisId={valueAxis}
           type="monotone"
@@ -128,6 +135,7 @@ function BaseAreaChart({
           fillOpacity={1}
           fill={`url(#${gradientId})`}
           activeDot={false}
+          isAnimationActive={false}
         />
       </Chart>
     </ResponsiveContainer>
