@@ -62,8 +62,29 @@ const LIQUIDATION_ARG = {
   instType: 'SWAP',
 }
 
+const generateSubscribeArgsByInstId = (instId: string) => {
+  return [
+    { channel: OkxChannel.TICKERS, instId },
+    { channel: OkxChannel.OPEN_INTEREST, instId },
+    { channel: OkxChannel.FUNDING_RATE, instId },
+    // The contract's own price says nothing about what it is worth; the gap to
+    // the index it settles against is the premium being paid for the leverage.
+    { channel: OkxChannel.INDEX_TICKERS, instId: indexInstIdOf(instId) },
+  ]
+}
+
+const generateSubscribeArgsByInstIds = (instIds: string[]) => {
+  return instIds.map(generateSubscribeArgsByInstId).flat()
+}
+
 export const useOkxTickers = () => {
-  const initialInstIds = useTickerStore.getState().instIds // read once
+  /**
+   * Whether the board is watching anything at all, and nothing finer than that.
+   * The socket used to be torn down and rebuilt whenever the *number* of
+   * symbols changed, so adding or removing one dropped the whole feed and
+   * resubscribed every other symbol on the board to arrive back where it was.
+   */
+  const watching = useTickerStore((state) => state.instIds.length > 0)
   const setFunding = useTickerStore((state) => state.setFunding)
   const { formatTicker } = useOkxTickerFormat()
   const wsRef = useRef<WebSocket | null>(null)
@@ -75,21 +96,6 @@ export const useOkxTickers = () => {
 
   formatTickerRef.current = formatTicker
   setFundingRef.current = setFunding
-
-  const generateSubscribeArgsByInstId = (instId: string) => {
-    return [
-      { channel: OkxChannel.TICKERS, instId },
-      { channel: OkxChannel.OPEN_INTEREST, instId },
-      { channel: OkxChannel.FUNDING_RATE, instId },
-      // The contract's own price says nothing about what it is worth; the gap to
-      // the index it settles against is the premium being paid for the leverage.
-      { channel: OkxChannel.INDEX_TICKERS, instId: indexInstIdOf(instId) },
-    ]
-  }
-
-  const generateSubscribeArgsByInstIds = (instIds: string[]) => {
-    return instIds.map(generateSubscribeArgsByInstId).flat()
-  }
 
   const clearReconnectTimer = () => {
     if (reconnectTimerRef.current) {
@@ -148,7 +154,13 @@ export const useOkxTickers = () => {
           // unsubscribed — adding or removing a symbol does not change what this
           // channel sends, only which of it we keep.
           args: [
-            ...generateSubscribeArgsByInstIds(initialInstIds),
+            // Read off the store rather than closed over. Every socket that
+            // opens — the first one and each reconnect after it — subscribes
+            // the watchlist as it stands at that moment, which is what lets a
+            // symbol added while the feed was down come back with the rest.
+            ...generateSubscribeArgsByInstIds(
+              useTickerStore.getState().instIds,
+            ),
             LIQUIDATION_ARG,
           ],
         }),
@@ -253,64 +265,62 @@ export const useOkxTickers = () => {
     }
   }
 
-  const ensureWebSocket = useCallback(() => {
-    return new Promise<WebSocket>((resolve, reject) => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        resolve(wsRef.current)
-        return
-      }
-
-      const interval = setInterval(() => {
-        if (!mountedRef.current) {
-          clearInterval(interval)
-          reject(new Error('Component unmounted'))
-          return
-        }
-        if (wsRef.current?.readyState === WebSocket.OPEN) {
-          clearInterval(interval)
-          resolve(wsRef.current)
-        }
-      }, 100)
-    })
-  }, [])
+  /**
+   * One symbol's channels, on the socket the board already holds.
+   *
+   * A no-op while that socket is down, rather than something to wait for: the
+   * next one to open subscribes the whole watchlist off the store, which by
+   * then is the watchlist this symbol has just joined or left. This used to
+   * poll for an open socket and resolve only once it had one, which on a feed
+   * that never came up left the promise pending forever — and the caller waits
+   * on it before fetching the new symbol's ratio, funding and daily stats, so
+   * a symbol added while the feed was down got none of them until a reload.
+   */
+  const sendSubscription = useCallback(
+    (op: 'subscribe' | 'unsubscribe', instId: string) => {
+      const ws = wsRef.current
+      if (ws?.readyState !== WebSocket.OPEN) return
+      ws.send(
+        JSON.stringify({ op, args: generateSubscribeArgsByInstId(instId) }),
+      )
+    },
+    [],
+  )
 
   const add = useCallback(
     async (instId: string) => {
-      const ws = await ensureWebSocket()
-      ws.send(
-        JSON.stringify({
-          op: 'subscribe',
-          args: generateSubscribeArgsByInstId(instId),
-        }),
-      )
+      sendSubscription('subscribe', instId)
     },
-    [ensureWebSocket],
+    [sendSubscription],
   )
 
   const remove = useCallback(
     async (instId: string) => {
-      const ws = await ensureWebSocket()
-      ws.send(
-        JSON.stringify({
-          op: 'unsubscribe',
-          args: generateSubscribeArgsByInstId(instId),
-        }),
-      )
+      sendSubscription('unsubscribe', instId)
     },
-    [ensureWebSocket],
+    [sendSubscription],
   )
 
+  // The placeholder every card is drawn from until its first message lands.
+  // Mount only: this used to run again whenever the watchlist changed, so
+  // adding or removing one symbol emptied the ticker held for every *other*
+  // symbol and the whole board dropped back to skeletons until the feed refilled
+  // it a moment later.
   useEffect(() => {
-    initialInstIds.forEach((instId) => {
+    useTickerStore.getState().instIds.forEach((instId) => {
       updateOkxTicker(instId, getEmptyTicker(instId))
       setOkxPercent(instId, 0)
     })
-  }, [initialInstIds])
+  }, [])
 
+  // A board with nothing on it has nothing to listen for, and the liquidation
+  // channel is the whole exchange — worth closing rather than filtering to an
+  // empty watchlist. Anything short of emptying the board leaves the socket
+  // alone; `add` and `remove` carry the difference over the one that is up.
   useEffect(() => {
-    mountedRef.current = true
-    if (!initialInstIds.length) return
+    if (!watching) return
 
+    mountedRef.current = true
     connectRef.current()
 
     return () => {
@@ -322,7 +332,7 @@ export const useOkxTickers = () => {
       ws?.close()
       resetFeed()
     }
-  }, [initialInstIds.length])
+  }, [watching])
 
   return {
     add,
