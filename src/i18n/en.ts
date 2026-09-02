@@ -383,7 +383,9 @@ export const en = {
     oiCrowded: 'OI near 100d high',
     oiEmpty: 'OI near 100d low',
     oiPercentileDetail: (percent: number, crowded: boolean) =>
-      `open interest above ${percent}% of the last 100 days — ${crowded ? 'a crowd already positioned' : 'barely anyone positioned'}`,
+      crowded
+        ? `open interest above ${percent}% of the last 100 days — open positions stacked thick`
+        : `open interest above only ${percent}% of the last 100 days — open positions stacked thin`,
 
     /** Signed, like the rate on the card: which side pays is most of it. */
     fundingCarry: (signed: string) => `carry ${signed}/wk`,

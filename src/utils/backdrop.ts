@@ -272,7 +272,7 @@ function volRegimeReading(
 }
 
 /**
- * How much leverage is standing on this contract, against how much usually is.
+ * How much position is standing on this contract, against how much usually is.
  *
  * The five-minute open interest reading says what just arrived or left. This says
  * what has accumulated: a contract carrying more open positions than on ninety of
@@ -280,9 +280,9 @@ function volRegimeReading(
  * last five minutes, and that crowd is what a move has to move through.
  *
  * The other end is worth saying too, and is not merely the absence of the first.
- * Open interest at its own hundred-day low is a contract nobody is positioned in,
- * which alongside a coil is the same picture twice — no leverage, no range, and
- * nothing yet to unwind.
+ * Open interest at its own hundred-day low is a contract the crowd has stepped off
+ * — still traded, but with little accumulated position on it, which alongside a
+ * coil is the same picture twice: no range, and nothing yet to unwind.
  */
 function oiPercentileReading(
   percentile: number | null | undefined,

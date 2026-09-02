@@ -279,7 +279,9 @@ export const zh: Messages = {
     oiCrowded: '持仓接近百日高位',
     oiEmpty: '持仓接近百日低位',
     oiPercentileDetail: (percent, crowded) =>
-      `持仓量高于近 100 日中 ${percent}% 的水平，${crowded ? '已有大量筹码在场' : '几乎无人在场'}`,
+      crowded
+        ? `近 100 日里有 ${percent}% 的日子持仓量比现在低，未平仓的仓位堆得很厚`
+        : `近 100 日里只有 ${percent}% 的日子持仓量比现在低，未平仓的仓位很薄`,
 
     fundingCarry: (signed) => `周成本 ${signed}`,
     fundingCarryDetail: (paid, annual, longsPaying) =>
