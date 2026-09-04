@@ -100,6 +100,18 @@ export enum Period {
   HOUR_6 = '6H',
   HOUR_12 = '12H',
   DAY_1 = '1D',
+  /**
+   * The same day, cut at midnight UTC instead of at midnight Hong Kong, which
+   * is where the exchange puts the boundary for every bar of six hours and up
+   * unless it is asked otherwise.
+   *
+   * Both are here because the choice is not a preference: a bar this size is
+   * read either as one of a run — where all that matters is that they are the
+   * same length — or as *today*, in which case where the day starts decides
+   * what is in it and what is still forming. `dailyStatsOf` reads it the second
+   * way and is the one caller that wants this.
+   */
+  DAY_1_UTC = '1Dutc',
 }
 
 /**

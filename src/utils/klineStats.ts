@@ -262,6 +262,15 @@ const meanRangeOf = (bars: OkxKline[]) => {
  * its own range by construction — which is the one state worth being able to
  * tell apart from being near it.
  *
+ * Which makes where the day starts part of this function's contract, so the
+ * caller fetches `1Dutc` rather than the exchange's default. Those bars are cut
+ * at midnight Hong Kong, so a high made at breakfast there stays outside the
+ * month for the rest of the day — while the ticker's rolling `high24h`, which
+ * the card draws its range from, has had it since it printed. Two windows on
+ * one screen disagreeing about the high of the same morning reads as a bug
+ * whatever the reason for it. UTC does not remove the gap, it moves it to the
+ * quieter side of the exchange's day.
+ *
  * Bars arrive newest first, so the recent windows are the front of the series.
  */
 export function dailyStatsOf(klines?: OkxKline[]): DailyStats | null {

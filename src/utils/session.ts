@@ -1,4 +1,4 @@
-import { OkxKline, OpenTime } from '../types/okx'
+import { OkxKline, OpenTime, Period } from '../types/okx'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -42,4 +42,23 @@ export function sessionStartMs(openTime: OpenTime, now = Date.now()) {
 export function sessionKlines(klines: OkxKline[], openTime: OpenTime) {
   const start = sessionStartMs(openTime)
   return klines.filter((kline) => Number(kline[0]) >= start)
+}
+
+/**
+ * The daily bar cut where the board's open is.
+ *
+ * The exchange sells the day twice — `1D` opens at midnight Hong Kong, `1Dutc`
+ * at midnight UTC — and everything above is already about the fact that the
+ * board lets the reader choose. A month's extremes taken off the other one is
+ * the same mistake `sessionKlines` exists to prevent, one horizon up: the card
+ * prints a 24h high the month's high is supposed to contain, and for the rest
+ * of the day it does not, because the bar holding that high has not closed on a
+ * clock anybody on this screen is reading.
+ *
+ * The rolling open has no day of its own to be cut at, so it takes UTC: some
+ * boundary has to be chosen, and this is the one the exchange treats as neutral
+ * and the one the board opens on.
+ */
+export function dailyBarOf(openTime: OpenTime): Period {
+  return openTime === OpenTime.UTC8 ? Period.DAY_1 : Period.DAY_1_UTC
 }

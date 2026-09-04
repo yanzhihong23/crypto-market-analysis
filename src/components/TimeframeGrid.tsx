@@ -4,7 +4,11 @@ import useOkxTimeframes from '../hooks/useOkxTimeframes'
 import { numericFont } from '../fonts'
 import { useMessages } from '../i18n'
 import { formatSigmas } from '../utils/signals'
-import { type TimeframeRead, timeframeAgreement } from '../utils/timeframes'
+import {
+  periodLabelOf,
+  type TimeframeRead,
+  timeframeAgreement,
+} from '../utils/timeframes'
 
 import PositionTrack from './PositionTrack'
 
@@ -33,7 +37,7 @@ function TimeframeRow({ read }: { read: TimeframeRead }) {
           ...numericFont,
         }}
       >
-        {read.period}
+        {periodLabelOf(read.period)}
       </Typography>
 
       <Typography

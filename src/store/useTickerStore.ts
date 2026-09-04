@@ -160,6 +160,18 @@ interface TickerStore {
   dailyStats: Record<string, DailyStats | null>
   dailyStatsAt: Record<string, number>
   /**
+   * Which open each of those was cut at, so switching the board's open discards
+   * them rather than leaving a month measured on the other clock.
+   *
+   * A record of its own rather than a field on the timestamp: that one is
+   * persisted, and a field added inside a record already being saved is exactly
+   * the case the version note below is about. Absent from an old save, this
+   * reads as undefined, misses against whatever the board is set to, and the
+   * next pass rewrites it — which is what should happen to a month taken before
+   * anybody was asking.
+   */
+  dailyStatsOpenTime: Record<string, OpenTime>
+  /**
    * Where open interest sits in its own hundred days, 0 to 1. Off a different
    * endpoint from the candles above and on the same hourly walk, so it goes in
    * on the same write rather than earning a poller of its own.
@@ -169,6 +181,7 @@ interface TickerStore {
     instId: string,
     stats: DailyStats | null,
     oiPercentile: number | null,
+    openTime: OpenTime,
   ) => void
   /**
    * BTC's own daily stats, held apart from the watchlist's.
@@ -181,7 +194,9 @@ interface TickerStore {
    */
   benchmarkDaily: DailyStats | null
   benchmarkDailyAt: number
-  setBenchmarkDaily: (stats: DailyStats | null) => void
+  /** The same stamp, for the one series that is not keyed by instrument. */
+  benchmarkDailyOpenTime: OpenTime | null
+  setBenchmarkDaily: (stats: DailyStats | null, openTime: OpenTime) => void
   /**
    * Open interest as it stood when the current session opened, which is what
    * the live figure off the websocket is measured against. Stamped with the
@@ -349,6 +364,7 @@ export const useTickerStore = create<TickerStore>()(
         })),
       dailyStats: {},
       dailyStatsAt: {},
+      dailyStatsOpenTime: {},
       dailyOiPercentile: {},
       // Stamped even when the derivation came to nothing, so a symbol with too
       // little history is not refetched on every pass for the month it takes to
@@ -357,6 +373,7 @@ export const useTickerStore = create<TickerStore>()(
         instId: string,
         stats: DailyStats | null,
         oiPercentile: number | null,
+        openTime: OpenTime,
       ) =>
         set((state) => ({
           dailyStats: { ...state.dailyStats, [instId]: stats },
@@ -365,11 +382,20 @@ export const useTickerStore = create<TickerStore>()(
             [instId]: oiPercentile,
           },
           dailyStatsAt: { ...state.dailyStatsAt, [instId]: Date.now() },
+          dailyStatsOpenTime: {
+            ...state.dailyStatsOpenTime,
+            [instId]: openTime,
+          },
         })),
       benchmarkDaily: null,
       benchmarkDailyAt: 0,
-      setBenchmarkDaily: (stats: DailyStats | null) =>
-        set({ benchmarkDaily: stats, benchmarkDailyAt: Date.now() }),
+      benchmarkDailyOpenTime: null,
+      setBenchmarkDaily: (stats: DailyStats | null, openTime: OpenTime) =>
+        set({
+          benchmarkDaily: stats,
+          benchmarkDailyAt: Date.now(),
+          benchmarkDailyOpenTime: openTime,
+        }),
       openInterestOpen: {},
       setOpenInterestOpen: (
         instId: string,
@@ -459,12 +485,20 @@ export const useTickerStore = create<TickerStore>()(
               keep.has(instId),
             ),
           ),
+          dailyStatsOpenTime: Object.fromEntries(
+            Object.entries(saved.dailyStatsOpenTime ?? {}).filter(([instId]) =>
+              keep.has(instId),
+            ),
+          ),
           benchmarkDaily: isDailyStats(saved.benchmarkDaily)
             ? saved.benchmarkDaily
             : null,
           benchmarkDailyAt: isDailyStats(saved.benchmarkDaily)
             ? (saved.benchmarkDailyAt ?? 0)
             : 0,
+          benchmarkDailyOpenTime: isDailyStats(saved.benchmarkDaily)
+            ? (saved.benchmarkDailyOpenTime ?? null)
+            : null,
         }
       },
       /**

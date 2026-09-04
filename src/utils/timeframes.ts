@@ -23,20 +23,43 @@
  * their own place on the dialog.
  */
 
-import { OkxKline, Period } from '../types/okx'
+import { OkxKline, OpenTime, Period } from '../types/okx'
 import type { Messages } from '../i18n/en'
 
 import { rejectionSignal, volatilitySignal, volumeSignal } from './detectors'
 import { Signal, baselineOf, deviationFrom } from './signals'
+import { dailyBarOf } from './session'
 import { barReturnsOf, coilOf, klineStatsOf } from './klineStats'
 
-/** The four the chart gets read at. Shortest first, the way a chart is scanned. */
-export const TIMEFRAMES: Period[] = [
-  Period.MINUTE_15,
-  Period.HOUR_1,
-  Period.HOUR_4,
-  Period.DAY_1,
-]
+/**
+ * The four the chart gets read at. Shortest first, the way a chart is scanned.
+ *
+ * A function of the board's open rather than a constant, because the last of
+ * them is a day and the board lets the reader say where a day starts. The three
+ * below it are spans and have no boundary to disagree about; `1d` is a date,
+ * and this row sits two inches from a 30 day range read off the same clock.
+ */
+export function timeframesOf(openTime: OpenTime): Period[] {
+  return [Period.MINUTE_15, Period.HOUR_1, Period.HOUR_4, dailyBarOf(openTime)]
+}
+
+/**
+ * What a period is called on screen, where it differs from what the exchange is
+ * asked for.
+ *
+ * Only the day differs, and only because the day is the one bar whose boundary
+ * had to be chosen: `1Dutc` is a parameter, not a period, and a row labelled
+ * with it would advertise a fetch detail in the two places on this dialog that
+ * are meant to read as plain chart periods. The reader is being told the bar is
+ * a day, which it is.
+ */
+const PERIOD_LABELS: Partial<Record<Period, string>> = {
+  [Period.DAY_1_UTC]: '1D',
+}
+
+export function periodLabelOf(period: Period): string {
+  return PERIOD_LABELS[period] ?? period
+}
 
 /**
  * Bars per period. Two hundred is enough for a spread to mean something at every

@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 
 import { fetchOkxKlines } from '../apis'
 import { useMessages } from '../i18n'
+import { useTickerStore } from '../store/useTickerStore'
 import { OkxKline } from '../types/okx'
 import {
-  TIMEFRAMES,
+  timeframesOf,
   TIMEFRAME_BARS,
   type TimeframeRead,
   timeframeReadOf,
@@ -55,6 +56,8 @@ export default function useOkxTimeframes(
   enabled: boolean,
 ): Timeframes {
   const t = useMessages()
+  const openTime = useTickerStore((state) => state.openTime)
+  const periods = useMemo(() => timeframesOf(openTime), [openTime])
   const [fetched, setFetched] = useState<Fetched>({
     series: [],
     loading: false,
@@ -68,7 +71,7 @@ export default function useOkxTimeframes(
     setFetched((previous) => ({ ...previous, loading: true, failed: false }))
 
     void Promise.all(
-      TIMEFRAMES.map((period) =>
+      periods.map((period) =>
         fetchOkxKlines({ instId, period, limit: TIMEFRAME_BARS }),
       ),
     )
@@ -85,18 +88,18 @@ export default function useOkxTimeframes(
     return () => {
       cancelled = true
     }
-  }, [instId, enabled])
+  }, [instId, enabled, periods])
 
   const last = Number(useOkxTicker(instId).last)
 
   const reads = useMemo(
     () =>
       fetched.series.length
-        ? TIMEFRAMES.map((period, index) =>
+        ? periods.map((period, index) =>
             timeframeReadOf(period, fetched.series[index], last, t),
           )
         : [],
-    [fetched.series, last, t],
+    [fetched.series, last, t, periods],
   )
 
   return { reads, loading: fetched.loading, failed: fetched.failed }

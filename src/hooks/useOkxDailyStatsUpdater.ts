@@ -2,8 +2,9 @@ import { useCallback, useEffect, useRef } from 'react'
 
 import { fetchOkxKlines, fetchOkxOpenInterestHistory } from '../apis'
 import { useTickerStore } from '../store/useTickerStore'
-import { Period } from '../types/okx'
+import { OpenTime } from '../types/okx'
 import { dailyStatsOf } from '../utils/klineStats'
+import { dailyBarOf } from '../utils/session'
 import { oiPercentileOf } from '../utils/openInterest'
 
 /**
@@ -64,41 +65,67 @@ const BENCHMARK_INST_ID = 'BTC-USDT-SWAP'
 export default function useOkxDailyStatsUpdater() {
   const setDailyStats = useTickerStore((state) => state.setDailyStats)
   const instIds = useTickerStore((state) => state.instIds)
+  const openTime = useTickerStore((state) => state.openTime)
 
   const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
   const updateAllRef = useRef<() => Promise<void>>(async () => {})
+  // Read through a ref for the same reason the open interest walk does: the
+  // walk is a loop of awaits, and a setting changed halfway through it should
+  // not have half the board measured against one open and half against another.
+  const openTimeRef = useRef(openTime)
+  openTimeRef.current = openTime
 
   const updateByInstId = useCallback(
     async (instId: string) => {
-      const fetchedAt = useTickerStore.getState().dailyStatsAt[instId]
-      if (fetchedAt && fetchedAt > Date.now() - STALE_AFTER_MS) return
+      const session = openTimeRef.current
+      const { dailyStatsAt, dailyStatsOpenTime } = useTickerStore.getState()
+      const fetchedAt = dailyStatsAt[instId]
+      if (
+        dailyStatsOpenTime[instId] === session &&
+        fetchedAt &&
+        fetchedAt > Date.now() - STALE_AFTER_MS
+      ) {
+        return
+      }
 
       // In parallel: the two go to different hosts — candles straight to the
       // exchange, the statistics path through our own origin and its limiter —
       // so neither is waiting on the other's allowance.
       const [klines, openInterest] = await Promise.all([
-        fetchOkxKlines({ instId, period: Period.DAY_1, limit: BARS }),
+        fetchOkxKlines({ instId, period: dailyBarOf(session), limit: BARS }),
         fetchOkxOpenInterestHistory({ instId, period: '1D', limit: OI_DAYS }),
       ])
       if (!klines?.length) return
 
-      setDailyStats(instId, dailyStatsOf(klines), oiPercentileOf(openInterest))
+      setDailyStats(
+        instId,
+        dailyStatsOf(klines),
+        oiPercentileOf(openInterest),
+        session,
+      )
     },
     [setDailyStats],
   )
 
   const updateBenchmark = useCallback(async () => {
-    const { benchmarkDailyAt, setBenchmarkDaily } = useTickerStore.getState()
-    if (benchmarkDailyAt > Date.now() - STALE_AFTER_MS) return
+    const session = openTimeRef.current
+    const { benchmarkDailyAt, benchmarkDailyOpenTime, setBenchmarkDaily } =
+      useTickerStore.getState()
+    if (
+      benchmarkDailyOpenTime === session &&
+      benchmarkDailyAt > Date.now() - STALE_AFTER_MS
+    ) {
+      return
+    }
 
     const res = await fetchOkxKlines({
       instId: BENCHMARK_INST_ID,
-      period: Period.DAY_1,
+      period: dailyBarOf(session),
       limit: BARS,
     })
     if (!res?.length) return
 
-    setBenchmarkDaily(dailyStatsOf(res))
+    setBenchmarkDaily(dailyStatsOf(res), session)
   }, [])
 
   const updateAll = useCallback(async () => {
@@ -124,17 +151,43 @@ export default function useOkxDailyStatsUpdater() {
 
   updateAllRef.current = updateAll
 
+  // Runs on an open change as well as on mount: every stored month is stamped
+  // with the open it was cut at, so they all miss at once.
+  //
+  // Straight away on the change, and the delay is kept for the mount alone. It
+  // is there for a cold start, where this poller and the momentum one would
+  // otherwise walk the same endpoint at the same moment; a board that has been
+  // open for an hour is not that, and until the walk lands the dialog is
+  // showing a month cut at the open the reader has just stopped using — which
+  // is the reading this whole stamp exists to get rid of, so half a minute of
+  // it is half a minute too long.
+  //
+  // The previous value rather than a "have I mounted" flag: StrictMode runs
+  // this twice on mount, and a flag would read the second pass as a change and
+  // fetch immediately, which is the one thing the delay is for.
+  const lastOpenTimeRef = useRef<OpenTime | null>(null)
   useEffect(() => {
-    timerRef.current = setTimeout(() => {
+    const changed =
+      lastOpenTimeRef.current !== null && lastOpenTimeRef.current !== openTime
+    lastOpenTimeRef.current = openTime
+
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+    }
+    if (changed) {
       void updateAllRef.current()
-    }, FIRST_PASS_DELAY_MS)
+    } else {
+      timerRef.current = setTimeout(() => {
+        void updateAllRef.current()
+      }, FIRST_PASS_DELAY_MS)
+    }
 
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current)
       }
     }
-  }, [])
+  }, [openTime])
 
   return { updateDailyStatsByInstId: updateByInstId }
 }
