@@ -38,7 +38,7 @@
     "recharts": "^3.10.1",
     "usehooks-ts": "^3.1.1",
     "uuid": "^14.0.1",
-    "zustand": "^5.0.14"
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",
