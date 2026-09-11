@@ -23,33 +23,7 @@ import OkxLogoSymbol from './OkxLogoSymbol'
 import OkxTickerCardSkeleton from './OkxTickerCardSkeleton'
 import OkxTickerDetail from './OkxTickerDetail'
 import SignalPulse from './SignalPulse'
-
-/**
- * Over the sparkline rather than pinned to the card's bottom edge, which is
- * where the chips now sit. The chart is the one thing on the card that can
- * afford to be covered: it is the shape of the session, and the buttons are only
- * up while a cursor is on the card.
- */
-const actionBarSx = {
-  position: 'absolute',
-  // Anchored to the right rather than spanning the chart. It used to be laid
-  // over the whole of it, which was invisible until the signal badge moved into
-  // the chart's top-left corner: the bar showed through its own blur, so the
-  // badge still looked hoverable, while the bar's box swallowed the pointer and
-  // the badge's tooltip could never open. Hugging its buttons leaves that corner
-  // alone without having to know how tall the badge is.
-  top: 0,
-  right: 0,
-  bottom: 0,
-  px: 2,
-  zIndex: 3,
-  display: 'none',
-  alignItems: 'center',
-  gap: 1,
-  // The blur alone separates the button from the sparkline behind it; the white
-  // wash that used to sit here inverted badly in the dark scheme.
-  backdropFilter: 'blur(2px)',
-} as const
+import { cardActionBarSx, removeButtonSx } from './cardActionBarSx'
 
 /**
  * Its own component so that it renders when the pin changes and not otherwise.
@@ -81,7 +55,7 @@ const CardActions = memo(function CardActions({
     <Stack
       direction="row"
       className="actionBar"
-      sx={actionBarSx}
+      sx={cardActionBarSx}
       onDoubleClick={stopDoubleClick}
     >
       <Tooltip title={t.card.openCharts} arrow>
@@ -106,17 +80,12 @@ const CardActions = memo(function CardActions({
           {pinned ? <StarIcon /> : <StarBorderIcon />}
         </IconButton>
       </Tooltip>
-      {/* Neutral until it is pointed at. The theme's destructive red is the same
-          hex as its price-down red, so carrying it permanently put a third red
-          on a card that is already coloured by direction; on hover it is
-          unambiguous, because nothing else on the card responds to a cursor
-          sitting on it. */}
       <Tooltip title={t.card.remove} arrow>
         <IconButton
           size="small"
           aria-label={t.card.removeAria}
           onClick={onRemove}
-          sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
+          sx={removeButtonSx}
         >
           <BookmarkRemoveIcon />
         </IconButton>
@@ -163,7 +132,12 @@ function OkxTickerCard({ instId }: { instId: string }) {
   const handleCloseDetail = useCallback(() => setDetailOpen(false), [])
 
   if (!ready) {
-    return <OkxTickerCardSkeleton symbol={instId.split('-')[0]} />
+    return (
+      <OkxTickerCardSkeleton
+        symbol={instId.split('-')[0]}
+        onRemove={handleRemove}
+      />
+    )
   }
 
   return (
