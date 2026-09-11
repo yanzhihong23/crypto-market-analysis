@@ -234,7 +234,18 @@ export const useTickerStore = create<TickerStore>()(
     (set) => ({
       instruments: [],
       setInstruments: (instruments: OkxInstrument[]) => set({ instruments }),
-      instIds: ['BTC-USDT-SWAP', 'ETH-USDT-SWAP', 'SUI-USDT-SWAP'],
+      instIds: [
+        'BTC-USDT-SWAP',
+        'ETH-USDT-SWAP',
+        'ZEC-USDT-SWAP',
+        'SOL-USDT-SWAP',
+        'PUMP-USDT-SWAP',
+        'XAU-USDT-SWAP',
+        'XAG-USDT-SWAP',
+        'SNDK-USDT-SWAP',
+        'SPCX-USDT-SWAP',
+        'OKB-USDT-SWAP',
+      ],
       setInstIds: (instIds: string[]) => set({ instIds }),
       removeInstId: (instId: string) =>
         set((state) => {
