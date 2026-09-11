@@ -12,7 +12,8 @@ import type { Messages } from '../i18n/en'
 export const NAV_ITEMS: { key: keyof Messages['nav']; path: string }[] = [
   { key: 'okx', path: '/' },
   { key: 'binance', path: '/binance' },
-  { key: 'charts', path: '/charts' },
+  // The charts page is off the menu for now. The route below it still
+  // resolves, so a saved link keeps working while the page is reworked.
   { key: 'theories', path: '/theories' },
   { key: 'indicators', path: '/indicators' },
   { key: 'discipline', path: '/discipline' },
