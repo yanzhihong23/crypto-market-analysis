@@ -1,9 +1,11 @@
 import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { persist } from 'zustand/middleware'
 
 import { OkxInstrument, OkxKline, OpenTime, SortBy } from '../types/okx'
 import { Coil, DailyStats, isDailyStats } from '../utils/klineStats'
 import { Baseline } from '../utils/signals'
+
+import { coalescedLocalStorage } from './coalescedStorage'
 
 interface TickerStore {
   instruments: OkxInstrument[]
@@ -27,9 +29,10 @@ interface TickerStore {
   klineData: Record<string, OkxKline[]>
   volCcyQuote: Record<string, string>
   /**
-   * Both come off the same candles, so both go in on one write. Every write
-   * through this store is serialised and handed to localStorage, which is the
-   * one cost here that does not care how small the values are.
+   * Both come off the same candles, so both go in on one write. Writes through
+   * this store cost the size of everything it saves rather than the size of
+   * what changed, which is why they are coalesced and why the candles
+   * themselves are not among what it saves — see the persist options below.
    */
   setKlines: (
     instId: string,
@@ -425,7 +428,10 @@ export const useTickerStore = create<TickerStore>()(
     }),
     {
       name: 'tickers',
-      storage: createJSONStorage(() => localStorage),
+      // Coalesced rather than written straight through: every write through
+      // this store saves the whole of it, and a live feed writes several times
+      // a second. See the module for the numbers.
+      storage: coalescedLocalStorage<TickerStore>(),
       /**
        * Bumped whenever a persisted *record* grows a field, as opposed to the
        * store growing a record.
@@ -502,18 +508,28 @@ export const useTickerStore = create<TickerStore>()(
         }
       },
       /**
-       * Everything but the instrument list, which is four hundred-odd contracts
-       * and was 425KB of the 431KB this store saved. It is refetched on every
-       * mount regardless, so persisting it bought nothing and cost a full
-       * serialisation of it on every write through the store — with a live feed
-       * writing several times a minute per symbol, megabytes a minute of
-       * throwaway strings handed to a synchronous localStorage. Safari reloads
-       * a tab that goes on doing that.
+       * Everything but the two records that are refetched on mount anyway, and
+       * which between them were all but the last few percent of what this store
+       * saved: the instrument list, four hundred-odd contracts at 425KB of the
+       * 431KB it held then, and the candles, 368KB of the 425KB it held after
+       * that one was taken out. Neither bought anything by being saved, and each
+       * cost a full serialisation of itself on every write through the store —
+       * with a live feed writing several times a minute per symbol, megabytes a
+       * minute of throwaway strings handed to a synchronous localStorage. Safari
+       * reloads a tab that goes on doing that.
+       *
+       * The candles go rather than stay because of what they are: a quarter hour
+       * each, twenty-five hours of them, repolled every minute. A saved copy is
+       * stale by the time it is read, which is the opposite of the medium-term
+       * yardsticks next to them — those describe a month, so an hour-old copy is
+       * as good as a fresh one and worth every byte it costs. What is lost is a
+       * sparkline on the cards for the few seconds the opening walk takes, on a
+       * board whose prices are waiting on the socket over the same seconds.
        *
        * Saved empty rather than dropped so the persisted shape still matches
        * the store's, which is the same state the app boots into anyway.
        */
-      partialize: (state) => ({ ...state, instruments: [] }),
+      partialize: (state) => ({ ...state, instruments: [], klineData: {} }),
     },
   ),
 )
