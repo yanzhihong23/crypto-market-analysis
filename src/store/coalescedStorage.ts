@@ -32,6 +32,21 @@ import type { PersistStorage, StorageValue } from 'zustand/middleware'
  */
 const WRITE_INTERVAL_MS = 3000
 
+/**
+ * Resolved once, because reaching for it is itself what can fail: a browser
+ * told to block storage throws a `SecurityError` on the *property*, not on the
+ * call. `createJSONStorage` takes the same precaution, and a store that
+ * silently runs unpersisted is what it degrades to — this keeps that, rather
+ * than logging a failed write every few seconds for the life of the page.
+ */
+const store = ((): Storage | undefined => {
+  try {
+    return window.localStorage
+  } catch {
+    return undefined
+  }
+})()
+
 /** Newest value per store name, waiting for the tick. */
 const pending = new Map<string, unknown>()
 
@@ -46,7 +61,7 @@ const flush = () => {
 
   for (const [name, value] of pending) {
     try {
-      localStorage.setItem(name, JSON.stringify(value))
+      store?.setItem(name, JSON.stringify(value))
     } catch (error) {
       console.error('Failed to save the persisted state:', error)
     }
@@ -82,10 +97,9 @@ export function coalescedLocalStorage<T>(): PersistStorage<T> {
       const held = pending.get(name)
       if (held) return held as StorageValue<T>
 
-      const saved = localStorage.getItem(name)
-      if (!saved) return null
       try {
-        return JSON.parse(saved) as StorageValue<T>
+        const saved = store?.getItem(name)
+        return saved ? (JSON.parse(saved) as StorageValue<T>) : null
       } catch (error) {
         console.error('Failed to read the persisted state:', error)
         return null
@@ -97,7 +111,7 @@ export function coalescedLocalStorage<T>(): PersistStorage<T> {
     },
     removeItem: (name) => {
       pending.delete(name)
-      localStorage.removeItem(name)
+      store?.removeItem(name)
     },
   }
 }
