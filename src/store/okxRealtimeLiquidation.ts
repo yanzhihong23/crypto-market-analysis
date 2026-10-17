@@ -103,25 +103,7 @@ const recompute = (instId: string, now: number) => {
   notify(instId)
 }
 
-/**
- * Records one liquidation. Per detail rather than per message, because a single
- * message carries however many happened at once — which on the occasions this
- * reading matters at all is a great many.
- */
-export const recordOkxLiquidation = (
-  instId: string,
-  sz: number,
-  long: boolean,
-  ts: number,
-) => {
-  if (!(sz > 0) || !Number.isFinite(ts)) return
-
-  let buffer = events.get(instId)
-  if (!buffer) {
-    buffer = []
-    events.set(instId, buffer)
-  }
-
+const insert = (buffer: Event[], sz: number, long: boolean, ts: number) => {
   // Inserted by the exchange's stamp rather than by arrival. A cascade is the
   // one time this reading matters and the one time a message carries hundreds
   // of details, and they do not arrive in order — an older one landing last
@@ -132,8 +114,37 @@ export const recordOkxLiquidation = (
   let at = buffer.length
   while (at > 0 && buffer[at - 1].ts > ts) at--
   buffer.splice(at, 0, { ts, sz, long })
+}
 
-  recompute(instId, Date.now())
+/**
+ * Records everything one message said happened to one instrument.
+ *
+ * Per message rather than per detail, which is the unit the exchange sends in
+ * and the unit the reading changes by: a cascade is the only time this matters
+ * and the only time a message carries hundreds of details, and recomputing on
+ * each of them walked the whole window, re-armed the expiry timer and woke
+ * every card watching the symbol — hundreds of times, to arrive at the figure
+ * one pass over the batch gives. The arithmetic was quadratic in the size of
+ * exactly the burst it exists to describe.
+ */
+export const recordOkxLiquidations = (
+  instId: string,
+  details: { sz: number; long: boolean; ts: number }[],
+) => {
+  let buffer = events.get(instId)
+  let recorded = false
+
+  for (const { sz, long, ts } of details) {
+    if (!(sz > 0) || !Number.isFinite(ts)) continue
+    if (!buffer) {
+      buffer = []
+      events.set(instId, buffer)
+    }
+    insert(buffer, sz, long, ts)
+    recorded = true
+  }
+
+  if (recorded) recompute(instId, Date.now())
 }
 
 export const getOkxLiquidation = (instId: string) => reads.get(instId)

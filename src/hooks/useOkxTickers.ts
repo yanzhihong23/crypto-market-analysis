@@ -22,7 +22,7 @@ import {
   setOkxIndexPrice,
 } from '../store/okxRealtimeSeries'
 import { recordOkxSpread } from '../store/okxRealtimeSpread'
-import { recordOkxLiquidation } from '../store/okxRealtimeLiquidation'
+import { recordOkxLiquidations } from '../store/okxRealtimeLiquidation'
 import {
   markFeedMessage,
   resetFeed,
@@ -197,14 +197,14 @@ export const useOkxTickers = () => {
           // message, which is already being counted. Skipping them is what
           // keeps a liquidation from being counted twice, not a gap.
           if (!order?.instId || !watched.has(order.instId)) continue
-          for (const detail of order.details ?? []) {
-            recordOkxLiquidation(
-              order.instId,
-              Number(detail.sz),
-              detail.posSide === 'long',
-              Number(detail.ts),
-            )
-          }
+          recordOkxLiquidations(
+            order.instId,
+            (order.details ?? []).map((detail) => ({
+              sz: Number(detail.sz),
+              long: detail.posSide === 'long',
+              ts: Number(detail.ts),
+            })),
+          )
         }
         return
       }

@@ -126,21 +126,82 @@ const schedulePercentUpdate = (instId: string, value: number) => {
   percentFlushTimer ??= setTimeout(flushPercent, PERCENT_FLUSH_MS)
 }
 
+/**
+ * How long a price may sit unpublished.
+ *
+ * The tickers channel pushes as fast as the book moves — measured on a quiet
+ * market with sixteen symbols, fifty-five messages a second, and the exchange
+ * will send ten a second per instrument when one is actually moving. Every one
+ * of them used to republish on arrival, and a republish is a card's whole
+ * subtree re-rendered: on a busy board that is several thousand components a
+ * second, nearly all of it producing no visible change at all. Nobody can read
+ * a price that redraws ten times a second, and a browser asked to allocate at
+ * that rate for hours is a browser that reloads the tab for using significant
+ * memory, which is what Safari was doing.
+ *
+ * Seven a second is still live to look at, and it is a ceiling rather than a
+ * rate: a storm on a watchlist of forty costs exactly what a quiet market on a
+ * watchlist of three does.
+ */
+const TICKER_FLUSH_MS = 150
+
+/** Newest arrival per instrument, waiting for the flush. */
+const pendingTickers = new Map<string, OkxTickerFormatted>()
+let tickerFlushTimer: ReturnType<typeof setTimeout> | undefined
+let tickerFlushFrame: number | undefined
+
+/**
+ * One pass for every instrument that ticked inside the window, so React commits
+ * the board once rather than once per message.
+ */
+const flushTickers = () => {
+  tickerFlushFrame = undefined
+  const flushing = [...pendingTickers]
+  pendingTickers.clear()
+  for (const [instId, ticker] of flushing) {
+    tickers.set(instId, ticker)
+    notify(tickerListeners, instId)
+  }
+}
+
+/**
+ * The interval says how often at most; the frame says whether at all. A hidden
+ * tab is handed no frames, so a board left open behind something else records
+ * everything the socket sends and renders none of it — which is the state it
+ * spends most of its life in, and the one where redrawing was pure waste. The
+ * map holds one entry per instrument meanwhile, so the backlog is the size of
+ * the watchlist however long the tab is away, and the next frame after it comes
+ * back publishes the board as it stands.
+ */
+const scheduleTickerFlush = () => {
+  if (tickerFlushTimer || tickerFlushFrame !== undefined) return
+  tickerFlushTimer = setTimeout(() => {
+    tickerFlushTimer = undefined
+    tickerFlushFrame = requestAnimationFrame(flushTickers)
+  }, TICKER_FLUSH_MS)
+}
+
 export const updateOkxTicker = (instId: string, ticker: OkxTickerFormatted) => {
-  const lastTicker = tickers.get(instId)
+  // Against the previous *arrival* rather than the previous publication, so
+  // the colour still means what it has always meant: the direction of the last
+  // print against the one before it. Taken here because this is the only place
+  // that sees every message, and a flush that only sees the newest would read
+  // the direction over however many prints it collapsed.
+  const lastTicker = pendingTickers.get(instId) ?? tickers.get(instId)
   ticker.isUp = !lastTicker
     ? true
     : +ticker.last === +lastTicker.last
       ? lastTicker.isUp
       : +ticker.last > +lastTicker.last
 
-  tickers.set(instId, ticker)
-  notify(tickerListeners, instId)
+  pendingTickers.set(instId, ticker)
+  scheduleTickerFlush()
   schedulePercentUpdate(instId, Number(ticker.percent))
 }
 
 export const removeOkxTicker = (instId: string) => {
   tickers.delete(instId)
+  pendingTickers.delete(instId)
   percent.delete(instId)
   pendingPercent.delete(instId)
   openInterest.delete(instId)
