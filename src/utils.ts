@@ -21,14 +21,45 @@ export function getPeriodPattern(period: string) {
 }
 
 /**
+ * Formatters built once per set of options and reused.
+ *
+ * Constructing one is the expensive half of formatting — it is where the locale
+ * data is resolved and the native ICU formatter is allocated — and the two
+ * functions below are on the feed's hot path: every ticker message went through
+ * both, so the board built well over a hundred formatters a second, around the
+ * clock, whether or not anything was on screen. JavaScriptCore sees only the
+ * small wrapper each one sits behind, not the native memory it holds, so a page
+ * doing this is collected as if it were cheap long after it has stopped being.
+ * That is a footprint Safari reloads a tab for, and it grows fastest exactly
+ * when a sleeping or hidden page is collected least.
+ *
+ * Keyed by the options that vary, which take a handful of values in practice.
+ */
+const formatters = new Map<string, Intl.NumberFormat>()
+
+const formatterOf = (
+  key: string,
+  locale: string,
+  options: Intl.NumberFormatOptions,
+) => {
+  let formatter = formatters.get(key)
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale, options)
+    formatters.set(key, formatter)
+  }
+  return formatter
+}
+
+/**
  * Formats a number to a more readable format.
  * @param num - The number to format.
  * @returns The formatted number.
  */
 export function formatNumber(num: number, digits?: number) {
-  return new Intl.NumberFormat('en-US', {
+  const maximumFractionDigits = digits ?? 2
+  return formatterOf(`standard:${maximumFractionDigits}`, 'en-US', {
     notation: 'standard',
-    maximumFractionDigits: digits ?? 2,
+    maximumFractionDigits,
   }).format(num)
 }
 
@@ -47,7 +78,7 @@ export function compactNumberFormatter(
   val: number,
   minimumFractionDigits?: number,
 ) {
-  return new Intl.NumberFormat('en-GB', {
+  return formatterOf(`compact:${minimumFractionDigits}`, 'en-GB', {
     notation: 'compact',
     compactDisplay: 'short',
     minimumFractionDigits,
