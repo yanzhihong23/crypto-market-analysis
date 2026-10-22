@@ -15,6 +15,7 @@ import { format } from 'date-fns'
 
 import useOkxTicker from '../hooks/useOkxTicker'
 import useOkxBackdrop from '../hooks/useOkxBackdrop'
+import { isMonthRungReading } from '../utils/backdrop'
 import useOkxTickerDetail, {
   DETAIL_TOOLTIP_FORMAT,
   DetailWindow,
@@ -31,7 +32,6 @@ import SegmentedToggle, { SegmentedOption } from './SegmentedToggle'
 import SymbolAvatar from './SymbolAvatar'
 import OkxMarketMetrics from './OkxMarketMetrics'
 import TimeframeGrid from './TimeframeGrid'
-import PositionTrack from './PositionTrack'
 
 const windowOptions = (t: Messages): SegmentedOption<DetailWindow>[] => [
   { value: DetailWindow.DAY, label: t.detail.window24h },
@@ -72,18 +72,55 @@ const formatExcess = (points: number) =>
   `${points > 0 ? '+' : ''}${points.toFixed(1)}%`
 
 /**
+ * One excess return, set the way the dialog sets every other return.
+ *
+ * Coloured by its sign, which the period ladder beside it already does: a month
+ * spent behind the benchmark is the same kind of fact as a day spent falling,
+ * and this is still a return rather than one of the readings that earn amber by
+ * having no direction of their own.
+ */
+function ExcessValue({ points }: { points: number }) {
+  return (
+    <Typography
+      sx={{
+        fontSize: 13,
+        textAlign: 'right',
+        ...numericFont,
+        color:
+          points === 0
+            ? 'text.secondary'
+            : points > 0
+              ? 'market.up'
+              : 'market.down',
+      }}
+    >
+      {formatExcess(points)}
+    </Typography>
+  )
+}
+
+/**
  * What has been true of this instrument for weeks, beside what the periods are
  * doing right now.
  *
  * This started as a debug readout — `30d 50%` and a row of labels — which was
  * the right thing while nothing else drew from the layer and the wrong thing
- * once the dialog had room. Half of a range is only worth saying if the range
- * is said too, so the month's low and high are here rather than implied, and
- * each reading gets the sentence it wrote for itself instead of its chip.
+ * once the dialog had room. Each reading gets the sentence it wrote for itself
+ * instead of its chip.
+ *
+ * The month's range position used to be read here and is now the last rung of
+ * the period ladder, next to the four horizons it is the long end of. What is
+ * left is the half of this layer the ladder has no column for: the symbol
+ * measured against something other than its own history.
  */
 function BackdropPanel({ instId }: { instId: string }) {
   const backdrop = useOkxBackdrop(instId)
   const t = useMessages()
+  // The month's own reading is hung on the month's rung, next to the track it
+  // is describing; what is left here is everything with no rung to sit on.
+  const readings = backdrop.readings.filter(
+    (reading) => !isMonthRungReading(reading),
+  )
 
   return (
     <Box>
@@ -91,70 +128,73 @@ function BackdropPanel({ instId }: { instId: string }) {
         {t.backdrop.title}
       </Typography>
 
-      {backdrop.rangePosition === null ? (
+      {!backdrop.relative && !readings.length ? (
         <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
           {t.backdrop.pending}
         </Typography>
       ) : (
-        <Stack sx={{ gap: 0.5 }}>
-          <Stack
-            direction="row"
-            sx={{ alignItems: 'center', gap: 1, minHeight: 22 }}
-          >
-            <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
-              {t.backdrop.rangeLabel}
-            </Typography>
-            <Typography sx={{ fontSize: 13, ...numericFont }}>
-              {Math.round(backdrop.rangePosition * 100)}%
-            </Typography>
-            <PositionTrack position={backdrop.rangePosition} />
-            {backdrop.range && (
-              <Typography
-                sx={{
-                  fontSize: 12,
-                  color: 'text.secondary',
-                  ...numericFont,
-                }}
-              >
-                {formatNumber(backdrop.range.low, 6)} –{' '}
-                {formatNumber(backdrop.range.high, 6)}
-              </Typography>
-            )}
-          </Stack>
-
+        <Stack sx={{ gap: 1 }}>
           {/* Reported at every level rather than only when it is unusual, the
               way the range position is: how a symbol has done against BTC is
               worth knowing on any month, and it has no honest threshold of its
               own until the rest of the market is taken out — which is what the
-              reading below it does and this deliberately does not. */}
+              reading below it does and this deliberately does not.
+
+              A window each, in a column, rather than the sentence these two
+              used to share. They are returns, so they are set the way every
+              other return on this dialog is — right-aligned, monospaced, and
+              coloured by their sign — and a month twenty points behind BTC
+              stops being the quietest number in the panel. */}
           {backdrop.relative && (
-            <Stack
-              direction="row"
-              sx={{ alignItems: 'baseline', gap: 1, minHeight: 22 }}
+            <Box
+              sx={{
+                display: 'grid',
+                // `max-content` and nothing else: `auto` tracks share out the
+                // free space in the column this sits in, which pushed the two
+                // figures to the far right and left the label stranded a panel
+                // width away from them.
+                gridTemplateColumns: 'max-content max-content max-content',
+                justifyContent: 'start',
+                alignItems: 'baseline',
+                columnGap: 1.5,
+                rowGap: 0.5,
+              }}
             >
               <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
                 {t.backdrop.relativeLabel}
               </Typography>
-              <Typography sx={{ fontSize: 12, ...numericFont }}>
-                {t.backdrop.relativeValue(
-                  formatExcess(backdrop.relative.excess30d),
-                  formatExcess(backdrop.relative.excess7d),
-                )}
+              {/* Window on the left, figure on the right: the rungs beside
+                  this read `15m  −0.15%`, and there is no reason for the one
+                  table of returns on the dialog that is not a period to be
+                  read in the other direction. */}
+              <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                {t.backdrop.relativeWindow30d}
               </Typography>
-            </Stack>
+              <ExcessValue points={backdrop.relative.excess30d} />
+
+              <Box />
+              <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                {t.backdrop.relativeWindow7d}
+              </Typography>
+              <ExcessValue points={backdrop.relative.excess7d} />
+            </Box>
           )}
 
           {/* The sentence rather than the chip. The card has room for one of
               these at a time and shows the short form; this is the surface
               somebody opened to read them. */}
-          {backdrop.readings.map((reading) => (
-            <Typography
-              key={reading.kind}
-              sx={{ fontSize: 12, color: 'text.secondary' }}
-            >
-              {reading.detail}
-            </Typography>
-          ))}
+          {readings.length > 0 && (
+            <Stack sx={{ gap: 0.5 }}>
+              {readings.map((reading) => (
+                <Typography
+                  key={reading.kind}
+                  sx={{ fontSize: 12, color: 'text.secondary' }}
+                >
+                  {reading.detail}
+                </Typography>
+              ))}
+            </Stack>
+          )}
         </Stack>
       )}
     </Box>
@@ -300,7 +340,10 @@ export default function OkxTickerDetail({
         sx={{ alignItems: 'center', gap: 2, px: 3, pt: 2.5, pb: 1.5 }}
       >
         <SymbolAvatar instId={instId} size={28} />
-        <Stack sx={{ minWidth: 0 }}>
+        {/* Never shrunk. Left free to, flexbox took the quote currency's
+            hyphen as licence to break the line there and squeezed this to
+            39px on a phone, which is how a two-line header became four. */}
+        <Stack sx={{ flexShrink: 0 }}>
           <Typography sx={{ fontSize: 18, fontWeight: 600, lineHeight: 1.2 }}>
             {symbol}
           </Typography>
@@ -311,32 +354,84 @@ export default function OkxTickerDetail({
           </Typography>
         </Stack>
 
+        {/* What the symbol is, then what it costs. Along the row the two run
+            together — `USDT-SWAP 4072.7` reads for a moment as one string of
+            characters about the contract — and a hairline is the cheapest way
+            to say they are two things. The avatar's own height, so it lands on
+            a measure the row already keeps. */}
+        <Box
+          sx={{
+            alignSelf: 'center',
+            flexShrink: 0,
+            width: '1px',
+            height: 28,
+            backgroundColor: 'surface.border',
+          }}
+        />
+
         {/* The live price stays on the dialog: the charts are history, and
             without it the price you are looking at is the one from whenever the
-            candles were fetched. */}
-        <Stack sx={{ alignItems: 'end', ml: 'auto' }}>
+            candles were fetched.
+
+            One line and one baseline. Stacked, the price floated between the
+            two change lines while the symbol sat on a third, and a row of
+            three figures about one instrument was being read down a column
+            instead of across. It reads now the way it is said: XAU, four
+            thousand and seventy, down a percent and a half. */}
+        <Stack
+          direction="row"
+          sx={{ alignItems: 'baseline', gap: 1, flexShrink: 0 }}
+        >
           <Typography
             sx={{
               fontSize: 22,
               fontWeight: 600,
-              color: ticker.color,
+              // The last tick's direction, not the 24h one. The card has drawn
+              // it this way all along and says why on `LastPrice`: this number
+              // is the print that just landed, and the 24h reading already has
+              // the figures beside it, the metrics row and the charts. Taking
+              // both from `ticker.color` made the price restate the change
+              // percent and left the tick unsaid anywhere on the dialog.
+              color: ticker.isUp ? 'market.up' : 'market.down',
               ...numericFont,
             }}
           >
             {ticker.last}
           </Typography>
+
           <Typography
             sx={{ fontSize: 13, color: ticker.color, ...numericFont }}
           >
             {+ticker.percent > 0 ? '+' : ''}
-            {ticker.percent}% {ticker.dif}
+            {ticker.percent}%
+          </Typography>
+
+          {/* The same 24h change in the quote currency. Bracketed, which is
+              what brackets are for — a restatement of what was just said, in
+              other units — and the one device here that subordinates it
+              without claiming it is a different kind of fact. Set in the
+              change's own colour, like the card sets it; greying it said that,
+              and a bare `-1.51% -62.2` ran the pair together into one mangled
+              number.
+
+              Gone below `sm`, where a phone has room for the symbol, the price
+              and one reading of the change, and this is the other one. */}
+          <Typography
+            sx={{
+              display: { xs: 'none', sm: 'block' },
+              fontSize: 12,
+              color: ticker.color,
+              ...numericFont,
+            }}
+          >
+            ({ticker.dif})
           </Typography>
         </Stack>
 
         <IconButton
           aria-label={t.common.close}
           onClick={onClose}
-          sx={{ color: 'text.secondary' }}
+          sx={{ color: 'text.secondary', ml: 'auto' }}
         >
           <CloseIcon />
         </IconButton>

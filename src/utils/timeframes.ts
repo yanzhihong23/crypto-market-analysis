@@ -222,19 +222,47 @@ export function timeframeReadOf(
 }
 
 /**
- * How many of the periods are pointing the same way, and which way.
+ * How many of the periods are pointing the same way, and which way — or that
+ * they are evenly split, which is a third answer rather than a weak version of
+ * the other two.
  *
  * The one number this panel does compute across periods, and it is a count
  * rather than a score: no reading is weighted against another, nothing is
  * aggregated, and a reader who disagrees with it can see every row it counted.
+ *
+ * Takes the returns rather than the reads, because which horizons are in the
+ * ladder is the caller's to say — the month comes off a different feed and is
+ * not a `TimeframeRead`, and a heading that counted fewer rows than the panel
+ * underneath it shows would break the one promise this count makes.
  */
-export function timeframeAgreement(reads: TimeframeRead[]) {
-  const moves = reads
-    .map((read) => read.returnPercent)
-    .filter((value): value is number => value !== null && value !== 0)
+export type TimeframeAgreement =
+  | { split: true; of: number }
+  | { split: false; agreed: number; of: number; up: boolean }
+
+export function timeframeAgreement(
+  returns: (number | null)[],
+): TimeframeAgreement | null {
+  // Only the horizons that failed to read drop out. A flat one is counted in
+  // the total and in neither side, because it is on screen: a heading reading
+  // "3 of 3 down" over four rows, one of them sitting at 0.00%, describes a
+  // ladder the reader is not looking at.
+  const moves = returns.filter((value): value is number => value !== null)
   if (moves.length < 2) return null
 
   const up = moves.filter((move) => move > 0).length
-  const agreed = Math.max(up, moves.length - up)
-  return { agreed, of: moves.length, up: up >= moves.length - up }
+  const down = moves.filter((move) => move < 0).length
+  // Every horizon flat is not a split; it is nothing to report.
+  if (up === 0 && down === 0) return null
+  // Two against two is not two up. The `up >= down` this replaces handed an
+  // even split to whichever side the comparison happened to favour, and a
+  // heading reading "2 of 4 up" over two rows pointing down was the one
+  // sentence here that said something none of the rows underneath it did.
+  if (up === down) return { split: true, of: moves.length }
+
+  return {
+    split: false,
+    agreed: Math.max(up, down),
+    of: moves.length,
+    up: up > down,
+  }
 }

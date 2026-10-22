@@ -44,6 +44,28 @@ export interface BackdropReading {
   detail: string
 }
 
+/**
+ * Which readings belong to the month's rung of the period ladder rather than
+ * to the panel beside it.
+ *
+ * The range position is a statement about the thirty-day range, and the thirty
+ * day range is a row on the ladder now — read in a column next to the four
+ * shorter horizons, with its own marker and its own low and high underneath
+ * it. Left in the panel, its sentence sat two inches from the track it was
+ * describing and said the same percent over again.
+ *
+ * Everything else here stays put. A funding carry or an open interest
+ * percentile is not a fact about any horizon's price range, so there is no rung
+ * for it to belong to.
+ *
+ * Split here rather than in either component, because two filters written
+ * against the same list in two files is a reading shown twice or not at all the
+ * first time this set grows.
+ */
+export function isMonthRungReading(reading: BackdropReading) {
+  return reading.kind === 'range-position'
+}
+
 export interface Backdrop {
   /**
    * Where the price sits between the month's low and its high, 0 to 1. Outside
@@ -74,6 +96,17 @@ export interface Backdrop {
    * what the reading below does and what this deliberately does not.
    */
   relative: { excess7d: number; excess30d: number } | null
+  /**
+   * What the price has done over the month, in percent.
+   *
+   * Carried for the same reason the range is: the month is read on the dialog
+   * as the long end of the period ladder, and a row that showed where the price
+   * sits in its range without saying how it got there would be the only rung
+   * missing its move. `daily.return30d` calls it worth nothing on its own and
+   * is right — it is worth something sitting under a day, an hour and a quarter
+   * hour measured the same way.
+   */
+  return30d: number | null
   /** The ones with something to say right now. */
   readings: BackdropReading[]
 }
@@ -396,6 +429,7 @@ export function collectBackdrop(input: BackdropInput, t: Messages): Backdrop {
     range: input.daily
       ? { low: input.daily.low30d, high: input.daily.high30d }
       : null,
+    return30d: input.daily?.return30d ?? null,
     readings: [
       rangePositionReading(rangePosition, t),
       dailyCoilReading(input.daily?.coil, t),

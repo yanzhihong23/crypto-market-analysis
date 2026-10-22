@@ -354,8 +354,12 @@ export const en = {
     pending: 'Still reading the last 30 days.',
     /** Points, not percent of anything: this is one return minus another. */
     relativeLabel: 'vs BTC',
-    relativeValue: (excess30d: string, excess7d: string) =>
-      `${excess30d} on the month · ${excess7d} on the week`,
+    /**
+     * Bar codes rather than prose, because these caption a column of figures
+     * now instead of running through a sentence.
+     */
+    relativeWindow30d: '30d',
+    relativeWindow7d: '7d',
 
     /**
      * The board is already out of this number by the time it is printed, so
@@ -413,6 +417,11 @@ export const en = {
      */
     agreement: (agreed: number, of: number, up: boolean) =>
       `${agreed} of ${of} ${up ? 'up' : 'down'}`,
+    /**
+     * The even split. Worth its own sentence because it is the one state the
+     * count cannot describe: "2 of 4 up" is true of a tie and reads as a lean.
+     */
+    split: (of: number) => `${of} periods split`,
     loading: 'Reading the periods…',
     position: (percent: number) => `${percent}% up this period's range`,
 

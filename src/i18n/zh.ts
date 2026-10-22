@@ -256,8 +256,8 @@ export const zh: Messages = {
     rangeLabel: '30 日区间位置',
     pending: '正在读取近 30 日数据。',
     relativeLabel: '相对 BTC',
-    relativeValue: (excess30d, excess7d) =>
-      `30 日 ${excess30d} · 7 日 ${excess7d}`,
+    relativeWindow30d: '30 日',
+    relativeWindow7d: '7 日',
 
     relativeStrength: (signed) => `${signed} 相对板块`,
     relativeStrengthDetail: (size, ahead) =>
@@ -292,6 +292,7 @@ export const zh: Messages = {
     title: '多周期',
     agreement: (agreed, of, up) =>
       `${of} 个周期中 ${agreed} 个向${up ? '上' : '下'}`,
+    split: (of) => `${of} 个周期方向不一`,
     loading: '正在读取各周期…',
     position: (percent) => `处于该周期区间的 ${percent}%`,
 
