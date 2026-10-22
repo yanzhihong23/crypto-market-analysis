@@ -295,6 +295,7 @@ export const zh: Messages = {
     split: (of) => `${of} 个周期方向不一`,
     loading: '正在读取各周期…',
     position: (percent) => `处于该周期区间的 ${percent}%`,
+    rangeBroken: (high) => (high ? '已突破上沿' : '已跌破下沿'),
 
     coil: (share) => `盘整 ${share}×`,
     coilDetail: (share, quieterThan) =>

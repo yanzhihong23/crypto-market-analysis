@@ -426,6 +426,17 @@ export const en = {
     position: (percent: number) => `${percent}% up this period's range`,
 
     /**
+     * The month's rung, once the price has left the range printed beside it.
+     *
+     * A share of a range the price is no longer inside is not a share of
+     * anything, and the track below it has already pinned its marker to the
+     * end — so `-1%` under a marker sitting on the floor had the two halves of
+     * one reading disagreeing. The verb is the `rangeBreak` signal's, because
+     * this is that fact seen from the dialog rather than a second name for it.
+     */
+    rangeBroken: (high: boolean) => `past the ${high ? 'high' : 'low'}`,
+
+    /**
      * The coil, worded without naming a window: the row it sits on is already
      * labelled with the period, where the board's own version has only one and
      * so says "the last 2h" out loud.

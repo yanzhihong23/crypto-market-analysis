@@ -4,6 +4,7 @@ import useOkxBackdrop from '../hooks/useOkxBackdrop'
 import useOkxTimeframes from '../hooks/useOkxTimeframes'
 import { numericFont } from '../fonts'
 import { useMessages } from '../i18n'
+import type { Messages } from '../i18n/en'
 import { formatNumber } from '../utils'
 import { isMonthRungReading } from '../utils/backdrop'
 import { formatSigmas } from '../utils/signals'
@@ -50,6 +51,20 @@ const SIGMA_WORTH_PRINTING = 1
  * direction, so this is not a number that already has one.
  */
 const SIGMA_UNUSUAL = 2
+
+/**
+ * Where in the month's range, or that it is no longer in it.
+ *
+ * `rangePositionOf` is deliberately unclamped — the breakout detectors read the
+ * overshoot — so this is the first surface that has had to print the raw value,
+ * and `-1%` is not a share of anything. The track underneath has already pinned
+ * its marker to the end of the range, which left the number and the marker
+ * telling the reader two different things about the same price.
+ */
+function rangePositionLabel(position: number, t: Messages) {
+  if (position < 0 || position > 1) return t.timeframe.rangeBroken(position > 1)
+  return `${Math.round(position * 100)}%`
+}
 
 /** Two decimals until the move is big enough that the second is noise. */
 const formatMove = (move: number) =>
@@ -309,7 +324,7 @@ export default function TimeframeGrid({
                     ...numericFont,
                   }}
                 >
-                  {Math.round(month.rangePosition * 100)}%
+                  {rangePositionLabel(month.rangePosition, t)}
                   {month.range &&
                     ` · ${formatNumber(month.range.low, 6)} – ${formatNumber(month.range.high, 6)}`}
                 </Typography>
