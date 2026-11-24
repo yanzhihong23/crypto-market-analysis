@@ -2,7 +2,8 @@
  * Over the sparkline rather than pinned to the card's bottom edge, which is
  * where the chips now sit. The chart is the one thing on the card that can
  * afford to be covered: it is the shape of the session, and the buttons are only
- * up while a cursor is on the card.
+ * up while a fine pointer hovers the card — or, on touch, while a tap has opened
+ * the bar (see TickerContainer). Never always-visible on mobile.
  *
  * Shared with the skeleton, which draws a bar of its own so a card still waiting
  * on its first message can be taken off the board.

@@ -42,7 +42,7 @@ function OkxTickerCardSkeleton({
   const t = useMessages()
 
   return (
-    <TickerContainer pending minWidth={236}>
+    <TickerContainer pending minWidth={236} tapActions>
       <Stack
         direction="row"
         sx={{
