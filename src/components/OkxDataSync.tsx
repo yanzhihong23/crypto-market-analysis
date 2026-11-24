@@ -12,6 +12,10 @@ import useOkxOpenInterestUpdater from '../hooks/useOkxOpenInterestUpdater'
 import useOkxAlerts from '../hooks/useOkxAlerts'
 import { useOkxTickers } from '../hooks/useOkxTickers'
 import { okxTickerActions } from '../okx/okxTickerActions'
+import { settleWithConcurrency } from '../utils/settleWithConcurrency'
+
+/** Cap concurrent REST fills for one newly added symbol. */
+const ADD_REST_CONCURRENCY = 3
 
 export default function OkxDataSync() {
   useOkxInstrumentsUpdater()
@@ -28,14 +32,25 @@ export default function OkxDataSync() {
 
   useEffect(() => {
     okxTickerActions.add = async (instId: string) => {
+      // WS subscribe returns once the message is sent (or no-ops if the socket
+      // is down — the next open resubscribes the whole watchlist).
       await add(instId)
-      await updateRatioByInstId(instId)
-      await updateTakerFlowByInstId(instId)
-      await updateDivergenceByInstId(instId)
-      await updateFundingBaselineByInstId(instId)
-      await updateMomentumBaselineByInstId(instId)
-      await updateDailyStatsByInstId(instId)
-      await updateOpenInterestOpenByInstId(instId)
+
+      // REST fills chips as each field lands (`common.missing` until then).
+      // Do not hold this action open for the whole suite: seven serial awaits
+      // left half-empty cards for a long stretch and queued rapid adds.
+      void settleWithConcurrency(
+        [
+          () => updateRatioByInstId(instId),
+          () => updateTakerFlowByInstId(instId),
+          () => updateDivergenceByInstId(instId),
+          () => updateFundingBaselineByInstId(instId),
+          () => updateMomentumBaselineByInstId(instId),
+          () => updateDailyStatsByInstId(instId),
+          () => updateOpenInterestOpenByInstId(instId),
+        ],
+        ADD_REST_CONCURRENCY,
+      )
     }
     okxTickerActions.remove = remove
   }, [
