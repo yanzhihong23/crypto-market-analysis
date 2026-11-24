@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react'
+import { useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import {
   ResponsiveContainer,
@@ -15,6 +16,12 @@ import {
 import type { LabelProps, TickItem } from 'recharts'
 
 import { useMessages } from '../i18n'
+
+/**
+ * Same gate as `TickerContainer`: true hover with a mouse / trackpad — not a
+ * finger that leaves sticky :hover while the dialog scrolls.
+ */
+const FINE_POINTER_QUERY = '(hover: hover) and (pointer: fine)'
 
 /**
  * Recharts does not export the type; this is the shape of the callback form,
@@ -96,6 +103,13 @@ export default function BaseAreaChart({
   const [isUp, setIsUp] = useState(true)
   const theme = useTheme()
   const t = useMessages()
+  // Hover tooltip only where a fine pointer can leave again. Touch scroll over
+  // the chart otherwise sticks the crosshair and the box the way sticky :hover
+  // stuck the card action bar — recharts' click trigger reads a separate
+  // interaction slot, so a finger drag that never clicks never opens it.
+  const finePointer = useMediaQuery(FINE_POINTER_QUERY)
+  // Narrow viewport: the default recharts box eats a third of a phone chart.
+  const compactTooltip = useMediaQuery(theme.breakpoints.down('sm'))
   // Unique per instance: a fixed id makes every chart on the page resolve to
   // the first one's <defs>.
   const gradientId = `area-${useId().replace(/:/g, '')}`
@@ -204,6 +218,8 @@ export default function BaseAreaChart({
           />
         )}
         <Tooltip
+          // Fine pointer: hover. Touch: tap to inspect — scroll never arms it.
+          trigger={finePointer ? 'hover' : 'click'}
           labelFormatter={
             labelFormatter
               ? (label) => labelFormatter(Number(label))
@@ -225,10 +241,25 @@ export default function BaseAreaChart({
           wrapperStyle={{ border: 'none' }}
           contentStyle={{
             border: `1px solid ${theme.vars.palette.surface.border}`,
-            borderRadius: 8,
+            borderRadius: compactTooltip ? 6 : 8,
             background: theme.vars.palette.background.paper,
             color: theme.vars.palette.text.primary,
+            ...(compactTooltip && {
+              fontSize: 11,
+              lineHeight: 1.3,
+              padding: '6px 8px',
+            }),
           }}
+          labelStyle={
+            compactTooltip
+              ? { fontSize: 11, marginBottom: 2, lineHeight: 1.3 }
+              : undefined
+          }
+          itemStyle={
+            compactTooltip
+              ? { fontSize: 11, padding: '1px 0', lineHeight: 1.3 }
+              : undefined
+          }
         />
         {/* Declared before the area so the stroke crosses over it. */}
         {referenceY !== undefined && (

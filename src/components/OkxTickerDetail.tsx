@@ -335,13 +335,29 @@ export default function OkxTickerDetail({
           sx: {
             border: `1px solid ${theme.vars.palette.surface.border}`,
             backgroundImage: 'none',
+            // Fullscreen: header chrome stays put; only DialogContent scrolls.
+            // Without this the whole paper is one scrollport and the close row
+            // rides away with the charts.
+            ...(fullScreen && {
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }),
           },
         },
       }}
     >
       <Stack
         direction="row"
-        sx={{ alignItems: 'center', gap: 2, px: 3, pt: 2.5, pb: 1.5 }}
+        sx={{
+          alignItems: 'center',
+          gap: 2,
+          px: 3,
+          pt: fullScreen ? 'max(20px, env(safe-area-inset-top, 0px))' : 2.5,
+          pb: 1.5,
+          flexShrink: 0,
+          backgroundColor: 'background.paper',
+        }}
       >
         <SymbolAvatar instId={instId} size={28} />
         {/* Never shrunk. Left free to, flexbox took the quote currency's
@@ -450,6 +466,8 @@ export default function OkxTickerDetail({
           gap: 2,
           px: 3,
           pb: 1.5,
+          flexShrink: 0,
+          backgroundColor: 'background.paper',
         }}
       >
         <OkxMarketMetrics instId={instId} signals={signals} />
@@ -461,7 +479,19 @@ export default function OkxTickerDetail({
         />
       </Stack>
 
-      <DialogContent sx={{ px: 3, pb: 3, pt: 0 }}>
+      <DialogContent
+        sx={{
+          px: 3,
+          pb: fullScreen ? 'max(24px, env(safe-area-inset-bottom, 0px))' : 3,
+          pt: 0,
+          ...(fullScreen && {
+            flex: '1 1 auto',
+            minHeight: 0,
+            overflow: 'auto',
+            WebkitOverflowScrolling: 'touch',
+          }),
+        }}
+      >
         {detail.loading && !detail.price.length ? (
           <Stack sx={{ alignItems: 'center', py: 10 }}>
             <CircularProgress size={28} />
