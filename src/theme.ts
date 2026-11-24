@@ -417,15 +417,26 @@ const theme = createTheme({
     },
     MuiDialog: {
       styleOverrides: {
-        paperWidthXs: {
-          maxWidth: '464px',
-        },
-        paperWidthMd: {
-          maxWidth: '680px',
-        },
-        paper: {
-          margin: '16px',
-        },
+        // Cap inset dialogs only. These used to apply even with `fullScreen`,
+        // so a phone detail sheet kept a 16px margin, a 680px max width and
+        // the shape radius — reading as a floating card instead of the
+        // viewport. Skip the caps when `fullScreen` so MUI's paperFullScreen
+        // (and any component sx) can own the whole screen.
+        paperWidthXs: ({ ownerState }) =>
+          ownerState.fullScreen ? {} : { maxWidth: '464px' },
+        paperWidthMd: ({ ownerState }) =>
+          ownerState.fullScreen ? {} : { maxWidth: '680px' },
+        paper: ({ ownerState }) =>
+          ownerState.fullScreen
+            ? {
+                margin: 0,
+                width: '100%',
+                maxWidth: '100%',
+                height: '100%',
+                maxHeight: 'none',
+                borderRadius: 0,
+              }
+            : { margin: '16px' },
       },
     },
     MuiAlert: {

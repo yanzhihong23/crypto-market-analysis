@@ -333,16 +333,29 @@ export default function OkxTickerDetail({
       slotProps={{
         paper: {
           sx: {
-            border: `1px solid ${theme.vars.palette.surface.border}`,
             backgroundImage: 'none',
-            // Fullscreen: header chrome stays put; only DialogContent scrolls.
-            // Without this the whole paper is one scrollport and the close row
-            // rides away with the charts.
-            ...(fullScreen && {
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-            }),
+            // Desktop inset dialog keeps the surface border. Fullscreen must
+            // not — a 1px frame on top of theme margin/maxWidth is what made
+            // #156 still look like a floating card on a phone.
+            ...(fullScreen
+              ? {
+                  // True viewport cover. Theme used to leave margin:16px and
+                  // paperWidthMd maxWidth:680px even with fullScreen={true}.
+                  margin: 0,
+                  width: '100vw',
+                  maxWidth: '100vw',
+                  height: '100dvh',
+                  maxHeight: '100dvh',
+                  borderRadius: 0,
+                  border: 'none',
+                  // Header chrome stays put; only DialogContent scrolls.
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                }
+              : {
+                  border: `1px solid ${theme.vars.palette.surface.border}`,
+                }),
           },
         },
       }}
