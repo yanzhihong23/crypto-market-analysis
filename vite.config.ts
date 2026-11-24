@@ -43,6 +43,20 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), svgr()],
+    build: {
+      // Vite 8 defaults to baseline-widely-available (safari/ios 16.4+). Keep
+      // iPadOS 15 Safari in the support floor so Oxc still downlevels for it.
+      target: ['es2020', 'safari15', 'ios15'],
+      // Safari (unlike Chrome on the same iPadOS 15 device) has reused
+      // <link rel="modulepreload"> scripts across reloads in ways that mix
+      // entry/chunk graphs and surface:
+      //   SyntaxError: Importing binding name 'Ft' is not found
+      // during linkAndEvaluateModule. 'Ft' is the minified export for the
+      // shared vendor chunk's require_react facade — present in the file,
+      // missing only when Safari links a mismatched preload set. Skip
+      // modulepreload so the entry's static imports own the graph.
+      modulePreload: false,
+    },
     server: {
       // The dev-side half of the `/okx` rewrite that `vercel.json` sets up for
       // production. Only rubik/ needs it; the rest of the API is fetched direct.
