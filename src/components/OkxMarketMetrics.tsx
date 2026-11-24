@@ -11,16 +11,23 @@ import {
 } from '../hooks/useTickerField'
 import { useOkxOpenInterest, useOkxPercent } from '../hooks/useOkxOpenInterest'
 import useMinute from '../hooks/useMinute'
-import useOkxSignals from '../hooks/useOkxSignals'
 import { formatCountdown, isImminent, msUntilFunding } from '../utils/funding'
 import { describeFlow, flowRead } from '../utils/openInterest'
 import { signalOf } from '../utils/detectors'
+import type { Signal } from '../utils/signals'
 import { compactNumberFormatter } from '../utils'
 import { useMessages } from '../i18n'
 
 import { metricChipSx, signalChipSx } from './metricChipSx'
 
-function OkxMarketMetrics({ instId }: { instId: string }) {
+function OkxMarketMetrics({
+  instId,
+  signals,
+}: {
+  instId: string
+  /** Built once on the card so chips share the same pass as the pulse/ring. */
+  signals: Signal[]
+}) {
   const volCcyQuote = useVolCcyQuote(instId)
   const ratio = useRatio(instId)
   const takerFlow = useTakerFlow(instId)
@@ -29,7 +36,6 @@ function OkxMarketMetrics({ instId }: { instId: string }) {
   const openInterest = useOkxOpenInterest(instId)
   const openInterestOpen = useOpenInterestOpen(instId)
   const pricePercent = useOkxPercent(instId)
-  const { signals } = useOkxSignals(instId)
   const t = useMessages()
 
   // Each of these arrives on its own channel, so a card can hold two real
