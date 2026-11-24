@@ -229,6 +229,66 @@ interface TickerStore {
   setKlineVolume: (klineVolume: boolean) => void
 }
 
+/**
+ * Every store field that is a Record keyed by instId.
+ *
+ * Arrays and functions also satisfy `Record` in TypeScript's structural
+ * typing, so both are carved out. What remains are the per-instrument maps —
+ * the ones `removeInstId` promises to take with the symbol.
+ */
+type InstIdRecordKey = {
+  [K in keyof TickerStore]-?: TickerStore[K] extends Record<string, unknown>
+    ? TickerStore[K] extends readonly unknown[]
+      ? never
+      : TickerStore[K] extends (...args: never[]) => unknown
+        ? never
+        : K
+    : never
+}[keyof TickerStore]
+
+const withoutInstId = <T>(record: Record<string, T>, instId: string) => {
+  const rest = { ...record }
+  delete rest[instId]
+  return rest
+}
+
+/**
+ * Drop one instrument from every Record that lives under its name.
+ *
+ * The return is typed as a full `Pick` of every `InstIdRecordKey`, so a keyed
+ * field added to `TickerStore` will not build until it is named here — the same
+ * class of protection `NUMERIC_FIELDS` gives `isDailyStats`. The hand-written
+ * list that lived inside `removeInstId` used to miss `fundingSettlesAt` and
+ * `dailyStatsOpenTime` for exactly that reason.
+ */
+const clearInstIdRecords = (
+  state: TickerStore,
+  instId: string,
+): Pick<TickerStore, InstIdRecordKey> => ({
+  klineData: withoutInstId(state.klineData, instId),
+  volCcyQuote: withoutInstId(state.volCcyQuote, instId),
+  ratio: withoutInstId(state.ratio, instId),
+  takerFlow: withoutInstId(state.takerFlow, instId),
+  divergence: withoutInstId(state.divergence, instId),
+  fundingRate: withoutInstId(state.fundingRate, instId),
+  fundingTime: withoutInstId(state.fundingTime, instId),
+  fundingBaseline: withoutInstId(state.fundingBaseline, instId),
+  fundingShiftBaseline: withoutInstId(state.fundingShiftBaseline, instId),
+  fundingPrev: withoutInstId(state.fundingPrev, instId),
+  fundingCarry: withoutInstId(state.fundingCarry, instId),
+  fundingBaselineAt: withoutInstId(state.fundingBaselineAt, instId),
+  fundingSettlesAt: withoutInstId(state.fundingSettlesAt, instId),
+  momentumBaseline: withoutInstId(state.momentumBaseline, instId),
+  momentumBaselineAt: withoutInstId(state.momentumBaselineAt, instId),
+  coil: withoutInstId(state.coil, instId),
+  oiChangeBaseline: withoutInstId(state.oiChangeBaseline, instId),
+  dailyStats: withoutInstId(state.dailyStats, instId),
+  dailyStatsAt: withoutInstId(state.dailyStatsAt, instId),
+  dailyStatsOpenTime: withoutInstId(state.dailyStatsOpenTime, instId),
+  dailyOiPercentile: withoutInstId(state.dailyOiPercentile, instId),
+  openInterestOpen: withoutInstId(state.openInterestOpen, instId),
+})
+
 export const useTickerStore = create<TickerStore>()(
   persist(
     (set) => ({
@@ -248,40 +308,13 @@ export const useTickerStore = create<TickerStore>()(
       ],
       setInstIds: (instIds: string[]) => set({ instIds }),
       removeInstId: (instId: string) =>
-        set((state) => {
-          const without = <T>(record: Record<string, T>) => {
-            const rest = { ...record }
-            delete rest[instId]
-            return rest
-          }
-
-          return {
-            instIds: state.instIds.filter((id) => id !== instId),
-            // Otherwise the pin outlives the card and reappears if the symbol
-            // is added back later.
-            pinnedInstIds: state.pinnedInstIds.filter((id) => id !== instId),
-            klineData: without(state.klineData),
-            volCcyQuote: without(state.volCcyQuote),
-            ratio: without(state.ratio),
-            takerFlow: without(state.takerFlow),
-            divergence: without(state.divergence),
-            fundingRate: without(state.fundingRate),
-            fundingTime: without(state.fundingTime),
-            fundingBaseline: without(state.fundingBaseline),
-            fundingShiftBaseline: without(state.fundingShiftBaseline),
-            fundingPrev: without(state.fundingPrev),
-            fundingCarry: without(state.fundingCarry),
-            fundingBaselineAt: without(state.fundingBaselineAt),
-            momentumBaseline: without(state.momentumBaseline),
-            momentumBaselineAt: without(state.momentumBaselineAt),
-            coil: without(state.coil),
-            oiChangeBaseline: without(state.oiChangeBaseline),
-            dailyStats: without(state.dailyStats),
-            dailyStatsAt: without(state.dailyStatsAt),
-            dailyOiPercentile: without(state.dailyOiPercentile),
-            openInterestOpen: without(state.openInterestOpen),
-          }
-        }),
+        set((state) => ({
+          ...clearInstIdRecords(state, instId),
+          instIds: state.instIds.filter((id) => id !== instId),
+          // Otherwise the pin outlives the card and reappears if the symbol
+          // is added back later.
+          pinnedInstIds: state.pinnedInstIds.filter((id) => id !== instId),
+        })),
       pinnedInstIds: [],
       togglePinned: (instId: string) =>
         set((state) => ({
