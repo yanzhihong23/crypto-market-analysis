@@ -26,6 +26,7 @@ import { compactNumberFormatter, formatNumber } from '../utils'
 import { numericFont } from '../fonts'
 import { useMessages } from '../i18n'
 import type { Messages } from '../i18n/en'
+import type { Signal } from '../utils/signals'
 
 import BaseAreaChart, { type SyncMethod } from './BaseAreaChart'
 import SegmentedToggle, { SegmentedOption } from './SegmentedToggle'
@@ -293,10 +294,13 @@ export default function OkxTickerDetail({
   instId,
   open,
   onClose,
+  signals,
 }: {
   instId: string
   open: boolean
   onClose: () => void
+  /** Same pass as the card — detail reuses chips without a second subscription. */
+  signals: Signal[]
 }) {
   const theme = useTheme()
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'))
@@ -448,7 +452,7 @@ export default function OkxTickerDetail({
           pb: 1.5,
         }}
       >
-        <OkxMarketMetrics instId={instId} />
+        <OkxMarketMetrics instId={instId} signals={signals} />
         <SegmentedToggle
           label={t.detail.window}
           value={detailWindow}

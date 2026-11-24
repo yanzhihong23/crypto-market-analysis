@@ -217,7 +217,7 @@ function OkxTickerCard({ instId }: { instId: string }) {
         />
       </Box>
 
-      <OkxMarketMetrics instId={instId} />
+      <OkxMarketMetrics instId={instId} signals={signals} />
 
       {/* Mounted only once it has been asked for, so the board does not carry a
           dialog and its four series for every card on it. */}
@@ -226,6 +226,7 @@ function OkxTickerCard({ instId }: { instId: string }) {
           instId={instId}
           open={detailOpen}
           onClose={handleCloseDetail}
+          signals={signals}
         />
       )}
     </TickerContainer>
