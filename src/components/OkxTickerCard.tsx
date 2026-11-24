@@ -146,6 +146,7 @@ function OkxTickerCard({ instId }: { instId: string }) {
       changePercent={changePercent}
       minWidth={236}
       flagged={flagged}
+      tapActions
       onDoubleClick={handleTogglePin}
     >
       <Stack
