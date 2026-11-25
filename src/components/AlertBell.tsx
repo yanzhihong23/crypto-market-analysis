@@ -14,6 +14,7 @@ import {
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import CloseIcon from '@mui/icons-material/Close'
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone'
+import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded'
 import { useCallback, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { formatDistanceToNowStrict } from 'date-fns'
@@ -37,11 +38,13 @@ function ChannelSwitch({
   label,
   checked,
   disabled,
+  action,
   onChange,
 }: {
   label: string
   checked: boolean
   disabled?: boolean
+  action?: React.ReactNode
   onChange: (checked: boolean) => void
 }) {
   return (
@@ -52,13 +55,16 @@ function ChannelSwitch({
         justifyContent: 'space-between',
       }}
     >
-      <Typography
-        sx={{
-          fontSize: 14,
-        }}
-      >
-        {label}
-      </Typography>
+      <Stack direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
+        <Typography
+          sx={{
+            fontSize: 14,
+          }}
+        >
+          {label}
+        </Typography>
+        {action}
+      </Stack>
       <Switch
         size="small"
         checked={checked}
@@ -244,6 +250,20 @@ export default function AlertBell() {
               <ChannelSwitch
                 label={t.alerts.sound}
                 checked={soundEnabled}
+                action={
+                  soundEnabled ? (
+                    <Tooltip title={t.alerts.testSound} arrow>
+                      <IconButton
+                        size="small"
+                        aria-label={t.alerts.testSound}
+                        onClick={() => beep('price')}
+                        sx={{ color: 'text.secondary', p: 0.25 }}
+                      >
+                        <VolumeUpRoundedIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </Tooltip>
+                  ) : undefined
+                }
                 onChange={toggleSound}
               />
 

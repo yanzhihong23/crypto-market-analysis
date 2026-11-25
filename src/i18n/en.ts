@@ -86,6 +86,7 @@ export const en = {
     blocked: 'Blocked for this site in your browser settings.',
     unsupported: 'This browser does not support notifications.',
     sound: 'Sound',
+    testSound: 'Test sound',
     /** Gates both channels above, so it reads as a condition on them. */
     onlyWhenAway: 'Only when I am away',
     awayMeans: 'Away is this window not being the one in front.',

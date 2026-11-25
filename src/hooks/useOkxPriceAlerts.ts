@@ -71,7 +71,7 @@ export default function useOkxPriceAlerts() {
             openOkxDetail(instId),
           )
         }
-        if (soundEnabled) beep()
+        if (soundEnabled) beep('price')
       }
     })
   }, [])

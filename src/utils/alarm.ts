@@ -48,30 +48,103 @@ export function showNotification(
 
 let audioContext: AudioContext | null = null
 
+export type AlertTone = 'signal' | 'price'
+
+interface ChimeNote {
+  freq: number
+  /** Start offset in seconds from the start of the chime. */
+  at: number
+  /** Ring duration in seconds. */
+  duration: number
+}
+
+// A-major intervals (A5 / C#6 / E6): cuts through ambient room noise on both
+// laptop and phone speakers without the harshness of a raw buzzer. Two pulses
+// separated by a short beat so a single ping is never lost while typing.
+const CHIMES: Record<AlertTone, readonly ChimeNote[]> = {
+  signal: [
+    { freq: 880, at: 0, duration: 0.24 },
+    { freq: 1108.73, at: 0.13, duration: 0.34 },
+    { freq: 880, at: 0.54, duration: 0.24 },
+    { freq: 1108.73, at: 0.67, duration: 0.4 },
+  ],
+  // Three-note ascending triad, repeated once, so hitting a user-set price
+  // target sounds immediately distinct from an automatic anomaly alert.
+  price: [
+    { freq: 880, at: 0, duration: 0.2 },
+    { freq: 1108.73, at: 0.11, duration: 0.2 },
+    { freq: 1318.51, at: 0.22, duration: 0.34 },
+    { freq: 880, at: 0.64, duration: 0.2 },
+    { freq: 1108.73, at: 0.75, duration: 0.2 },
+    { freq: 1318.51, at: 0.86, duration: 0.44 },
+  ],
+}
+
+function scheduleNote(
+  ctx: AudioContext,
+  destination: AudioNode,
+  startTime: number,
+  note: ChimeNote,
+) {
+  const t0 = startTime + note.at
+  const tEnd = t0 + note.duration
+
+  // Triangle fundamental carries gentle odd harmonics that stay audible on
+  // small speakers (a bare sine at 0.12 was nearly silent); a quiet octave
+  // sine overtone adds bell-like clarity.
+  const fundamental = ctx.createOscillator()
+  const overtone = ctx.createOscillator()
+  const fundGain = ctx.createGain()
+  const overGain = ctx.createGain()
+
+  fundamental.type = 'triangle'
+  fundamental.frequency.setValueAtTime(note.freq, t0)
+  overtone.type = 'sine'
+  overtone.frequency.setValueAtTime(note.freq * 2, t0)
+
+  // Ramped attack & exponential decay rather than switched on: avoids clicks.
+  fundGain.gain.setValueAtTime(0.0001, t0)
+  fundGain.gain.exponentialRampToValueAtTime(0.36, t0 + 0.012)
+  fundGain.gain.exponentialRampToValueAtTime(0.0001, tEnd)
+
+  overGain.gain.setValueAtTime(0.0001, t0)
+  overGain.gain.exponentialRampToValueAtTime(0.1, t0 + 0.01)
+  overGain.gain.exponentialRampToValueAtTime(0.0001, t0 + note.duration * 0.65)
+
+  fundamental.connect(fundGain).connect(destination)
+  overtone.connect(overGain).connect(destination)
+
+  fundamental.start(t0)
+  overtone.start(t0)
+  fundamental.stop(tEnd + 0.02)
+  overtone.stop(tEnd + 0.02)
+}
+
 /**
- * A short tone rather than an audio file: nothing to ship, nothing to fail to
- * load, and it cannot be mistaken for a notification from another app. Built on
- * demand because a context created before a user gesture starts out suspended.
+ * Synthesised multi-note chime rather than an audio file: nothing to ship,
+ * nothing to fail to load, and distinct from generic OS notifications. Built
+ * on demand because a context created before a user gesture starts suspended.
  */
-export function beep() {
+export function beep(tone: AlertTone = 'signal') {
   try {
     audioContext ??= new AudioContext()
-    if (audioContext.state === 'suspended') void audioContext.resume()
+    const ctx = audioContext
 
-    const now = audioContext.currentTime
-    const oscillator = audioContext.createOscillator()
-    const gain = audioContext.createGain()
+    const play = () => {
+      // Soft compressor prevents clipping if multiple symbols fire together.
+      const compressor = ctx.createDynamicsCompressor()
+      compressor.connect(ctx.destination)
+      const now = ctx.currentTime + 0.01
+      for (const note of CHIMES[tone]) {
+        scheduleNote(ctx, compressor, now, note)
+      }
+    }
 
-    oscillator.type = 'sine'
-    oscillator.frequency.setValueAtTime(880, now)
-    // Ramped rather than switched on: a square edge on a sine reads as a click.
-    gain.gain.setValueAtTime(0.0001, now)
-    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.015)
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3)
-
-    oscillator.connect(gain).connect(audioContext.destination)
-    oscillator.start(now)
-    oscillator.stop(now + 0.31)
+    if (ctx.state === 'suspended') {
+      void ctx.resume().then(play)
+    } else {
+      play()
+    }
   } catch (error) {
     console.error('Failed to play the alert tone:', error)
   }
