@@ -108,6 +108,7 @@ export const en = {
   },
 
   toolbar: {
+    controls: 'Display options',
     sortBy: 'Sort by',
     sortDefault: 'Default',
     sortGainers: 'Gainers',

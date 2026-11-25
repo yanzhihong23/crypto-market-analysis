@@ -86,6 +86,7 @@ export const zh: Messages = {
   },
 
   toolbar: {
+    controls: '显示设置',
     sortBy: '排序',
     sortDefault: '默认',
     sortGainers: '涨幅',

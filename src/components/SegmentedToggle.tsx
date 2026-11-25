@@ -65,10 +65,11 @@ export default function SegmentedToggle<T extends string>({
             // the cards below it do rather than past the edge of the screen.
             // Segments stay content-width from `sm` up, where they fit.
             flex: { xs: 1, sm: 'none' },
-            // Five even segments across a 360px phone leave about 62px each,
-            // and "Gainers" at the selected weight wants 63 of them. The
-            // narrower padding and type buy back the difference.
-            px: { xs: 0.75, sm: 1.5 },
+            // Five even segments across a 360px phone — especially when inset
+            // inside the collapsible toolbar card — leave under 60px each, and
+            // "Gainers" at the selected weight wants most of it. The narrower
+            // padding and type buy back the difference.
+            px: { xs: 0.5, sm: 1.5 },
             fontSize: { xs: 12, sm: 13 },
             whiteSpace: 'nowrap',
           },
