@@ -12,15 +12,27 @@ interface OkxDetailStore {
   instId: string | null
   open: (instId: string) => void
   close: () => void
+  priceAlertInstId: string | null
+  openPriceAlert: (instId: string) => void
+  closePriceAlert: () => void
 }
 
 export const useOkxDetailStore = create<OkxDetailStore>()((set) => ({
   instId: null,
   open: (instId) => set({ instId }),
   close: () => set({ instId: null }),
+  priceAlertInstId: null,
+  openPriceAlert: (priceAlertInstId) => set({ priceAlertInstId }),
+  closePriceAlert: () => set({ priceAlertInstId: null }),
 }))
 
 export const openOkxDetail = (instId: string) =>
   useOkxDetailStore.getState().open(instId)
 
 export const closeOkxDetail = () => useOkxDetailStore.getState().close()
+
+export const openOkxPriceAlert = (instId: string) =>
+  useOkxDetailStore.getState().openPriceAlert(instId)
+
+export const closeOkxPriceAlert = () =>
+  useOkxDetailStore.getState().closePriceAlert()

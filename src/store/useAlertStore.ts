@@ -1,9 +1,32 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-import { Signal, formatDeviation, formatSigmas } from '../utils/signals'
+import { formatDeviation, formatSigmas } from '../utils/signals'
 import type { BackdropReading } from '../utils/backdrop'
 import { currentMessages } from '../i18n'
+
+export type PriceAlertDirection = 'above' | 'below'
+
+/**
+ * A user-defined target price level for one OKX perpetual. One-shot by design:
+ * once live price crosses it, the rule fires into the shared alert stream and
+ * clears itself so oscillation around a level does not spam the log.
+ */
+export interface PriceAlertRule {
+  id: string
+  instId: string
+  price: number
+  direction: PriceAlertDirection
+  note?: string
+  createdAt: number
+}
+
+export interface AlertReason {
+  kind: string
+  deviation?: number | null
+  label: string
+  detail: string
+}
 
 export interface Alert {
   id: string
@@ -17,7 +40,7 @@ export interface Alert {
    * has rolled off long before anyone scrolls back to it, and an entry that
    * changed its mind about what happened would be worse than no entry.
    */
-  reasons: Signal[]
+  reasons: AlertReason[]
   /**
    * What had been true of this instrument for weeks when it fired, if anything.
    *
@@ -55,6 +78,10 @@ interface AlertStore {
   alerts: Alert[]
   push: (alert: Alert) => void
   clear: () => void
+  priceRules: PriceAlertRule[]
+  addPriceRule: (rule: Omit<PriceAlertRule, 'id' | 'createdAt'>) => void
+  removePriceRule: (id: string) => void
+  removePriceRulesForInstId: (instId: string) => void
   /** When the list was last opened, which is what the badge counts against. */
   seenAt: number
   markSeen: () => void
@@ -102,6 +129,34 @@ export const useAlertStore = create<AlertStore>()(
           alerts: [alert, ...state.alerts].slice(0, MAX_ALERTS),
         })),
       clear: () => set({ alerts: [], seenAt: Date.now() }),
+      priceRules: [],
+      addPriceRule: (rule) =>
+        set((state) => ({
+          priceRules: [
+            {
+              ...rule,
+              note: rule.note?.trim() || undefined,
+              id: `pr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+              createdAt: Date.now(),
+            },
+            ...state.priceRules,
+          ],
+        })),
+      removePriceRule: (id) =>
+        set((state) => ({
+          priceRules: state.priceRules.filter((rule) => rule.id !== id),
+        })),
+      removePriceRulesForInstId: (instId) =>
+        set((state) => {
+          if (!state.priceRules.some((rule) => rule.instId === instId)) {
+            return state
+          }
+          return {
+            priceRules: state.priceRules.filter(
+              (rule) => rule.instId !== instId,
+            ),
+          }
+        }),
       seenAt: 0,
       markSeen: () => set({ seenAt: Date.now() }),
       tapeEnabled: true,

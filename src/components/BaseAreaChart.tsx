@@ -48,6 +48,7 @@ export default function BaseAreaChart({
   valueName,
   stroke,
   referenceY,
+  alertLines,
   width = '99%',
   height = 300,
 }: {
@@ -92,6 +93,8 @@ export default function BaseAreaChart({
   stroke?: string
   /** A level the series is read against, e.g. zero for a funding rate. */
   referenceY?: number
+  /** User-set target price lines; drawn only when inside the visible Y range. */
+  alertLines?: { y: number; label: string }[]
   width?: number | `${number}%`
   height?: number | `${number}%`
   syncId?: string
@@ -270,6 +273,22 @@ export default function BaseAreaChart({
             strokeDasharray="3 3"
           />
         )}
+        {alertLines?.map((line) => (
+          <ReferenceLine
+            key={`${line.y}-${line.label}`}
+            yAxisId={volumeKey ? 'value' : undefined}
+            y={line.y}
+            ifOverflow="hidden"
+            stroke={theme.vars.palette.signal.main}
+            strokeDasharray="4 3"
+            label={{
+              value: line.label,
+              position: 'insideTopRight',
+              fill: theme.vars.palette.signal.main,
+              fontSize: 11,
+            }}
+          />
+        ))}
         {volumeKey && (
           <Bar
             yAxisId="volume"

@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@mui/material'
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
+import CloseIcon from '@mui/icons-material/Close'
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone'
 import { useCallback, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
@@ -24,6 +25,7 @@ import {
   notificationPermission,
   requestNotificationPermission,
 } from '../utils/alarm'
+import { formatNumber } from '../utils'
 import { numericFont } from '../fonts'
 import { useDateLocale, useMessages } from '../i18n'
 
@@ -69,6 +71,8 @@ function ChannelSwitch({
 
 export default function AlertBell() {
   const alerts = useAlertStore((state) => state.alerts)
+  const priceRules = useAlertStore((state) => state.priceRules)
+  const removePriceRule = useAlertStore((state) => state.removePriceRule)
   const seenAt = useAlertStore((state) => state.seenAt)
   const markSeen = useAlertStore((state) => state.markSeen)
   const clear = useAlertStore((state) => state.clear)
@@ -266,6 +270,98 @@ export default function AlertBell() {
         </Stack>
 
         <Divider />
+
+        {priceRules.length > 0 && (
+          <>
+            <Box sx={{ px: 2, py: 1.25 }}>
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  mb: 0.75,
+                }}
+              >
+                {t.priceAlert.activeCount(priceRules.length)}
+              </Typography>
+              <Stack sx={{ gap: 0.5, maxHeight: 144, overflowY: 'auto' }}>
+                {priceRules.map((rule) => {
+                  const symbol = rule.instId.split('-')[0]
+                  return (
+                    <Stack
+                      key={rule.id}
+                      direction="row"
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 1,
+                        borderRadius: '8px',
+                        '&:hover': { backgroundColor: 'surface.subtle' },
+                      }}
+                    >
+                      <ButtonBase
+                        aria-label={t.alerts.openDetail(symbol)}
+                        onClick={() => openAlertDetail(rule.instId)}
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                          display: 'flex',
+                          alignItems: 'baseline',
+                          justifyContent: 'flex-start',
+                          gap: 0.75,
+                          px: 1,
+                          py: 0.5,
+                          borderRadius: '8px',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <Typography
+                          component="span"
+                          sx={{ fontSize: 13, fontWeight: 600, flexShrink: 0 }}
+                        >
+                          {symbol}
+                        </Typography>
+                        <Typography
+                          component="span"
+                          sx={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: 'signal.main',
+                            flexShrink: 0,
+                            ...numericFont,
+                          }}
+                        >
+                          {t.priceAlert.ruleShort(
+                            rule.direction === 'above',
+                            formatNumber(rule.price, 8),
+                          )}
+                        </Typography>
+                        {rule.note && (
+                          <Typography
+                            component="span"
+                            noWrap
+                            sx={{ fontSize: 11, color: 'text.secondary' }}
+                          >
+                            {rule.note}
+                          </Typography>
+                        )}
+                      </ButtonBase>
+                      <IconButton
+                        size="small"
+                        aria-label={t.priceAlert.delete}
+                        onClick={() => removePriceRule(rule.id)}
+                        sx={{ color: 'text.secondary', p: 0.5 }}
+                      >
+                        <CloseIcon sx={{ fontSize: 14 }} />
+                      </IconButton>
+                    </Stack>
+                  )
+                })}
+              </Stack>
+            </Box>
+            <Divider />
+          </>
+        )}
 
         {alerts.length === 0 ? (
           <Typography

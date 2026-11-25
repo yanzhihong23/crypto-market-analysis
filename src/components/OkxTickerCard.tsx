@@ -15,9 +15,11 @@ import {
   type MouseEvent,
   type TouchEvent,
 } from 'react'
+import AddAlertOutlinedIcon from '@mui/icons-material/AddAlertOutlined'
 import BookmarkRemoveIcon from '@mui/icons-material/BookmarkRemoveOutlined'
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
 import DriveFileMoveOutlinedIcon from '@mui/icons-material/DriveFileMoveOutlined'
+import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined'
 import QueryStatsIcon from '@mui/icons-material/QueryStats'
 import StarIcon from '@mui/icons-material/Star'
 import StarBorderIcon from '@mui/icons-material/StarBorder'
@@ -30,9 +32,11 @@ import {
   groupIdOf,
   useTickerStore,
 } from '../store/useTickerStore'
-import { openOkxDetail } from '../store/useOkxDetailStore'
+import { useAlertStore } from '../store/useAlertStore'
+import { openOkxDetail, openOkxPriceAlert } from '../store/useOkxDetailStore'
 import { removeOkxTicker } from '../store/okxRealtimeTicker'
 import { okxTickerActions } from '../okx/okxTickerActions'
+import { formatNumber } from '../utils'
 import { numericFont } from '../fonts'
 import { useMessages } from '../i18n'
 
@@ -60,15 +64,19 @@ import {
 const CardActions = memo(function CardActions({
   instId,
   pinned,
+  hasPriceAlerts,
   compact = false,
   onOpenDetail,
+  onOpenPriceAlert,
   onTogglePin,
   onRemove,
 }: {
   instId: string
   pinned: boolean
+  hasPriceAlerts: boolean
   compact?: boolean
   onOpenDetail: () => void
+  onOpenPriceAlert: () => void
   onTogglePin: () => void
   onRemove: () => void
 }) {
@@ -109,6 +117,20 @@ const CardActions = memo(function CardActions({
           sx={{ color: 'text.secondary' }}
         >
           <QueryStatsIcon />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title={t.priceAlert.action} arrow>
+        <IconButton
+          size="small"
+          aria-label={t.priceAlert.action}
+          onClick={onOpenPriceAlert}
+          sx={{ color: hasPriceAlerts ? 'signal.main' : 'text.secondary' }}
+        >
+          {hasPriceAlerts ? (
+            <NotificationsActiveOutlinedIcon sx={{ fontSize: 19 }} />
+          ) : (
+            <AddAlertOutlinedIcon sx={{ fontSize: 19 }} />
+          )}
         </IconButton>
       </Tooltip>
       {/* The pin is reachable by double-clicking the card, which nothing on the
@@ -214,6 +236,13 @@ function OkxTickerCard({ instId }: { instId: string }) {
   const backdrop = useOkxBackdrop(instId)
   const pinned = useTickerStore((state) => state.pinnedInstIds.includes(instId))
   const compact = useTickerStore((state) => state.compactCard)
+  const allPriceRules = useAlertStore((state) => state.priceRules)
+  const messages = useMessages()
+  const priceRules = useMemo(
+    () => allPriceRules.filter((rule) => rule.instId === instId),
+    [allPriceRules, instId],
+  )
+  const hasPriceAlerts = priceRules.length > 0
 
   // A chip or the badge carries any single reading on its own; the card only
   // claims the ring once two of the three kinds of reading agree, which is the
@@ -230,6 +259,7 @@ function OkxTickerCard({ instId }: { instId: string }) {
     void okxTickerActions.remove(instId)
     removeOkxTicker(instId)
     useTickerStore.getState().removeInstId(instId)
+    useAlertStore.getState().removePriceRulesForInstId(instId)
   }, [instId])
 
   const handleTogglePin = useCallback(() => {
@@ -240,6 +270,10 @@ function OkxTickerCard({ instId }: { instId: string }) {
   // card: the card already answers a double-click by pinning, and a single
   // click that opened a dialog would fire on the way to every one of those.
   const handleOpenDetail = useCallback(() => openOkxDetail(instId), [instId])
+  const handleOpenPriceAlert = useCallback(
+    () => openOkxPriceAlert(instId),
+    [instId],
+  )
 
   if (!ready) {
     return (
@@ -276,6 +310,28 @@ function OkxTickerCard({ instId }: { instId: string }) {
         >
           <OkxLogoSymbol instId={instId} />
           {pinned && <StarIcon sx={{ fontSize: 14, color: 'primary.main' }} />}
+          {hasPriceAlerts && (
+            <Tooltip
+              title={priceRules
+                .map((rule) =>
+                  [
+                    messages.priceAlert.ruleShort(
+                      rule.direction === 'above',
+                      formatNumber(rule.price, 8),
+                    ),
+                    rule.note,
+                  ]
+                    .filter(Boolean)
+                    .join(' · '),
+                )
+                .join(' / ')}
+              arrow
+            >
+              <NotificationsActiveOutlinedIcon
+                sx={{ fontSize: 14, color: 'signal.main', flexShrink: 0 }}
+              />
+            </Tooltip>
+          )}
         </Stack>
 
         {/* Both readings of the same 24h change, so they sit together. */}
@@ -317,7 +373,9 @@ function OkxTickerCard({ instId }: { instId: string }) {
           instId={instId}
           compact
           pinned={pinned}
+          hasPriceAlerts={hasPriceAlerts}
           onOpenDetail={handleOpenDetail}
+          onOpenPriceAlert={handleOpenPriceAlert}
           onTogglePin={handleTogglePin}
           onRemove={handleRemove}
         />
@@ -345,7 +403,9 @@ function OkxTickerCard({ instId }: { instId: string }) {
             <CardActions
               instId={instId}
               pinned={pinned}
+              hasPriceAlerts={hasPriceAlerts}
               onOpenDetail={handleOpenDetail}
+              onOpenPriceAlert={handleOpenPriceAlert}
               onTogglePin={handleTogglePin}
               onRemove={handleRemove}
             />

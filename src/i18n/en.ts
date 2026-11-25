@@ -96,6 +96,26 @@ export const en = {
     openDetail: (symbol: string) => `Open ${symbol} details`,
   },
 
+  priceAlert: {
+    action: 'Price alert',
+    title: (symbol: string) => `${symbol} price alert`,
+    currentPrice: (price: string) => `Last ${price}`,
+    direction: 'Condition',
+    above: 'Above ≥',
+    below: 'Below ≤',
+    targetLabel: 'Target price',
+    targetPlaceholder: 'Enter target price',
+    notePlaceholder: 'Optional note, e.g. resistance or stop level',
+    activeTitle: 'Active price alerts',
+    activeCount: (count: number) => `Price alerts (${count})`,
+    delete: 'Remove price alert',
+    ruleShort: (above: boolean, price: string) =>
+      `${above ? '≥' : '≤'} ${price}`,
+    triggeredHeadline: (above: boolean, price: string) =>
+      above ? `Crossed above ${price}` : `Crossed below ${price}`,
+    triggeredPrice: (price: string) => `Last ${price}`,
+  },
+
   addTicker: {
     /** The button, its label and the dialog's title are one phrase. */
     action: 'Add ticker',

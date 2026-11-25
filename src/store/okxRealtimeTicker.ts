@@ -5,6 +5,7 @@ import { removeOkxSpread } from './okxRealtimeSpread'
 import { removeOkxLiquidation } from './okxRealtimeLiquidation'
 
 type Listener = () => void
+type LivePriceListener = (instId: string, last: number) => void
 
 const tickers = new Map<string, OkxTickerFormatted>()
 const percent = new Map<string, number>()
@@ -18,6 +19,12 @@ const openInterest = new Map<string, string>()
 const tickerListeners = new Map<string, Set<Listener>>()
 const percentListeners = new Map<string, Set<Listener>>()
 const openInterestListeners = new Map<string, Set<Listener>>()
+/**
+ * Fires synchronously on every arriving websocket tick, bypassing the
+ * `requestAnimationFrame` render flush so price-level alerts still fire while
+ * the tab is in the background.
+ */
+const livePriceListeners = new Set<LivePriceListener>()
 
 const subscribeByInstId = (
   registry: Map<string, Set<Listener>>,
@@ -74,6 +81,13 @@ export const subscribeOkxPercent = (instId: string, listener: Listener) =>
 
 export const subscribeOkxOpenInterest = (instId: string, listener: Listener) =>
   subscribeByInstId(openInterestListeners, instId, listener)
+
+export const subscribeOkxLivePrice = (listener: LivePriceListener) => {
+  livePriceListeners.add(listener)
+  return () => {
+    livePriceListeners.delete(listener)
+  }
+}
 
 export const getOkxTickerSnapshot = (instId: string) => tickers.get(instId)
 
@@ -201,6 +215,13 @@ export const updateOkxTicker = (instId: string, ticker: OkxTickerFormatted) => {
   pendingTickers.set(instId, ticker)
   scheduleTickerFlush()
   schedulePercentUpdate(instId, Number(ticker.percent))
+
+  if (livePriceListeners.size > 0) {
+    const last = Number(ticker.last)
+    if (Number.isFinite(last) && last > 0) {
+      livePriceListeners.forEach((listener) => listener(instId, last))
+    }
+  }
 }
 
 export const removeOkxTicker = (instId: string) => {

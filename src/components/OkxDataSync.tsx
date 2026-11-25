@@ -10,6 +10,7 @@ import useOkxMomentumBaselineUpdater from '../hooks/useOkxMomentumBaselineUpdate
 import useOkxDailyStatsUpdater from '../hooks/useOkxDailyStatsUpdater'
 import useOkxOpenInterestUpdater from '../hooks/useOkxOpenInterestUpdater'
 import useOkxAlerts from '../hooks/useOkxAlerts'
+import useOkxPriceAlerts from '../hooks/useOkxPriceAlerts'
 import { useOkxTickers } from '../hooks/useOkxTickers'
 import { okxTickerActions } from '../okx/okxTickerActions'
 import { settleWithConcurrency } from '../utils/settleWithConcurrency'
@@ -29,6 +30,7 @@ export default function OkxDataSync() {
   const { updateDailyStatsByInstId } = useOkxDailyStatsUpdater()
   const { updateOpenInterestOpenByInstId } = useOkxOpenInterestUpdater()
   useOkxAlerts()
+  useOkxPriceAlerts()
 
   useEffect(() => {
     okxTickerActions.add = async (instId: string) => {

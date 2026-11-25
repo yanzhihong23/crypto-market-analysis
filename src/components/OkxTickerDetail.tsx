@@ -1,21 +1,27 @@
 import {
   Box,
+  Chip,
   CircularProgress,
   Dialog,
   DialogContent,
   Divider,
   IconButton,
   Stack,
+  Tooltip,
   Typography,
   useMediaQuery,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import AddAlertOutlinedIcon from '@mui/icons-material/AddAlertOutlined'
 import CloseIcon from '@mui/icons-material/Close'
-import { useId, useState } from 'react'
+import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined'
+import { useId, useMemo, useState } from 'react'
 import { format } from 'date-fns'
 
 import useOkxTicker from '../hooks/useOkxTicker'
 import useOkxBackdrop from '../hooks/useOkxBackdrop'
+import { useAlertStore } from '../store/useAlertStore'
+import { openOkxPriceAlert } from '../store/useOkxDetailStore'
 import { isMonthRungReading } from '../utils/backdrop'
 import useOkxTickerDetail, {
   DETAIL_TOOLTIP_FORMAT,
@@ -224,6 +230,7 @@ function ChartSection({
   data,
   stroke,
   referenceY,
+  alertLines,
   height,
   syncId,
   volumeKey,
@@ -240,6 +247,7 @@ function ChartSection({
   data: SeriesPoint[]
   stroke?: string
   referenceY?: number
+  alertLines?: { y: number; label: string }[]
   height: number
   /** Passed by the charts that share the window, and so share a cursor. */
   syncId?: string
@@ -287,6 +295,7 @@ function ChartSection({
           height={height}
           stroke={stroke}
           referenceY={referenceY}
+          alertLines={alertLines}
           syncId={syncId}
           syncMethod={syncByTime}
           xDataFormatter={xDataFormatter}
@@ -340,10 +349,28 @@ export default function OkxTickerDetail({
   // Nothing is fetched until the dialog is open, so a board of thirty cards
   // does not carry thirty sets of history it will never show.
   const detail = useOkxTickerDetail(instId, detailWindow, open)
+  const allPriceRules = useAlertStore((state) => state.priceRules)
+  const removePriceRule = useAlertStore((state) => state.removePriceRule)
+  const priceRules = useMemo(
+    () => allPriceRules.filter((rule) => rule.instId === instId),
+    [allPriceRules, instId],
+  )
   const t = useMessages()
   // Per dialog: two of these open at once would otherwise hand each other a
   // cursor for a symbol the other is not showing.
   const windowSyncId = useId()
+
+  const alertLines = useMemo(
+    () =>
+      priceRules.map((rule) => ({
+        y: rule.price,
+        label: t.priceAlert.ruleShort(
+          rule.direction === 'above',
+          formatNumber(rule.price, 8),
+        ),
+      })),
+    [priceRules, t],
+  )
 
   const [symbol, ...rest] = instId.split('-')
   const neutral = theme.vars.palette.primary.main
@@ -501,13 +528,33 @@ export default function OkxTickerDetail({
           </>
         )}
 
-        <IconButton
-          aria-label={t.common.close}
-          onClick={onClose}
-          sx={{ color: 'text.secondary', ml: 'auto' }}
+        <Stack
+          direction="row"
+          sx={{ alignItems: 'center', gap: 0.5, ml: 'auto', flexShrink: 0 }}
         >
-          <CloseIcon />
-        </IconButton>
+          <Tooltip title={t.priceAlert.action} arrow>
+            <IconButton
+              aria-label={t.priceAlert.action}
+              onClick={() => openOkxPriceAlert(instId)}
+              sx={{
+                color: priceRules.length ? 'signal.main' : 'text.secondary',
+              }}
+            >
+              {priceRules.length ? (
+                <NotificationsActiveOutlinedIcon sx={{ fontSize: 20 }} />
+              ) : (
+                <AddAlertOutlinedIcon sx={{ fontSize: 20 }} />
+              )}
+            </IconButton>
+          </Tooltip>
+          <IconButton
+            aria-label={t.common.close}
+            onClick={onClose}
+            sx={{ color: 'text.secondary' }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Stack>
       </Stack>
 
       <DialogContent
@@ -561,6 +608,59 @@ export default function OkxTickerDetail({
                 <BackdropPanel instId={instId} />
               </Box>
             </Stack>
+
+            {priceRules.length > 0 && (
+              <>
+                <Divider />
+                <Stack
+                  direction="row"
+                  sx={{
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 0.75,
+                    px: 2,
+                    py: 1.25,
+                  }}
+                >
+                  <Typography
+                    sx={{ fontSize: 12, color: 'text.secondary', mr: 0.25 }}
+                  >
+                    {t.priceAlert.action}
+                  </Typography>
+                  {priceRules.map((rule) => {
+                    const label = [
+                      t.priceAlert.ruleShort(
+                        rule.direction === 'above',
+                        formatNumber(rule.price, 8),
+                      ),
+                      rule.note,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')
+                    return (
+                      <Chip
+                        key={rule.id}
+                        size="small"
+                        label={label}
+                        onDelete={() => removePriceRule(rule.id)}
+                        sx={{
+                          ...numericFont,
+                          backgroundColor: 'signal.surface',
+                          color: 'signal.main',
+                          fontWeight: 600,
+                          '& .MuiChip-deleteIcon': {
+                            color: 'signal.main',
+                            opacity: 0.7,
+                            fontSize: 15,
+                            '&:hover': { color: 'signal.main', opacity: 1 },
+                          },
+                        }}
+                      />
+                    )
+                  })}
+                </Stack>
+              </>
+            )}
           </Box>
 
           {fullScreen && (
@@ -630,6 +730,7 @@ export default function OkxTickerDetail({
                   )
                 }
                 data={detail.price}
+                alertLines={alertLines}
                 height={220}
                 syncId={windowSyncId}
                 volumeKey="volume"

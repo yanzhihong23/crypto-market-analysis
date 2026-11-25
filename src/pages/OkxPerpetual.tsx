@@ -25,9 +25,14 @@ import {
   orderedGroupIds,
   useTickerStore,
 } from '../store/useTickerStore'
-import { closeOkxDetail, useOkxDetailStore } from '../store/useOkxDetailStore'
+import {
+  closeOkxDetail,
+  closeOkxPriceAlert,
+  useOkxDetailStore,
+} from '../store/useOkxDetailStore'
 import OkxTickerCard from '../components/OkxTickerCard'
 import OkxTickerDetail from '../components/OkxTickerDetail'
+import OkxPriceAlertDialog from '../components/OkxPriceAlertDialog'
 import AddTickerButton, { AddTickerDialog } from '../components/AddTickerButton'
 import OkxDataSync from '../components/OkxDataSync'
 import OkxMarketToolbar from '../components/OkxMarketToolbar'
@@ -439,6 +444,19 @@ function OkxDetailHost() {
   )
 }
 
+function OkxPriceAlertHost() {
+  const instId = useOkxDetailStore((state) => state.priceAlertInstId)
+  if (!instId) return null
+  return (
+    <OkxPriceAlertDialog
+      key={instId}
+      instId={instId}
+      open
+      onClose={closeOkxPriceAlert}
+    />
+  )
+}
+
 export default function OkxPerpetual() {
   return (
     <Box>
@@ -446,6 +464,7 @@ export default function OkxPerpetual() {
       <OkxMarketToolbar />
       <OkxTickerGrid />
       <OkxDetailHost />
+      <OkxPriceAlertHost />
     </Box>
   )
 }

@@ -75,6 +75,25 @@ export const zh: Messages = {
     openDetail: (symbol) => `查看 ${symbol} 详情`,
   },
 
+  priceAlert: {
+    action: '价格预警',
+    title: (symbol) => `${symbol} 价格预警`,
+    currentPrice: (price) => `当前 ${price}`,
+    direction: '触发条件',
+    above: '突破 ≥',
+    below: '跌破 ≤',
+    targetLabel: '目标价',
+    targetPlaceholder: '输入目标价格',
+    notePlaceholder: '备注（可选），如：前高压力、关键支撑',
+    activeTitle: '监控中的价格预警',
+    activeCount: (count) => `价格预警 (${count})`,
+    delete: '删除预警',
+    ruleShort: (above, price) => `${above ? '≥' : '≤'} ${price}`,
+    triggeredHeadline: (above, price) =>
+      above ? `突破目标价 ${price}` : `跌破目标价 ${price}`,
+    triggeredPrice: (price) => `最新价 ${price}`,
+  },
+
   addTicker: {
     action: '添加合约',
     noOptions: '没有匹配的永续合约',
