@@ -1,6 +1,23 @@
-import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material'
-import { memo, useMemo, useCallback, type MouseEvent } from 'react'
+import {
+  Box,
+  IconButton,
+  Menu,
+  MenuItem,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material'
+import {
+  memo,
+  useMemo,
+  useCallback,
+  useState,
+  type MouseEvent,
+  type TouchEvent,
+} from 'react'
 import BookmarkRemoveIcon from '@mui/icons-material/BookmarkRemoveOutlined'
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
+import DriveFileMoveOutlinedIcon from '@mui/icons-material/DriveFileMoveOutlined'
 import QueryStatsIcon from '@mui/icons-material/QueryStats'
 import StarIcon from '@mui/icons-material/Star'
 import StarBorderIcon from '@mui/icons-material/StarBorder'
@@ -8,7 +25,11 @@ import StarBorderIcon from '@mui/icons-material/StarBorder'
 import useOkxTicker from '../hooks/useOkxTicker'
 import useOkxSignals from '../hooks/useOkxSignals'
 import useOkxBackdrop from '../hooks/useOkxBackdrop'
-import { useTickerStore } from '../store/useTickerStore'
+import {
+  DEFAULT_GROUP_ID,
+  groupIdOf,
+  useTickerStore,
+} from '../store/useTickerStore'
 import { openOkxDetail } from '../store/useOkxDetailStore'
 import { removeOkxTicker } from '../store/okxRealtimeTicker'
 import { okxTickerActions } from '../okx/okxTickerActions'
@@ -37,12 +58,14 @@ import {
  * the board's render work.
  */
 const CardActions = memo(function CardActions({
+  instId,
   pinned,
   compact = false,
   onOpenDetail,
   onTogglePin,
   onRemove,
 }: {
+  instId: string
   pinned: boolean
   compact?: boolean
   onOpenDetail: () => void
@@ -50,10 +73,22 @@ const CardActions = memo(function CardActions({
   onRemove: () => void
 }) {
   const t = useMessages()
+  const groups = useTickerStore((state) => state.groups)
+  const assignedGroup = useTickerStore((state) => state.symbolGroup[instId])
+  const setSymbolGroup = useTickerStore((state) => state.setSymbolGroup)
+  const [groupMenuAnchor, setGroupMenuAnchor] = useState<HTMLElement | null>(
+    null,
+  )
 
-  // The action bar sits on top of the card, so a click on any of its buttons
-  // would otherwise reach the card's own double-click handler as well.
-  const stopDoubleClick = useCallback((event: MouseEvent) => {
+  const currentGroupId = groupIdOf(
+    instId,
+    groups,
+    assignedGroup ? { [instId]: assignedGroup } : {},
+  )
+
+  // The action bar sits on top of the card, so clicks and pointer-downs here
+  // must not trigger the card's double-click pin or start a drag gesture.
+  const stopPropagation = useCallback((event: MouseEvent | TouchEvent) => {
     event.stopPropagation()
   }, [])
 
@@ -62,7 +97,9 @@ const CardActions = memo(function CardActions({
       direction="row"
       className="actionBar"
       sx={compact ? compactCardActionBarSx : cardActionBarSx}
-      onDoubleClick={stopDoubleClick}
+      onMouseDown={stopPropagation}
+      onTouchStart={stopPropagation}
+      onDoubleClick={stopPropagation}
     >
       <Tooltip title={t.card.openCharts} arrow>
         <IconButton
@@ -86,6 +123,72 @@ const CardActions = memo(function CardActions({
           {pinned ? <StarIcon /> : <StarBorderIcon />}
         </IconButton>
       </Tooltip>
+      {groups.length > 0 && (
+        <>
+          <Tooltip title={t.card.moveToGroup} arrow>
+            <IconButton
+              size="small"
+              aria-label={t.card.moveToGroup}
+              onClick={(event) => {
+                event.stopPropagation()
+                setGroupMenuAnchor(event.currentTarget)
+              }}
+              sx={{ color: 'text.secondary' }}
+            >
+              <DriveFileMoveOutlinedIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
+          <Menu
+            anchorEl={groupMenuAnchor}
+            open={Boolean(groupMenuAnchor)}
+            onClose={() => setGroupMenuAnchor(null)}
+            onClick={stopPropagation}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            slotProps={{
+              paper: {
+                sx: (theme) => ({
+                  minWidth: 156,
+                  borderRadius: '12px',
+                  border: `1px solid ${theme.vars.palette.surface.border}`,
+                  backgroundImage: 'none',
+                  boxShadow: theme.vars.palette.surface.shadow,
+                }),
+              },
+            }}
+          >
+            {[
+              { id: DEFAULT_GROUP_ID, name: t.groups.defaultName },
+              ...groups,
+            ].map((group) => {
+              const selected = group.id === currentGroupId
+              return (
+                <MenuItem
+                  key={group.id}
+                  dense
+                  selected={selected}
+                  onClick={() => {
+                    setSymbolGroup(instId, group.id)
+                    setGroupMenuAnchor(null)
+                  }}
+                  sx={{
+                    justifyContent: 'space-between',
+                    gap: 1.5,
+                    fontWeight: selected ? 600 : 400,
+                  }}
+                >
+                  {group.name}
+                  {selected && (
+                    <CheckRoundedIcon
+                      sx={{ fontSize: 16, color: 'primary.main' }}
+                    />
+                  )}
+                </MenuItem>
+              )
+            })}
+          </Menu>
+        </>
+      )}
       <Tooltip title={t.card.remove} arrow>
         <IconButton
           size="small"
@@ -211,6 +314,7 @@ function OkxTickerCard({ instId }: { instId: string }) {
 
       {compact ? (
         <CardActions
+          instId={instId}
           compact
           pinned={pinned}
           onOpenDetail={handleOpenDetail}
@@ -239,6 +343,7 @@ function OkxTickerCard({ instId }: { instId: string }) {
             <SignalPulse signals={signals} />
 
             <CardActions
+              instId={instId}
               pinned={pinned}
               onOpenDetail={handleOpenDetail}
               onTogglePin={handleTogglePin}

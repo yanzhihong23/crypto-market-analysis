@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-import { useTickerStore } from '../store/useTickerStore'
+import { groupIdOf, useTickerStore } from '../store/useTickerStore'
 import { useAlertStore } from '../store/useAlertStore'
 import { openOkxDetail } from '../store/useOkxDetailStore'
 import { readSignalInput } from '../store/okxSignalInput'
@@ -54,19 +54,35 @@ export default function useOkxAlerts() {
     let passTimer: ReturnType<typeof setTimeout> | undefined
 
     const evaluate = () => {
-      const { instIds } = useTickerStore.getState()
+      const state = useTickerStore.getState()
+      const { instIds, groups, symbolGroup } = state
       const now = Date.now()
-      // One sort for the pass rather than one per symbol: the median is the same
-      // number for every instrument being measured against it.
-      const boardPercent = boardMedianPricePercent(instIds)
+      // One sort per group rather than one per symbol: every instrument in a
+      // section shares the same peer median, and different asset classes no
+      // longer skew each other's relative strength.
+      const peersByGroup = new Map<string, string[]>()
+      for (const instId of instIds) {
+        const gid = groups.length ? groupIdOf(instId, groups, symbolGroup) : ''
+        const bucket = peersByGroup.get(gid)
+        if (bucket) bucket.push(instId)
+        else peersByGroup.set(gid, [instId])
+      }
+      const boardPercentByGroup = new Map<string, number | null>()
+      for (const [gid, peers] of peersByGroup) {
+        boardPercentByGroup.set(gid, boardMedianPricePercent(peers))
+      }
       // Read once per pass rather than subscribed to: an entry is written in
       // whatever language was in force when it fired, and switching afterwards
       // does not rewrite what already happened.
       const t = currentMessages()
 
       for (const instId of instIds) {
+        const gid = groups.length ? groupIdOf(instId, groups, symbolGroup) : ''
         const signals = collectSignals(
-          readSignalInput(instId, { boardPercent, now }),
+          readSignalInput(instId, {
+            boardPercent: boardPercentByGroup.get(gid),
+            now,
+          }),
           t,
         )
         const flag = flagStateOf(signals, t)

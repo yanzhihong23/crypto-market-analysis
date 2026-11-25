@@ -78,16 +78,25 @@ function useBoardBreadth(instIds: string[]): BreadthSnapshot {
 }
 
 /**
- * A quiet desktop-only breadth readout at the trailing edge of the toolbar:
- * advancers, decliners and the board's median session change, so a reader can
- * tell in a glance whether a red card is moving with the rest of the watchlist
- * or breaking away from it.
+ * A quiet breadth readout: advancers, decliners and median session change, so
+ * a reader can tell in a glance whether a card is moving with its peers or
+ * breaking away.
  *
+ * Used both at the trailing edge of the desktop toolbar (across the whole
+ * watchlist) and inside each group's section header (for that group alone).
  * Isolated in its own memoised component so three-second percent flushes never
- * re-render the toolbar controls sitting beside it.
+ * re-render the surrounding controls.
  */
-function OkxBoardBreadth() {
-  const instIds = useTickerStore((state) => state.instIds)
+function OkxBoardBreadth({
+  instIds: scopedInstIds,
+  variant = 'toolbar',
+}: {
+  /** Omit to summarize the whole watchlist. */
+  instIds?: string[]
+  variant?: 'toolbar' | 'section'
+}) {
+  const allInstIds = useTickerStore((state) => state.instIds)
+  const instIds = scopedInstIds ?? allInstIds
   const { up, down, total, median } = useBoardBreadth(instIds)
   const t = useMessages()
 
@@ -98,27 +107,30 @@ function OkxBoardBreadth() {
   const medianColor =
     median > 0 ? 'market.up' : median < 0 ? 'market.down' : 'text.secondary'
   const medianText = `${median > 0 ? '+' : ''}${median.toFixed(2)}%`
+  const isSection = variant === 'section'
 
   return (
     <Tooltip title={t.toolbar.breadthHint(total)} arrow>
       <Stack
         direction="row"
         sx={{
-          display: { xs: 'none', md: 'flex' },
+          display: isSection ? 'flex' : { xs: 'none', md: 'flex' },
           alignItems: 'center',
-          gap: 1,
-          ml: 'auto',
+          gap: isSection ? 0.75 : 1,
+          ml: isSection ? 0 : 'auto',
           flexShrink: 0,
           userSelect: 'none',
         }}
       >
         {/* Proportional split bar: green from the left, red from the right,
-            leaving neutral track in the middle for any flat symbols. */}
+            leaving neutral track in the middle for any flat symbols. Hidden on
+            very narrow phones inside section headers to leave room for the name. */}
         <Box
           aria-hidden
           sx={{
+            display: isSection ? { xs: 'none', sm: 'block' } : 'block',
             position: 'relative',
-            width: 48,
+            width: isSection ? 36 : 48,
             height: 4,
             borderRadius: '999px',
             backgroundColor: 'surface.subtle',
@@ -157,7 +169,7 @@ function OkxBoardBreadth() {
           sx={{
             alignItems: 'baseline',
             gap: 0.5,
-            fontSize: 13,
+            fontSize: isSection ? 12 : 13,
             ...numericFont,
           }}
         >
@@ -179,22 +191,28 @@ function OkxBoardBreadth() {
         <Box
           component="span"
           aria-hidden
-          sx={{ fontSize: 13, color: 'text.secondary', opacity: 0.45 }}
+          sx={{
+            fontSize: isSection ? 12 : 13,
+            color: 'text.secondary',
+            opacity: 0.45,
+          }}
         >
           ·
         </Box>
 
         <Stack direction="row" sx={{ alignItems: 'baseline', gap: 0.5 }}>
-          <Typography
-            component="span"
-            sx={{ fontSize: 13, color: 'text.secondary' }}
-          >
-            {t.toolbar.breadthMedian}
-          </Typography>
+          {!isSection && (
+            <Typography
+              component="span"
+              sx={{ fontSize: 13, color: 'text.secondary' }}
+            >
+              {t.toolbar.breadthMedian}
+            </Typography>
+          )}
           <Typography
             component="span"
             sx={{
-              fontSize: 13,
+              fontSize: isSection ? 12 : 13,
               fontWeight: 600,
               color: medianColor,
               ...numericFont,

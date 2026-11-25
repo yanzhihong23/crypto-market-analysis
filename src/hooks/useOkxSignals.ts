@@ -1,4 +1,5 @@
 import { readSignalInput } from '../store/okxSignalInput'
+import { useTickerStore } from '../store/useTickerStore'
 import { collectSignals } from '../utils/detectors'
 import { flagStateOf } from '../utils/signals'
 import { useMessages } from '../i18n'
@@ -58,6 +59,9 @@ export default function useOkxSignals(instId: string) {
   useOkxSpreadRead(instId)
   useOkxLiquidationRead(instId)
   useOkxOpenInterest(instId)
+  // Recompute relative strength when a card moves to another peer group.
+  useTickerStore((state) => state.symbolGroup[instId])
+  useTickerStore((state) => state.groups)
 
   const signals = collectSignals(readSignalInput(instId), t)
   return { signals, flag: flagStateOf(signals, t) }

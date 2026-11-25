@@ -14,7 +14,7 @@ import { MIN_BOARD_SYMBOLS, medianOf } from '../utils/signals'
 import type { Messages } from '../i18n/en'
 
 import { getOkxTickerSnapshot } from './okxRealtimeTicker'
-import { useTickerStore } from './useTickerStore'
+import { peerInstIdsOf, useTickerStore } from './useTickerStore'
 
 /**
  * The middle of the board's excess returns over the benchmark, in points.
@@ -57,7 +57,8 @@ export function readBackdrop(
       // history it is summed from was already being fetched.
       fundingCarry: state.fundingCarry[instId],
       benchmark: state.benchmarkDaily,
-      boardExcess30d: boardExcess ?? boardExcess30d(state.instIds),
+      boardExcess30d:
+        boardExcess ?? boardExcess30d(peerInstIdsOf(instId, state)),
     },
     t,
   )

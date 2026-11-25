@@ -79,6 +79,23 @@ export const zh: Messages = {
     action: '添加合约',
     noOptions: '没有匹配的永续合约',
     placeholder: '搜索币种，例如 SOL',
+    group: '所属分组',
+  },
+
+  groups: {
+    defaultName: '默认',
+    newGroup: '新建分组',
+    renameGroup: '重命名分组',
+    nameLabel: '分组名称',
+    namePlaceholder: '例如：加密主流、贵金属、美股合约',
+    save: '保存',
+    moveUp: '上移',
+    moveDown: '下移',
+    delete: '删除分组',
+    moreActions: '分组操作',
+    addToGroup: (name) => `添加合约到「${name}」`,
+    emptyHint: '拖拽卡片到此分组，或点击右侧 + 添加合约',
+    dropHint: '松开移入此分组',
   },
 
   watchlist: {
@@ -114,6 +131,7 @@ export const zh: Messages = {
     unpin: '取消置顶',
     pinAria: '将该合约置顶',
     unpinAria: '取消该合约置顶',
+    moveToGroup: '移至分组',
     remove: '从自选中移除',
     removeAria: '从自选列表中移除该合约',
   },

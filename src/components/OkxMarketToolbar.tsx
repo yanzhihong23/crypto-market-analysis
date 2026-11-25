@@ -3,6 +3,7 @@ import {
   ButtonBase,
   Collapse,
   FormControlLabel,
+  IconButton,
   Stack,
   Switch,
   Tooltip,
@@ -10,6 +11,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material'
+import CreateNewFolderOutlinedIcon from '@mui/icons-material/CreateNewFolderOutlined'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded'
 import { Fragment, useId, useState } from 'react'
@@ -21,6 +23,7 @@ import type { Messages } from '../i18n/en'
 
 import SegmentedToggle, { SegmentedOption } from './SegmentedToggle'
 import OkxBoardBreadth from './OkxBoardBreadth'
+import OkxGroupDialog from './OkxGroupDialog'
 
 // Built per language rather than held as a constant, so the segments are named
 // in whichever one is on. Gainers and losers are separate segments rather than
@@ -49,14 +52,26 @@ export default function OkxMarketToolbar() {
   const setSortBy = useTickerStore((state) => state.setSortBy)
   const setKlineVolume = useTickerStore((state) => state.setKlineVolume)
   const setCompactCard = useTickerStore((state) => state.setCompactCard)
+  const addGroup = useTickerStore((state) => state.addGroup)
   const t = useMessages()
   const theme = useTheme()
   const compact = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true })
   const [expanded, setExpanded] = useState(false)
+  const [newGroupOpen, setNewGroupOpen] = useState(false)
   const panelId = useId()
 
   const sorts = sortOptions(t)
   const openTimes = openTimeOptions(t)
+
+  const newGroupDialog = (
+    <OkxGroupDialog
+      open={newGroupOpen}
+      title={t.groups.newGroup}
+      submitLabel={t.common.add}
+      onClose={() => setNewGroupOpen(false)}
+      onSubmit={addGroup}
+    />
+  )
 
   if (compact) {
     // On a phone the three controls stack to ~200px, pushing the second card
@@ -210,86 +225,126 @@ export default function OkxMarketToolbar() {
                 },
               }}
             />
+            <ButtonBase
+              onClick={() => {
+                setExpanded(false)
+                setNewGroupOpen(true)
+              }}
+              sx={(th) => ({
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 0.75,
+                py: 0.875,
+                px: 1.5,
+                borderRadius: '10px',
+                fontSize: 13,
+                fontWeight: 500,
+                color: 'text.secondary',
+                border: `1px dashed ${th.vars.palette.surface.border}`,
+                '&:hover': {
+                  color: 'text.primary',
+                  borderColor: th.vars.palette.surface.marker,
+                },
+              })}
+            >
+              <CreateNewFolderOutlinedIcon sx={{ fontSize: 16 }} />
+              {t.groups.newGroup}
+            </ButtonBase>
           </Stack>
         </Collapse>
+        {newGroupDialog}
       </Box>
     )
   }
 
   return (
-    <Stack
-      direction="row"
-      sx={{
-        alignItems: 'center',
-        gap: 3,
-        flexWrap: 'wrap',
-        mb: 2.5,
-      }}
-    >
-      <SegmentedToggle
-        label={t.toolbar.sortBy}
-        value={sortBy}
-        options={sorts}
-        onChange={setSortBy}
-      />
-      <SegmentedToggle
-        label={t.toolbar.openTime}
-        value={openTime}
-        options={openTimes}
-        onChange={setOpenTime}
-      />
-      {/* Switches rather than segmented tracks: the controls to the left each
-          pick one of several readings of the board, and these only toggle a
-          display layer. Labels go after the control so they line up with the
-          labels to their left, which sit before their tracks. */}
-      <Stack direction="row" sx={{ alignItems: 'center', gap: 2 }}>
-        <Tooltip title={t.toolbar.compactHint} arrow>
-          <FormControlLabel
-            control={
-              <Switch
-                size="small"
-                checked={compactCard}
-                onChange={(event) => setCompactCard(event.target.checked)}
-              />
-            }
-            label={t.toolbar.compact}
-            sx={{
-              ml: 0,
-              mr: 0,
-              '& .MuiFormControlLabel-label': {
-                ml: 0.5,
-                fontSize: 13,
-                color: 'text.secondary',
-              },
-            }}
-          />
-        </Tooltip>
-        <Tooltip title={t.toolbar.klineVolumeHint} arrow>
-          <FormControlLabel
-            disabled={compactCard}
-            control={
-              <Switch
-                size="small"
-                checked={klineVolume}
-                onChange={(event) => setKlineVolume(event.target.checked)}
-              />
-            }
-            label={t.toolbar.klineVolume}
-            sx={{
-              ml: 0,
-              mr: 0,
-              '& .MuiFormControlLabel-label': {
-                // The switch's own padding is all that separates it from its
-                // label otherwise, and the two read as one glyph.
-                ml: 0.5,
-                fontSize: 13,
-                color: 'text.secondary',
-              },
-            }}
-          />
-        </Tooltip>
+    <>
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: 'center',
+          gap: 3,
+          flexWrap: 'wrap',
+          mb: 2.5,
+        }}
+      >
+        <SegmentedToggle
+          label={t.toolbar.sortBy}
+          value={sortBy}
+          options={sorts}
+          onChange={setSortBy}
+        />
+        <SegmentedToggle
+          label={t.toolbar.openTime}
+          value={openTime}
+          options={openTimes}
+          onChange={setOpenTime}
+        />
+        {/* Switches rather than segmented tracks: the controls to the left each
+            pick one of several readings of the board, and these only toggle a
+            display layer. Labels go after the control so they line up with the
+            labels to their left, which sit before their tracks. */}
+        <Stack direction="row" sx={{ alignItems: 'center', gap: 2 }}>
+          <Tooltip title={t.toolbar.compactHint} arrow>
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={compactCard}
+                  onChange={(event) => setCompactCard(event.target.checked)}
+                />
+              }
+              label={t.toolbar.compact}
+              sx={{
+                ml: 0,
+                mr: 0,
+                '& .MuiFormControlLabel-label': {
+                  ml: 0.5,
+                  fontSize: 13,
+                  color: 'text.secondary',
+                },
+              }}
+            />
+          </Tooltip>
+          <Tooltip title={t.toolbar.klineVolumeHint} arrow>
+            <FormControlLabel
+              disabled={compactCard}
+              control={
+                <Switch
+                  size="small"
+                  checked={klineVolume}
+                  onChange={(event) => setKlineVolume(event.target.checked)}
+                />
+              }
+              label={t.toolbar.klineVolume}
+              sx={{
+                ml: 0,
+                mr: 0,
+                '& .MuiFormControlLabel-label': {
+                  // The switch's own padding is all that separates it from its
+                  // label otherwise, and the two read as one glyph.
+                  ml: 0.5,
+                  fontSize: 13,
+                  color: 'text.secondary',
+                },
+              }}
+            />
+          </Tooltip>
+          <Tooltip title={t.groups.newGroup} arrow>
+            <IconButton
+              size="small"
+              aria-label={t.groups.newGroup}
+              onClick={() => setNewGroupOpen(true)}
+              sx={{ color: 'text.secondary' }}
+            >
+              <CreateNewFolderOutlinedIcon sx={{ fontSize: 19 }} />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+        <OkxBoardBreadth />
       </Stack>
-      <OkxBoardBreadth />
-    </Stack>
+      {newGroupDialog}
+    </>
   )
 }

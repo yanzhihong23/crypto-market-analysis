@@ -23,7 +23,7 @@ import {
   getOkxOpenInterestSnapshot,
   getOkxTickerSnapshot,
 } from './okxRealtimeTicker'
-import { useTickerStore } from './useTickerStore'
+import { peerInstIdsOf, useTickerStore } from './useTickerStore'
 
 export function readSignalInput(
   instId: string,
@@ -49,9 +49,10 @@ export function readSignalInput(
     // drawn against: what was closed out is being sized against what is open
     // now, not against what was open this morning.
     openInterest: Number(getOkxOpenInterestSnapshot(instId)),
-    // Taken over the board when the caller has not already done it once for the
-    // whole pass, which is the difference between a sort per symbol and one sort.
-    boardPercent: boardPercent ?? boardMedianPricePercent(state.instIds),
+    // Measured against peers in the same watchlist group so crypto majors are
+    // not compared against commodities or stock perpetuals.
+    boardPercent:
+      boardPercent ?? boardMedianPricePercent(peerInstIdsOf(instId, state)),
     momentumBaseline: state.momentumBaseline[instId],
     coil: state.coil[instId],
     daily: state.dailyStats[instId],

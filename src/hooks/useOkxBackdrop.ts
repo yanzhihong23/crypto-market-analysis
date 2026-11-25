@@ -33,6 +33,8 @@ export default function useOkxBackdrop(instId: string): Backdrop {
   // And this one is not keyed by instrument at all: it is the market the
   // symbol is being measured against, so every card watches the same value.
   useTickerStore((state) => state.benchmarkDaily)
+  useTickerStore((state) => state.symbolGroup[instId])
+  useTickerStore((state) => state.groups)
 
   return readBackdrop(instId, t)
 }

@@ -7,6 +7,14 @@ import { Baseline } from '../utils/signals'
 
 import { coalescedLocalStorage } from './coalescedStorage'
 
+export const DEFAULT_GROUP_ID = 'default'
+
+export interface TickerGroup {
+  id: string
+  name: string
+  collapsed?: boolean
+}
+
 interface TickerStore {
   instruments: OkxInstrument[]
   setInstruments: (instruments: OkxInstrument[]) => void
@@ -234,6 +242,23 @@ interface TickerStore {
    */
   compactCard: boolean
   setCompactCard: (compactCard: boolean) => void
+  /**
+   * User-defined watchlist sections, rendered alongside the implicit default
+   * group. Keeping `instIds` as the single subscription list lets sockets and
+   * pollers stay unaware of grouping while `symbolGroup` assigns each symbol
+   * to at most one section.
+   */
+  groups: TickerGroup[]
+  /** Display order of sections, including `DEFAULT_GROUP_ID` and custom group ids. */
+  groupOrder: string[]
+  defaultGroupCollapsed: boolean
+  symbolGroup: Record<string, string>
+  addGroup: (name: string) => string
+  renameGroup: (id: string, name: string) => void
+  deleteGroup: (id: string) => void
+  moveGroup: (id: string, direction: 'up' | 'down') => void
+  toggleGroupCollapsed: (id: string) => void
+  setSymbolGroup: (instId: string, groupId: string) => void
 }
 
 /**
@@ -294,7 +319,73 @@ const clearInstIdRecords = (
   dailyStatsOpenTime: withoutInstId(state.dailyStatsOpenTime, instId),
   dailyOiPercentile: withoutInstId(state.dailyOiPercentile, instId),
   openInterestOpen: withoutInstId(state.openInterestOpen, instId),
+  symbolGroup: withoutInstId(state.symbolGroup, instId),
 })
+
+/**
+ * Resolves which section a symbol belongs to, falling back to the default
+ * group if unassigned or if its group was removed.
+ */
+export const groupIdOf = (
+  instId: string,
+  groups: TickerGroup[],
+  symbolGroup: Record<string, string>,
+): string => {
+  const assigned = symbolGroup[instId]
+  if (assigned && groups.some((group) => group.id === assigned)) {
+    return assigned
+  }
+  return DEFAULT_GROUP_ID
+}
+
+/**
+ * Resolves the display order of all sections (default + custom), reconciling
+ * any persisted order with newly added or deleted groups.
+ */
+export const orderedGroupIds = (
+  groups: TickerGroup[],
+  groupOrder: string[] = [],
+): string[] => {
+  const valid = new Set<string>([
+    DEFAULT_GROUP_ID,
+    ...groups.map((group) => group.id),
+  ])
+  const result: string[] = []
+  const seen = new Set<string>()
+
+  for (const id of groupOrder) {
+    if (valid.has(id) && !seen.has(id)) {
+      result.push(id)
+      seen.add(id)
+    }
+  }
+  if (!seen.has(DEFAULT_GROUP_ID)) {
+    result.unshift(DEFAULT_GROUP_ID)
+    seen.add(DEFAULT_GROUP_ID)
+  }
+  for (const group of groups) {
+    if (!seen.has(group.id)) {
+      result.push(group.id)
+      seen.add(group.id)
+    }
+  }
+  return result
+}
+
+/**
+ * Every watched symbol in the same section as `instId`. When no custom groups
+ * exist, the whole watchlist is one group.
+ */
+export const peerInstIdsOf = (
+  instId: string,
+  state: Pick<TickerStore, 'instIds' | 'groups' | 'symbolGroup'>,
+): string[] => {
+  if (!state.groups.length) return state.instIds
+  const target = groupIdOf(instId, state.groups, state.symbolGroup)
+  return state.instIds.filter(
+    (id) => groupIdOf(id, state.groups, state.symbolGroup) === target,
+  )
+}
 
 export const useTickerStore = create<TickerStore>()(
   persist(
@@ -478,6 +569,101 @@ export const useTickerStore = create<TickerStore>()(
       setKlineVolume: (klineVolume: boolean) => set({ klineVolume }),
       compactCard: false,
       setCompactCard: (compactCard: boolean) => set({ compactCard }),
+      groups: [],
+      groupOrder: [DEFAULT_GROUP_ID],
+      defaultGroupCollapsed: false,
+      symbolGroup: {},
+      addGroup: (name: string) => {
+        const trimmed = name.trim()
+        const id = `g-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
+        set((state) => {
+          const nextGroups = [...state.groups, { id, name: trimmed }]
+          return {
+            groups: nextGroups,
+            groupOrder: orderedGroupIds(nextGroups, [...state.groupOrder, id]),
+          }
+        })
+        return id
+      },
+      renameGroup: (id: string, name: string) => {
+        const trimmed = name.trim()
+        if (!trimmed) return
+        set((state) => ({
+          groups: state.groups.map((group) =>
+            group.id === id ? { ...group, name: trimmed } : group,
+          ),
+        }))
+      },
+      deleteGroup: (id: string) =>
+        set((state) => {
+          const nextSymbolGroup: Record<string, string> = {}
+          for (const [instId, groupId] of Object.entries(state.symbolGroup)) {
+            if (groupId !== id) nextSymbolGroup[instId] = groupId
+          }
+          const nextGroups = state.groups.filter((group) => group.id !== id)
+          return {
+            groups: nextGroups,
+            groupOrder: orderedGroupIds(
+              nextGroups,
+              state.groupOrder.filter((gid) => gid !== id),
+            ),
+            symbolGroup: nextSymbolGroup,
+          }
+        }),
+      moveGroup: (id: string, direction: 'up' | 'down') =>
+        set((state) => {
+          const fullOrder = orderedGroupIds(state.groups, state.groupOrder)
+          const hasDefaultSymbols = state.instIds.some(
+            (instId) =>
+              groupIdOf(instId, state.groups, state.symbolGroup) ===
+              DEFAULT_GROUP_ID,
+          )
+          // Swap against the adjacent *visible* section so moving past a
+          // hidden empty Default group never takes an invisible extra click.
+          const visible = fullOrder.filter(
+            (gid) => gid !== DEFAULT_GROUP_ID || hasDefaultSymbols,
+          )
+          const visIndex = visible.indexOf(id)
+          if (visIndex === -1) return state
+          const neighborVisIndex =
+            direction === 'up' ? visIndex - 1 : visIndex + 1
+          if (neighborVisIndex < 0 || neighborVisIndex >= visible.length) {
+            return state
+          }
+          const neighborId = visible[neighborVisIndex]
+          const a = fullOrder.indexOf(id)
+          const b = fullOrder.indexOf(neighborId)
+          const next = [...fullOrder]
+          ;[next[a], next[b]] = [next[b], next[a]]
+          return { groupOrder: next }
+        }),
+      toggleGroupCollapsed: (id: string) =>
+        set((state) => {
+          if (id === DEFAULT_GROUP_ID) {
+            return { defaultGroupCollapsed: !state.defaultGroupCollapsed }
+          }
+          return {
+            groups: state.groups.map((group) =>
+              group.id === id
+                ? { ...group, collapsed: !group.collapsed }
+                : group,
+            ),
+          }
+        }),
+      setSymbolGroup: (instId: string, groupId: string) =>
+        set((state) => {
+          if (
+            groupId === DEFAULT_GROUP_ID ||
+            !state.groups.some((group) => group.id === groupId)
+          ) {
+            if (!(instId in state.symbolGroup)) return state
+            return { symbolGroup: withoutInstId(state.symbolGroup, instId) }
+          }
+          if (state.symbolGroup[instId] === groupId) return state
+          return {
+            symbolGroup: { ...state.symbolGroup, [instId]: groupId },
+          }
+        }),
     }),
     {
       name: 'tickers',

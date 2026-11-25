@@ -101,6 +101,23 @@ export const en = {
     action: 'Add ticker',
     noOptions: 'No matching perpetual',
     placeholder: 'Search a symbol, e.g. SOL',
+    group: 'Group',
+  },
+
+  groups: {
+    defaultName: 'Default',
+    newGroup: 'New group',
+    renameGroup: 'Rename group',
+    nameLabel: 'Group name',
+    namePlaceholder: 'e.g. Majors, Commodities, Equities',
+    save: 'Save',
+    moveUp: 'Move up',
+    moveDown: 'Move down',
+    delete: 'Delete group',
+    moreActions: 'Group actions',
+    addToGroup: (name: string) => `Add ticker to ${name}`,
+    emptyHint: 'Drag cards here or click + to add a ticker',
+    dropHint: 'Drop to move here',
   },
 
   watchlist: {
@@ -141,6 +158,7 @@ export const en = {
     unpin: 'Unpin',
     pinAria: 'Pin ticker to front',
     unpinAria: 'Unpin ticker',
+    moveToGroup: 'Move to group',
     remove: 'Remove from watchlist',
     removeAria: 'Remove ticker from watchlist',
   },
