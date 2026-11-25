@@ -227,6 +227,13 @@ interface TickerStore {
    */
   klineVolume: boolean
   setKlineVolume: (klineVolume: boolean) => void
+  /**
+   * Collapses each card down to its header and last price — symbol, 24h change,
+   * price and print size — dropping the range track, sparkline and metric chips
+   * so more of the watchlist fits in view at once.
+   */
+  compactCard: boolean
+  setCompactCard: (compactCard: boolean) => void
 }
 
 /**
@@ -469,6 +476,8 @@ export const useTickerStore = create<TickerStore>()(
       setSortBy: (sortBy: SortBy) => set({ sortBy }),
       klineVolume: true,
       setKlineVolume: (klineVolume: boolean) => set({ klineVolume }),
+      compactCard: false,
+      setCompactCard: (compactCard: boolean) => set({ compactCard }),
     }),
     {
       name: 'tickers',

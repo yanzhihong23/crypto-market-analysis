@@ -8,7 +8,12 @@ import { numericFont } from '../fonts'
  * a 236px card at a single fixed size. The steps below keep the price plus the
  * trade size on one line down to the narrowest column the grid will produce.
  */
-function priceFontSize(last: string) {
+function priceFontSize(last: string, compact: boolean) {
+  if (compact) {
+    if (last.length <= 7) return 26
+    if (last.length <= 9) return 22
+    return 19
+  }
   if (last.length <= 7) return 32
   if (last.length <= 9) return 26
   return 22
@@ -18,6 +23,7 @@ function LastPrice({
   last,
   lastSz,
   up,
+  compact = false,
 }: {
   last: string
   lastSz: string
@@ -29,6 +35,7 @@ function LastPrice({
    * share this number.
    */
   up?: boolean
+  compact?: boolean
 }) {
   return (
     <Stack
@@ -42,7 +49,7 @@ function LastPrice({
     >
       <Typography
         sx={{
-          fontSize: priceFontSize(last),
+          fontSize: priceFontSize(last, compact),
           fontWeight: 600,
           lineHeight: 1.15,
           color: up ? 'market.up' : 'market.down',
@@ -54,7 +61,7 @@ function LastPrice({
       </Typography>
       <Typography
         sx={{
-          fontSize: 13,
+          fontSize: compact ? 12 : 13,
           color: 'text.secondary',
           ...numericFont,
           whiteSpace: 'nowrap',

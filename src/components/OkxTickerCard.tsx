@@ -23,7 +23,11 @@ import OkxLogoSymbol from './OkxLogoSymbol'
 import OkxTickerCardSkeleton from './OkxTickerCardSkeleton'
 import OkxTickerDetail from './OkxTickerDetail'
 import SignalPulse from './SignalPulse'
-import { cardActionBarSx, removeButtonSx } from './cardActionBarSx'
+import {
+  cardActionBarSx,
+  compactCardActionBarSx,
+  removeButtonSx,
+} from './cardActionBarSx'
 
 /**
  * Its own component so that it renders when the pin changes and not otherwise.
@@ -34,11 +38,13 @@ import { cardActionBarSx, removeButtonSx } from './cardActionBarSx'
  */
 const CardActions = memo(function CardActions({
   pinned,
+  compact = false,
   onOpenDetail,
   onTogglePin,
   onRemove,
 }: {
   pinned: boolean
+  compact?: boolean
   onOpenDetail: () => void
   onTogglePin: () => void
   onRemove: () => void
@@ -55,7 +61,7 @@ const CardActions = memo(function CardActions({
     <Stack
       direction="row"
       className="actionBar"
-      sx={cardActionBarSx}
+      sx={compact ? compactCardActionBarSx : cardActionBarSx}
       onDoubleClick={stopDoubleClick}
     >
       <Tooltip title={t.card.openCharts} arrow>
@@ -94,6 +100,8 @@ const CardActions = memo(function CardActions({
   )
 })
 
+const COMPACT_CARD_SX = { px: 2, py: 1.5, gap: 1 } as const
+
 function OkxTickerCard({ instId }: { instId: string }) {
   const t = useOkxTicker(instId)
   const { signals, flag } = useOkxSignals(instId)
@@ -102,6 +110,7 @@ function OkxTickerCard({ instId }: { instId: string }) {
   // screen as the second track under the range and as that track's tooltip.
   const backdrop = useOkxBackdrop(instId)
   const pinned = useTickerStore((state) => state.pinnedInstIds.includes(instId))
+  const compact = useTickerStore((state) => state.compactCard)
   // Opening the detail is deliberately a button rather than a click on the
   // card: the card already answers a double-click by pinning, and a single
   // click that opened a dialog would fire on the way to every one of those.
@@ -135,6 +144,7 @@ function OkxTickerCard({ instId }: { instId: string }) {
     return (
       <OkxTickerCardSkeleton
         symbol={instId.split('-')[0]}
+        compact={compact}
         onRemove={handleRemove}
       />
     )
@@ -144,16 +154,18 @@ function OkxTickerCard({ instId }: { instId: string }) {
     <TickerContainer
       up={up}
       changePercent={changePercent}
-      minWidth={236}
+      minWidth={compact ? 200 : 236}
       flagged={flagged}
       tapActions
       onDoubleClick={handleTogglePin}
+      sx={compact ? COMPACT_CARD_SX : undefined}
     >
       <Stack
         direction="row"
         sx={{
           alignItems: 'center',
           justifyContent: 'space-between',
+          gap: 1,
           zIndex: 2,
         }}
       >
@@ -166,11 +178,12 @@ function OkxTickerCard({ instId }: { instId: string }) {
         </Stack>
 
         {/* Both readings of the same 24h change, so they sit together. */}
-        <Stack sx={{ alignItems: 'end' }}>
+        <Stack sx={{ alignItems: 'end', flexShrink: 0 }}>
           <Typography
             sx={{
-              fontSize: 20,
+              fontSize: compact ? 18 : 20,
               fontWeight: 600,
+              lineHeight: compact ? 1.2 : undefined,
               color: t.color,
               ...numericFont,
             }}
@@ -190,35 +203,54 @@ function OkxTickerCard({ instId }: { instId: string }) {
           </Typography>
         </Stack>
       </Stack>
-      <LastPrice last={t.last} lastSz={t.lastSz} up={t.isUp} />
-      <PriceRange
-        low={t.low24h}
-        high={t.high24h}
+
+      <LastPrice
         last={t.last}
-        open={t.open}
-        up={up}
-        monthPosition={backdrop.rangePosition}
-        monthLabel={backdrop.readings
-          .map((reading) => reading.detail)
-          .join(' · ')}
+        lastSz={t.lastSz}
+        up={t.isUp}
+        compact={compact}
       />
 
-      {/* The action bar is positioned against the chart, so the chart owns the
-          containing block rather than the card. */}
-      <Box sx={{ position: 'relative' }}>
-        <OkxKlineChart instId={instId} />
-
-        <SignalPulse signals={signals} />
-
+      {compact ? (
         <CardActions
+          compact
           pinned={pinned}
           onOpenDetail={handleOpenDetail}
           onTogglePin={handleTogglePin}
           onRemove={handleRemove}
         />
-      </Box>
+      ) : (
+        <>
+          <PriceRange
+            low={t.low24h}
+            high={t.high24h}
+            last={t.last}
+            open={t.open}
+            up={up}
+            monthPosition={backdrop.rangePosition}
+            monthLabel={backdrop.readings
+              .map((reading) => reading.detail)
+              .join(' · ')}
+          />
 
-      <OkxMarketMetrics instId={instId} signals={signals} />
+          {/* The action bar is positioned against the chart, so the chart owns
+              the containing block rather than the card. */}
+          <Box sx={{ position: 'relative' }}>
+            <OkxKlineChart instId={instId} />
+
+            <SignalPulse signals={signals} />
+
+            <CardActions
+              pinned={pinned}
+              onOpenDetail={handleOpenDetail}
+              onTogglePin={handleTogglePin}
+              onRemove={handleRemove}
+            />
+          </Box>
+
+          <OkxMarketMetrics instId={instId} signals={signals} />
+        </>
+      )}
 
       {/* Mounted only once it has been asked for, so the board does not carry a
           dialog and its four series for every card on it. */}

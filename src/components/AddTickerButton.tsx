@@ -41,8 +41,10 @@ const filterOptions = createFilterOptions<OkxInstrument>({
  */
 export default function AddTickerButton({
   variant = 'cell',
+  compact = false,
 }: {
   variant?: 'cell' | 'standalone'
+  compact?: boolean
 }) {
   const instruments = useTickerStore((state) => state.instruments)
   const instIds = useTickerStore((state) => state.instIds)
@@ -73,15 +75,15 @@ export default function AddTickerButton({
         aria-label={t.addTicker.action}
         onClick={() => setOpen(true)}
         sx={(theme) => ({
-          flexDirection: 'column',
+          flexDirection: compact ? 'row' : 'column',
           gap: 1,
           width: '100%',
           // Matches a card in the cell, and stays a button in the empty state,
           // where there is no row of cards to take its height from.
           height: variant === 'cell' ? '100%' : 'auto',
-          minHeight: variant === 'cell' ? 160 : 0,
-          px: 2.5,
-          py: variant === 'cell' ? 2.5 : 1.5,
+          minHeight: variant === 'cell' ? (compact ? 84 : 160) : 0,
+          px: compact ? 2 : 2.5,
+          py: variant === 'cell' ? (compact ? 1.5 : 2.5) : 1.5,
           maxWidth: variant === 'cell' ? 'none' : 200,
           borderRadius: '16px',
           fontSize: 14,

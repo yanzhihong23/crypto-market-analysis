@@ -45,6 +45,7 @@ const OkxTickerGrid = memo(function OkxTickerGrid() {
   const sortBy = useTickerStore((state) => state.sortBy)
   const instIds = useTickerStore((state) => state.instIds)
   const pinnedInstIds = useTickerStore((state) => state.pinnedInstIds)
+  const compact = useTickerStore((state) => state.compactCard)
   const sortValues = useTickerStore(
     useShallow((state) => {
       if (sortBy === SortBy.VOLUME) {
@@ -104,12 +105,15 @@ const OkxTickerGrid = memo(function OkxTickerGrid() {
         // Column count follows the available width instead of six hardcoded
         // breakpoints, which used to stretch cards past 400px on wide screens.
         //
-        // The minimum is what the chip row needs to stay on one line: four
-        // chips come to about 217px and the card spends 20px of padding a side.
-        // Below that the footer wraps and every card on the board ends in a
-        // ragged second row carrying one lone chip.
-        gridTemplateColumns: 'repeat(auto-fill, minmax(264px, 1fr))',
-        gap: 2,
+        // The minimum in full mode is what the chip row needs to stay on one
+        // line: four chips come to about 217px and the card spends 20px of
+        // padding a side. Compact cards drop that row and tighten their
+        // padding, so more columns fit across wide screens without squeezing
+        // long prices.
+        gridTemplateColumns: compact
+          ? 'repeat(auto-fill, minmax(224px, 1fr))'
+          : 'repeat(auto-fill, minmax(264px, 1fr))',
+        gap: compact ? 1.5 : 2,
       }}
     >
       {instIds.map((instId) => (
@@ -123,7 +127,7 @@ const OkxTickerGrid = memo(function OkxTickerGrid() {
           a floating button pinned to the corner of the viewport, which sat on
           top of the last row once the cards filled the page. */}
       <Box sx={{ order: instIds.length, minWidth: 0, height: '100%' }}>
-        <AddTickerButton />
+        <AddTickerButton compact={compact} />
       </Box>
     </Box>
   )

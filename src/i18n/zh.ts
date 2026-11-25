@@ -99,6 +99,8 @@ export const zh: Messages = {
     openUtc8: 'UTC+8',
     klineVolume: '量柱',
     klineVolumeHint: '在每张卡片的走势图背后画出成交量',
+    compact: '简版',
+    compactHint: '卡片只显示币种、涨跌幅和最新价',
   },
 
   card: {

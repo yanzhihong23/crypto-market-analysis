@@ -43,9 +43,11 @@ export default function OkxMarketToolbar() {
   const openTime = useTickerStore((state) => state.openTime)
   const sortBy = useTickerStore((state) => state.sortBy)
   const klineVolume = useTickerStore((state) => state.klineVolume)
+  const compactCard = useTickerStore((state) => state.compactCard)
   const setOpenTime = useTickerStore((state) => state.setOpenTime)
   const setSortBy = useTickerStore((state) => state.setSortBy)
   const setKlineVolume = useTickerStore((state) => state.setKlineVolume)
+  const setCompactCard = useTickerStore((state) => state.setCompactCard)
   const t = useMessages()
   const theme = useTheme()
   const compact = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true })
@@ -58,14 +60,18 @@ export default function OkxMarketToolbar() {
   if (compact) {
     // On a phone the three controls stack to ~200px, pushing the second card
     // below the fold. Collapse them into a single bar that still prints the
-    // active sort, open-time baseline and volume-bars state so nothing about
-    // how the board is being read is hidden while folded.
+    // active sort, open-time baseline and card mode so nothing about how the
+    // board is being read is hidden while folded.
     const activeSort = sorts.find((o) => o.value === sortBy)?.label
     const activeOpenTime = openTimes.find((o) => o.value === openTime)?.label
     const summaryItems = [
       activeSort,
       activeOpenTime,
-      ...(klineVolume ? [t.toolbar.klineVolume] : []),
+      ...(compactCard
+        ? [t.toolbar.compact]
+        : klineVolume
+          ? [t.toolbar.klineVolume]
+          : []),
     ].filter((item): item is string => Boolean(item))
 
     return (
@@ -167,6 +173,27 @@ export default function OkxMarketToolbar() {
               control={
                 <Switch
                   size="small"
+                  checked={compactCard}
+                  onChange={(event) => setCompactCard(event.target.checked)}
+                />
+              }
+              label={t.toolbar.compact}
+              sx={{
+                ml: 0,
+                mr: 0,
+                justifyContent: 'space-between',
+                '& .MuiFormControlLabel-label': {
+                  fontSize: 13,
+                  color: 'text.secondary',
+                },
+              }}
+            />
+            <FormControlLabel
+              labelPlacement="start"
+              disabled={compactCard}
+              control={
+                <Switch
+                  size="small"
                   checked={klineVolume}
                   onChange={(event) => setKlineVolume(event.target.checked)}
                 />
@@ -210,33 +237,57 @@ export default function OkxMarketToolbar() {
         options={openTimes}
         onChange={setOpenTime}
       />
-      {/* A switch rather than a third segmented track: the other two each pick
-          one of several readings of the board, and this one only says whether a
-          layer is drawn. The label goes after the control so it lines up with
-          the labels to its left, which sit before their tracks. */}
-      <Tooltip title={t.toolbar.klineVolumeHint} arrow>
-        <FormControlLabel
-          control={
-            <Switch
-              size="small"
-              checked={klineVolume}
-              onChange={(event) => setKlineVolume(event.target.checked)}
-            />
-          }
-          label={t.toolbar.klineVolume}
-          sx={{
-            ml: 0,
-            mr: 0,
-            '& .MuiFormControlLabel-label': {
-              // The switch's own padding is all that separates it from its
-              // label otherwise, and the two read as one glyph.
-              ml: 0.5,
-              fontSize: 13,
-              color: 'text.secondary',
-            },
-          }}
-        />
-      </Tooltip>
+      {/* Switches rather than segmented tracks: the controls to the left each
+          pick one of several readings of the board, and these only toggle a
+          display layer. Labels go after the control so they line up with the
+          labels to their left, which sit before their tracks. */}
+      <Stack direction="row" sx={{ alignItems: 'center', gap: 2 }}>
+        <Tooltip title={t.toolbar.compactHint} arrow>
+          <FormControlLabel
+            control={
+              <Switch
+                size="small"
+                checked={compactCard}
+                onChange={(event) => setCompactCard(event.target.checked)}
+              />
+            }
+            label={t.toolbar.compact}
+            sx={{
+              ml: 0,
+              mr: 0,
+              '& .MuiFormControlLabel-label': {
+                ml: 0.5,
+                fontSize: 13,
+                color: 'text.secondary',
+              },
+            }}
+          />
+        </Tooltip>
+        <Tooltip title={t.toolbar.klineVolumeHint} arrow>
+          <FormControlLabel
+            disabled={compactCard}
+            control={
+              <Switch
+                size="small"
+                checked={klineVolume}
+                onChange={(event) => setKlineVolume(event.target.checked)}
+              />
+            }
+            label={t.toolbar.klineVolume}
+            sx={{
+              ml: 0,
+              mr: 0,
+              '& .MuiFormControlLabel-label': {
+                // The switch's own padding is all that separates it from its
+                // label otherwise, and the two read as one glyph.
+                ml: 0.5,
+                fontSize: 13,
+                color: 'text.secondary',
+              },
+            }}
+          />
+        </Tooltip>
+      </Stack>
     </Stack>
   )
 }

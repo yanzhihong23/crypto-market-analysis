@@ -1,3 +1,5 @@
+import type { Theme } from '@mui/material'
+
 /**
  * Over the sparkline rather than pinned to the card's bottom edge, which is
  * where the chips now sit. The chart is the one thing on the card that can
@@ -28,6 +30,28 @@ export const cardActionBarSx = {
   // wash that used to sit here inverted badly in the dark scheme.
   backdropFilter: 'blur(2px)',
 } as const
+
+/**
+ * Floating pill for compact cards, which have no sparkline to sit over. An
+ * opaque paper surface with the card's own hairline border keeps the buttons
+ * legible over live figures on both neutral and strong-mover tinted cards.
+ */
+export const compactCardActionBarSx = (theme: Theme) => ({
+  position: 'absolute',
+  top: '50%',
+  right: 12,
+  transform: 'translateY(-50%)',
+  px: 0.75,
+  py: 0.5,
+  zIndex: 3,
+  display: 'none',
+  alignItems: 'center',
+  gap: 0.25,
+  borderRadius: '10px',
+  backgroundColor: theme.vars.palette.background.paper,
+  border: `1px solid ${theme.vars.palette.surface.border}`,
+  boxShadow: theme.vars.palette.surface.shadow,
+})
 
 /**
  * Neutral until it is pointed at. The theme's destructive red is the same hex as

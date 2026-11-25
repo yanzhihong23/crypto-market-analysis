@@ -125,6 +125,8 @@ export const en = {
     // apart without either of them getting longer.
     klineVolume: 'Volume bars',
     klineVolumeHint: 'Volume behind the sparkline on every card',
+    compact: 'Compact',
+    compactHint: 'Show only symbol, change and last price on each card',
   },
 
   card: {
