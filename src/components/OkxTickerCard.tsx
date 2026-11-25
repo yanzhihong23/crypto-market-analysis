@@ -1,5 +1,5 @@
 import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material'
-import { memo, useMemo, useCallback, useState, type MouseEvent } from 'react'
+import { memo, useMemo, useCallback, type MouseEvent } from 'react'
 import BookmarkRemoveIcon from '@mui/icons-material/BookmarkRemoveOutlined'
 import QueryStatsIcon from '@mui/icons-material/QueryStats'
 import StarIcon from '@mui/icons-material/Star'
@@ -9,6 +9,7 @@ import useOkxTicker from '../hooks/useOkxTicker'
 import useOkxSignals from '../hooks/useOkxSignals'
 import useOkxBackdrop from '../hooks/useOkxBackdrop'
 import { useTickerStore } from '../store/useTickerStore'
+import { openOkxDetail } from '../store/useOkxDetailStore'
 import { removeOkxTicker } from '../store/okxRealtimeTicker'
 import { okxTickerActions } from '../okx/okxTickerActions'
 import { numericFont } from '../fonts'
@@ -21,7 +22,6 @@ import PriceRange from './PriceRange'
 import OkxMarketMetrics from './OkxMarketMetrics'
 import OkxLogoSymbol from './OkxLogoSymbol'
 import OkxTickerCardSkeleton from './OkxTickerCardSkeleton'
-import OkxTickerDetail from './OkxTickerDetail'
 import SignalPulse from './SignalPulse'
 import {
   cardActionBarSx,
@@ -111,10 +111,6 @@ function OkxTickerCard({ instId }: { instId: string }) {
   const backdrop = useOkxBackdrop(instId)
   const pinned = useTickerStore((state) => state.pinnedInstIds.includes(instId))
   const compact = useTickerStore((state) => state.compactCard)
-  // Opening the detail is deliberately a button rather than a click on the
-  // card: the card already answers a double-click by pinning, and a single
-  // click that opened a dialog would fire on the way to every one of those.
-  const [detailOpen, setDetailOpen] = useState(false)
 
   // A chip or the badge carries any single reading on its own; the card only
   // claims the ring once two of the three kinds of reading agree, which is the
@@ -137,8 +133,10 @@ function OkxTickerCard({ instId }: { instId: string }) {
     useTickerStore.getState().togglePinned(instId)
   }, [instId])
 
-  const handleOpenDetail = useCallback(() => setDetailOpen(true), [])
-  const handleCloseDetail = useCallback(() => setDetailOpen(false), [])
+  // Opening the detail is deliberately a button rather than a click on the
+  // card: the card already answers a double-click by pinning, and a single
+  // click that opened a dialog would fire on the way to every one of those.
+  const handleOpenDetail = useCallback(() => openOkxDetail(instId), [instId])
 
   if (!ready) {
     return (
@@ -250,17 +248,6 @@ function OkxTickerCard({ instId }: { instId: string }) {
 
           <OkxMarketMetrics instId={instId} signals={signals} />
         </>
-      )}
-
-      {/* Mounted only once it has been asked for, so the board does not carry a
-          dialog and its four series for every card on it. */}
-      {detailOpen && (
-        <OkxTickerDetail
-          instId={instId}
-          open={detailOpen}
-          onClose={handleCloseDetail}
-          signals={signals}
-        />
       )}
     </TickerContainer>
   )

@@ -2,6 +2,7 @@ import {
   Badge,
   Box,
   Button,
+  ButtonBase,
   Divider,
   IconButton,
   Popover,
@@ -10,11 +11,14 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone'
 import { useCallback, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import { formatDistanceToNowStrict } from 'date-fns'
 
 import { useAlertStore } from '../store/useAlertStore'
+import { openOkxDetail } from '../store/useOkxDetailStore'
 import {
   beep,
   notificationPermission,
@@ -84,9 +88,20 @@ export default function AlertBell() {
   )
   const t = useMessages()
   const dateLocale = useDateLocale()
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const [permission, setPermission] = useState(notificationPermission)
+
+  const openAlertDetail = useCallback(
+    (instId: string) => {
+      setAnchorEl(null)
+      openOkxDetail(instId)
+      if (location.pathname !== '/') void navigate('/')
+    },
+    [location.pathname, navigate],
+  )
 
   const unseen = useMemo(
     () => alerts.filter((alert) => alert.at > seenAt).length,
@@ -266,94 +281,127 @@ export default function AlertBell() {
           </Typography>
         ) : (
           <Box sx={{ maxHeight: 280, overflowY: 'auto' }}>
-            {alerts.map((alert) => (
-              <Stack
-                key={alert.id}
-                sx={{
-                  gap: 0.25,
-                  px: 2,
-                  py: 1.25,
-                }}
-              >
-                <Stack
-                  direction="row"
+            {alerts.map((alert) => {
+              const symbol = alert.instId.split('-')[0]
+              return (
+                <ButtonBase
+                  key={alert.id}
+                  aria-label={t.alerts.openDetail(symbol)}
+                  onClick={() => openAlertDetail(alert.instId)}
                   sx={{
-                    alignItems: 'baseline',
-                    justifyContent: 'space-between',
-                    gap: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'stretch',
+                    width: '100%',
+                    textAlign: 'left',
+                    gap: 0.25,
+                    px: 2,
+                    py: 1.25,
+                    transition: 'background-color 150ms ease',
+                    '&:hover': {
+                      backgroundColor: 'surface.subtle',
+                    },
+                    '&:hover .alert-chevron': {
+                      opacity: 1,
+                    },
                   }}
                 >
-                  <Typography
+                  <Stack
+                    direction="row"
                     sx={{
-                      fontSize: 14,
-                      fontWeight: 600,
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 1,
                     }}
                   >
-                    {alert.instId.split('-')[0]}
+                    <Typography
+                      sx={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {symbol}
+                    </Typography>
+                    <Stack
+                      direction="row"
+                      sx={{ alignItems: 'center', gap: 0.25, flexShrink: 0 }}
+                    >
+                      <Typography
+                        sx={[
+                          {
+                            fontSize: 12,
+                            color: 'text.secondary',
+                          },
+                          ...(Array.isArray(numericFont)
+                            ? numericFont
+                            : [numericFont]),
+                        ]}
+                      >
+                        {formatDistanceToNowStrict(alert.at, {
+                          addSuffix: true,
+                          locale: dateLocale,
+                        })}
+                      </Typography>
+                      <ChevronRightRoundedIcon
+                        className="alert-chevron"
+                        sx={{
+                          fontSize: 15,
+                          color: 'text.secondary',
+                          opacity: 0.45,
+                          transition: 'opacity 150ms ease',
+                        }}
+                      />
+                    </Stack>
+                  </Stack>
+                  {/* The headline says what kind of event it was and the
+                      readings say what it was made of, which is the difference
+                      between an entry you can act on and a row of sigmas. */}
+                  <Typography sx={{ fontSize: 13 }}>
+                    {alert.headline}
                   </Typography>
-                  <Typography
-                    sx={[
-                      {
-                        fontSize: 12,
-                        color: 'text.secondary',
-                      },
-                      ...(Array.isArray(numericFont)
-                        ? numericFont
-                        : [numericFont]),
-                    ]}
-                  >
-                    {formatDistanceToNowStrict(alert.at, {
-                      addSuffix: true,
-                      locale: dateLocale,
-                    })}
-                  </Typography>
-                </Stack>
-                {/* The headline says what kind of event it was and the readings
-                    say what it was made of, which is the difference between an
-                    entry you can act on and a row of sigmas. */}
-                <Typography sx={{ fontSize: 13 }}>{alert.headline}</Typography>
-                {alert.reasons.map((reason) => (
-                  <Typography
-                    key={reason.kind}
-                    sx={[
-                      {
-                        fontSize: 12,
-                        color: 'text.secondary',
-                      },
-                      ...(Array.isArray(numericFont)
-                        ? numericFont
-                        : [numericFont]),
-                    ]}
-                  >
-                    {reason.detail}
-                  </Typography>
-                ))}
-                {/* The backdrop, under the readings and set in from them: what
-                    happened is above, and what it happened to is here. All of
-                    it, unlike the tape — this is the list you open when you
-                    have decided to ask, and it has the room. */}
-                {(alert.context ?? []).map((reading) => (
-                  <Typography
-                    key={reading.kind}
-                    sx={[
-                      {
-                        fontSize: 12,
-                        color: 'text.secondary',
-                        opacity: 0.75,
-                        pl: 1,
-                        borderLeft: '2px solid',
-                        borderColor: 'surface.marker',
-                      },
-                      ...(Array.isArray(numericFont)
-                        ? numericFont
-                        : [numericFont]),
-                    ]}
-                  >
-                    {reading.detail}
-                  </Typography>
-                ))}
-              </Stack>
-            ))}
+                  {alert.reasons.map((reason) => (
+                    <Typography
+                      key={reason.kind}
+                      sx={[
+                        {
+                          fontSize: 12,
+                          color: 'text.secondary',
+                        },
+                        ...(Array.isArray(numericFont)
+                          ? numericFont
+                          : [numericFont]),
+                      ]}
+                    >
+                      {reason.detail}
+                    </Typography>
+                  ))}
+                  {/* The backdrop, under the readings and set in from them:
+                      what happened is above, and what it happened to is here.
+                      All of it, unlike the tape — this is the list you open
+                      when you have decided to ask, and it has the room. */}
+                  {(alert.context ?? []).map((reading) => (
+                    <Typography
+                      key={reading.kind}
+                      sx={[
+                        {
+                          fontSize: 12,
+                          color: 'text.secondary',
+                          opacity: 0.75,
+                          pl: 1,
+                          borderLeft: '2px solid',
+                          borderColor: 'surface.marker',
+                        },
+                        ...(Array.isArray(numericFont)
+                          ? numericFont
+                          : [numericFont]),
+                      ]}
+                    >
+                      {reading.detail}
+                    </Typography>
+                  ))}
+                </ButtonBase>
+              )
+            })}
           </Box>
         )}
 

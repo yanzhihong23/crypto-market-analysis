@@ -1,18 +1,21 @@
 import { keyframes } from '@emotion/react'
-import { Box, IconButton, Stack, Tooltip } from '@mui/material'
+import { Box, ButtonBase, IconButton, Tooltip } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone'
 import {
   Fragment,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'react'
+import { useLocation, useNavigate } from 'react-router'
 import { formatDistanceToNowStrict } from 'date-fns'
 
 import { Alert, useAlertStore } from '../store/useAlertStore'
+import { openOkxDetail } from '../store/useOkxDetailStore'
 import { numericFont } from '../fonts'
 import { useDateLocale, useMessages } from '../i18n'
 
@@ -138,6 +141,16 @@ export default function AlertTape() {
   const dismiss = useAlertStore((state) => state.dismissTape)
   const t = useMessages()
   const dateLocale = useDateLocale()
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const openAlertDetail = useCallback(
+    (instId: string) => {
+      openOkxDetail(instId)
+      if (location.pathname !== '/') void navigate('/')
+    },
+    [location.pathname, navigate],
+  )
 
   const viewportRef = useRef<HTMLDivElement>(null)
   const groupRef = useRef<HTMLDivElement>(null)
@@ -186,86 +199,105 @@ export default function AlertTape() {
 
   if (!showing) return null
 
-  const entries = alerts.map((alert) => (
-    <Stack
-      key={alert.id}
-      direction="row"
-      sx={{
-        alignItems: 'center',
-        gap: 0.75,
-        whiteSpace: 'nowrap',
-        fontSize: 12,
-      }}
-    >
-      {/* The mark that opens an entry is also what separates it from the one
-          before, and amber because this is a signal — the tape never carries a
-          number with a direction, so red and green stay out of it. */}
-      <Box
-        sx={{
-          width: 5,
-          height: 5,
-          borderRadius: '50%',
-          backgroundColor: 'signal.main',
-          flexShrink: 0,
-        }}
-      />
-      <Box component="span" sx={{ fontWeight: 600 }}>
-        {alert.instId.split('-')[0]}
-      </Box>
-      {/* What kind of event it was, then what it was made of — the same order,
-          and the same two weights, the bell puts them in. A headline on its own
-          says a card is worth looking at; the readings are what let you decide
-          from here whether it is. */}
-      <Box component="span">{alert.headline}</Box>
-      {alert.reasons.slice(0, MOST_REASONS).map((reason) => (
-        <Fragment key={reason.kind}>
-          <Box sx={ruleSx} />
-          <Box
-            component="span"
-            sx={{ ...numericFont, color: 'text.secondary' }}
-          >
-            {reason.detail}
-          </Box>
-        </Fragment>
-      ))}
-      {/* What had been true for weeks when this fired. Behind the readings and
-          in the label rather than the sentence, because it is not one of them:
-          those say what happened, and this says what it happened to. No rule in
-          front of it either — a rule would rank it with them. */}
-      {(alert.context ?? []).slice(0, MOST_CONTEXT).map((reading) => (
-        <Box
-          key={reading.kind}
-          component="span"
+  const renderEntries = (duplicate = false) =>
+    alerts.map((alert) => {
+      const symbol = alert.instId.split('-')[0]
+      return (
+        <ButtonBase
+          key={alert.id}
+          tabIndex={duplicate ? -1 : undefined}
+          aria-label={duplicate ? undefined : t.alerts.openDetail(symbol)}
+          onClick={() => openAlertDetail(alert.instId)}
           sx={{
-            ml: 0.5,
-            fontSize: 11,
-            color: 'text.secondary',
-            opacity: 0.75,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 0.75,
+            whiteSpace: 'nowrap',
+            fontSize: 12,
+            lineHeight: 1.4,
+            px: 1,
+            py: 0.375,
+            mx: -1,
+            borderRadius: '6px',
+            color: 'inherit',
+            transition: 'background-color 150ms ease',
+            '&:hover': {
+              backgroundColor: 'surface.subtle',
+            },
           }}
         >
-          {reading.label}
-        </Box>
-      ))}
-      {/* Which is the difference between "this is happening" and "this happened
-          while you were making coffee". Set apart from the readings rather than
-          ruled off them: it is not one of them. */}
-      <Box
-        component="span"
-        sx={{
-          ...numericFont,
-          ml: 0.5,
-          fontSize: 11,
-          color: 'text.secondary',
-          opacity: 0.6,
-        }}
-      >
-        {formatDistanceToNowStrict(alert.at, {
-          addSuffix: true,
-          locale: dateLocale,
-        })}
-      </Box>
-    </Stack>
-  ))
+          {/* The mark that opens an entry is also what separates it from the
+              one before, and amber because this is a signal — the tape never
+              carries a number with a direction, so red and green stay out of
+              it. */}
+          <Box
+            sx={{
+              width: 5,
+              height: 5,
+              borderRadius: '50%',
+              backgroundColor: 'signal.main',
+              flexShrink: 0,
+            }}
+          />
+          <Box component="span" sx={{ fontWeight: 600 }}>
+            {symbol}
+          </Box>
+          {/* What kind of event it was, then what it was made of — the same
+              order, and the same two weights, the bell puts them in. A
+              headline on its own says a card is worth looking at; the readings
+              are what let you decide from here whether it is. */}
+          <Box component="span">{alert.headline}</Box>
+          {alert.reasons.slice(0, MOST_REASONS).map((reason) => (
+            <Fragment key={reason.kind}>
+              <Box sx={ruleSx} />
+              <Box
+                component="span"
+                sx={{ ...numericFont, color: 'text.secondary' }}
+              >
+                {reason.detail}
+              </Box>
+            </Fragment>
+          ))}
+          {/* What had been true for weeks when this fired. Behind the readings
+              and in the label rather than the sentence, because it is not one
+              of them: those say what happened, and this says what it happened
+              to. No rule in front of it either — a rule would rank it with
+              them. */}
+          {(alert.context ?? []).slice(0, MOST_CONTEXT).map((reading) => (
+            <Box
+              key={reading.kind}
+              component="span"
+              sx={{
+                ml: 0.5,
+                fontSize: 11,
+                color: 'text.secondary',
+                opacity: 0.75,
+              }}
+            >
+              {reading.label}
+            </Box>
+          ))}
+          {/* Which is the difference between "this is happening" and "this
+              happened while you were making coffee". Set apart from the
+              readings rather than ruled off them: it is not one of them. */}
+          <Box
+            component="span"
+            sx={{
+              ...numericFont,
+              ml: 0.5,
+              fontSize: 11,
+              color: 'text.secondary',
+              opacity: 0.6,
+            }}
+          >
+            {formatDistanceToNowStrict(alert.at, {
+              addSuffix: true,
+              locale: dateLocale,
+            })}
+          </Box>
+        </ButtonBase>
+      )
+    })
 
   return (
     <Box
@@ -327,7 +359,7 @@ export default function AlertTape() {
           }}
         >
           <Box ref={groupRef} sx={groupSx}>
-            {entries}
+            {renderEntries()}
           </Box>
           {/* The second pass, which is what the first one runs into instead of
               running out. Only worth carrying while the row is moving. */}
@@ -339,7 +371,7 @@ export default function AlertTape() {
                 '@media (prefers-reduced-motion: reduce)': { display: 'none' },
               }}
             >
-              {entries}
+              {renderEntries(true)}
             </Box>
           )}
         </Box>

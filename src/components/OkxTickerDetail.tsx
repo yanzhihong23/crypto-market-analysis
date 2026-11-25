@@ -387,79 +387,88 @@ export default function OkxTickerDetail({
           </Typography>
         </Stack>
 
-        {/* What the symbol is, then what it costs. Along the row the two run
-            together — `USDT-SWAP 4072.7` reads for a moment as one string of
-            characters about the contract — and a hairline is the cheapest way
-            to say they are two things. The avatar's own height, so it lands on
-            a measure the row already keeps. */}
-        <Box
-          sx={{
-            alignSelf: 'center',
-            flexShrink: 0,
-            width: '1px',
-            height: 28,
-            backgroundColor: 'surface.border',
-          }}
-        />
+        {/* Live price is absent when opened from an alert for a symbol that is
+            no longer subscribed on the board; skip the divider and readout
+            rather than printing an empty price beside +0%. */}
+        {ticker.last !== '' && (
+          <>
+            {/* What the symbol is, then what it costs. Along the row the two
+                run together — `USDT-SWAP 4072.7` reads for a moment as one
+                string of characters about the contract — and a hairline is the
+                cheapest way to say they are two things. The avatar's own
+                height, so it lands on a measure the row already keeps. */}
+            <Box
+              sx={{
+                alignSelf: 'center',
+                flexShrink: 0,
+                width: '1px',
+                height: 28,
+                backgroundColor: 'surface.border',
+              }}
+            />
 
-        {/* The live price stays on the dialog: the charts are history, and
-            without it the price you are looking at is the one from whenever the
-            candles were fetched.
+            {/* The live price stays on the dialog: the charts are history, and
+                without it the price you are looking at is the one from whenever
+                the candles were fetched.
 
-            One line and one baseline. Stacked, the price floated between the
-            two change lines while the symbol sat on a third, and a row of
-            three figures about one instrument was being read down a column
-            instead of across. It reads now the way it is said: XAU, four
-            thousand and seventy, down a percent and a half. */}
-        <Stack
-          direction="row"
-          sx={{ alignItems: 'baseline', gap: 1, flexShrink: 0 }}
-        >
-          <Typography
-            sx={{
-              fontSize: 22,
-              fontWeight: 600,
-              // The last tick's direction, not the 24h one. The card has drawn
-              // it this way all along and says why on `LastPrice`: this number
-              // is the print that just landed, and the 24h reading already has
-              // the figures beside it, the metrics row and the charts. Taking
-              // both from `ticker.color` made the price restate the change
-              // percent and left the tick unsaid anywhere on the dialog.
-              color: ticker.isUp ? 'market.up' : 'market.down',
-              ...numericFont,
-            }}
-          >
-            {ticker.last}
-          </Typography>
+                One line and one baseline. Stacked, the price floated between
+                the two change lines while the symbol sat on a third, and a row
+                of three figures about one instrument was being read down a
+                column instead of across. It reads now the way it is said: XAU,
+                four thousand and seventy, down a percent and a half. */}
+            <Stack
+              direction="row"
+              sx={{ alignItems: 'baseline', gap: 1, flexShrink: 0 }}
+            >
+              <Typography
+                sx={{
+                  fontSize: 22,
+                  fontWeight: 600,
+                  // The last tick's direction, not the 24h one. The card has
+                  // drawn it this way all along and says why on `LastPrice`:
+                  // this number is the print that just landed, and the 24h
+                  // reading already has the figures beside it, the metrics row
+                  // and the charts. Taking both from `ticker.color` made the
+                  // price restate the change percent and left the tick unsaid
+                  // anywhere on the dialog.
+                  color: ticker.isUp ? 'market.up' : 'market.down',
+                  ...numericFont,
+                }}
+              >
+                {ticker.last}
+              </Typography>
 
-          <Typography
-            sx={{ fontSize: 13, color: ticker.color, ...numericFont }}
-          >
-            {+ticker.percent > 0 ? '+' : ''}
-            {ticker.percent}%
-          </Typography>
+              <Typography
+                sx={{ fontSize: 13, color: ticker.color, ...numericFont }}
+              >
+                {+ticker.percent > 0 ? '+' : ''}
+                {ticker.percent}%
+              </Typography>
 
-          {/* The same 24h change in the quote currency. Bracketed, which is
-              what brackets are for — a restatement of what was just said, in
-              other units — and the one device here that subordinates it
-              without claiming it is a different kind of fact. Set in the
-              change's own colour, like the card sets it; greying it said that,
-              and a bare `-1.51% -62.2` ran the pair together into one mangled
-              number.
+              {/* The same 24h change in the quote currency. Bracketed, which is
+                  what brackets are for — a restatement of what was just said,
+                  in other units — and the one device here that subordinates it
+                  without claiming it is a different kind of fact. Set in the
+                  change's own colour, like the card sets it; greying it said
+                  that, and a bare `-1.51% -62.2` ran the pair together into one
+                  mangled number.
 
-              Gone below `sm`, where a phone has room for the symbol, the price
-              and one reading of the change, and this is the other one. */}
-          <Typography
-            sx={{
-              display: { xs: 'none', sm: 'block' },
-              fontSize: 12,
-              color: ticker.color,
-              ...numericFont,
-            }}
-          >
-            ({ticker.dif})
-          </Typography>
-        </Stack>
+                  Gone below `sm`, where a phone has room for the symbol, the
+                  price and one reading of the change, and this is the other
+                  one. */}
+              <Typography
+                sx={{
+                  display: { xs: 'none', sm: 'block' },
+                  fontSize: 12,
+                  color: ticker.color,
+                  ...numericFont,
+                }}
+              >
+                ({ticker.dif})
+              </Typography>
+            </Stack>
+          </>
+        )}
 
         <IconButton
           aria-label={t.common.close}

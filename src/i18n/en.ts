@@ -93,6 +93,7 @@ export const en = {
     /** Names the strip along the bottom, which has no room to name itself. */
     recent: 'Recent alerts',
     hide: 'Hide recent alerts',
+    openDetail: (symbol: string) => `Open ${symbol} details`,
   },
 
   addTicker: {

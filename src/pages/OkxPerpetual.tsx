@@ -4,11 +4,14 @@ import { useShallow } from 'zustand/react/shallow'
 
 import { SortBy } from '../types/okx'
 import { useTickerStore } from '../store/useTickerStore'
+import { closeOkxDetail, useOkxDetailStore } from '../store/useOkxDetailStore'
 import OkxTickerCard from '../components/OkxTickerCard'
+import OkxTickerDetail from '../components/OkxTickerDetail'
 import AddTickerButton from '../components/AddTickerButton'
 import OkxDataSync from '../components/OkxDataSync'
 import OkxMarketToolbar from '../components/OkxMarketToolbar'
 import EmptyWatchlist from '../components/EmptyWatchlist'
+import useOkxSignals from '../hooks/useOkxSignals'
 import useOkxTickerPercents from '../hooks/useOkxTickerPercents'
 
 /**
@@ -133,12 +136,39 @@ const OkxTickerGrid = memo(function OkxTickerGrid() {
   )
 })
 
+function OkxDetailDialog({
+  instId,
+  onClose,
+}: {
+  instId: string
+  onClose: () => void
+}) {
+  const { signals } = useOkxSignals(instId)
+  return (
+    <OkxTickerDetail instId={instId} open onClose={onClose} signals={signals} />
+  )
+}
+
+/**
+ * One dialog for the whole board, mounted only while a symbol is open. Driven
+ * by `useOkxDetailStore` so a card's chart button, an alert in the bell or
+ * tape, and a desktop notification all land on the same dialog.
+ */
+function OkxDetailHost() {
+  const instId = useOkxDetailStore((state) => state.instId)
+  if (!instId) return null
+  return (
+    <OkxDetailDialog key={instId} instId={instId} onClose={closeOkxDetail} />
+  )
+}
+
 export default function OkxPerpetual() {
   return (
     <Box>
       <OkxDataSync />
       <OkxMarketToolbar />
       <OkxTickerGrid />
+      <OkxDetailHost />
     </Box>
   )
 }

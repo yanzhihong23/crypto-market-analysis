@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 
 import { useTickerStore } from '../store/useTickerStore'
 import { useAlertStore } from '../store/useAlertStore'
+import { openOkxDetail } from '../store/useOkxDetailStore'
 import { readSignalInput } from '../store/okxSignalInput'
 import { readBackdrop } from '../store/okxBackdropInput'
 import {
@@ -113,6 +114,7 @@ export default function useOkxAlerts() {
               .map((reason) => reason.detail)
               .join(' · '),
             instId,
+            () => openOkxDetail(instId),
           )
         }
         if (soundEnabled) beep()

@@ -27,11 +27,23 @@ export async function requestNotificationPermission() {
   return Notification.requestPermission()
 }
 
-export function showNotification(title: string, body: string, tag: string) {
+export function showNotification(
+  title: string,
+  body: string,
+  tag: string,
+  onClick?: () => void,
+) {
   if (!notificationsSupported() || Notification.permission !== 'granted') return
   // Tagged per instrument so a symbol that fires again replaces its own
   // notification rather than stacking a second one behind it.
-  new Notification(title, { body, tag, icon: '/logo.svg' })
+  const notification = new Notification(title, { body, tag, icon: '/logo.svg' })
+  if (onClick) {
+    notification.onclick = () => {
+      window.focus()
+      onClick()
+      notification.close()
+    }
+  }
 }
 
 let audioContext: AudioContext | null = null

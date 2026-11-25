@@ -72,6 +72,7 @@ export const zh: Messages = {
     empty: '暂无触发记录',
     recent: '最近提醒',
     hide: '隐藏最近提醒',
+    openDetail: (symbol) => `查看 ${symbol} 详情`,
   },
 
   addTicker: {
