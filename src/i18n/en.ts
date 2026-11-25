@@ -128,6 +128,11 @@ export const en = {
     klineVolumeHint: 'Volume behind the sparkline on every card',
     compact: 'Compact',
     compactHint: 'Show only symbol, change and last price on each card',
+    breadthUp: (count: number) => `${count} up`,
+    breadthDown: (count: number) => `${count} down`,
+    breadthMedian: 'Median',
+    breadthHint: (count: number) =>
+      `Advancers, decliners and median change across ${count} watched symbols`,
   },
 
   card: {

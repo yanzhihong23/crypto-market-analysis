@@ -102,6 +102,10 @@ export const zh: Messages = {
     klineVolumeHint: '在每张卡片的走势图背后画出成交量',
     compact: '简版',
     compactHint: '卡片只显示币种、涨跌幅和最新价',
+    breadthUp: (count) => `${count} 涨`,
+    breadthDown: (count) => `${count} 跌`,
+    breadthMedian: '中位',
+    breadthHint: (count) => `自选 ${count} 个品种的涨跌分布与涨跌幅中位数`,
   },
 
   card: {

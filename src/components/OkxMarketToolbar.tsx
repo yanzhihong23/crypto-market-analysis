@@ -20,6 +20,7 @@ import { useMessages } from '../i18n'
 import type { Messages } from '../i18n/en'
 
 import SegmentedToggle, { SegmentedOption } from './SegmentedToggle'
+import OkxBoardBreadth from './OkxBoardBreadth'
 
 // Built per language rather than held as a constant, so the segments are named
 // in whichever one is on. Gainers and losers are separate segments rather than
@@ -288,6 +289,7 @@ export default function OkxMarketToolbar() {
           />
         </Tooltip>
       </Stack>
+      <OkxBoardBreadth />
     </Stack>
   )
 }

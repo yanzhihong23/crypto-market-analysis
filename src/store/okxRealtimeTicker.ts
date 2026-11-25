@@ -89,6 +89,10 @@ export const setOkxOpenInterest = (instId: string, oi: string) => {
 export const getOkxPercentSnapshot = (instId: string) =>
   percent.get(instId) ?? 0
 
+/** Null until the first ticker message lands, so breadth skips unloaded symbols. */
+export const getOkxPercentOrNull = (instId: string) =>
+  percent.get(instId) ?? null
+
 export const setOkxPercent = (instId: string, value: number) => {
   if (percent.get(instId) === value) return
   percent.set(instId, value)
