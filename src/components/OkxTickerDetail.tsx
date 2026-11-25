@@ -3,6 +3,7 @@ import {
   CircularProgress,
   Dialog,
   DialogContent,
+  Divider,
   IconButton,
   Stack,
   Typography,
@@ -125,7 +126,7 @@ function BackdropPanel({ instId }: { instId: string }) {
 
   return (
     <Box>
-      <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75 }}>
+      <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 1 }}>
         {t.backdrop.title}
       </Typography>
 
@@ -134,65 +135,79 @@ function BackdropPanel({ instId }: { instId: string }) {
           {t.backdrop.pending}
         </Typography>
       ) : (
-        <Stack sx={{ gap: 1 }}>
-          {/* Reported at every level rather than only when it is unusual, the
-              way the range position is: how a symbol has done against BTC is
-              worth knowing on any month, and it has no honest threshold of its
-              own until the rest of the market is taken out — which is what the
-              reading below it does and this deliberately does not.
-
-              A window each, in a column, rather than the sentence these two
-              used to share. They are returns, so they are set the way every
-              other return on this dialog is — right-aligned, monospaced, and
-              coloured by their sign — and a month twenty points behind BTC
-              stops being the quietest number in the panel. */}
+        <Stack sx={{ gap: 1.25 }}>
+          {/* Both horizons on one scannable row so 30d and 7d relative returns
+              compare side by side without burning an extra line. */}
           {backdrop.relative && (
-            <Box
+            <Stack
+              direction="row"
               sx={{
-                display: 'grid',
-                // `max-content` and nothing else: `auto` tracks share out the
-                // free space in the column this sits in, which pushed the two
-                // figures to the far right and left the label stranded a panel
-                // width away from them.
-                gridTemplateColumns: 'max-content max-content max-content',
-                justifyContent: 'start',
                 alignItems: 'baseline',
-                columnGap: 1.5,
+                flexWrap: 'wrap',
+                columnGap: 1,
                 rowGap: 0.5,
               }}
             >
               <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
                 {t.backdrop.relativeLabel}
               </Typography>
-              {/* Window on the left, figure on the right: the rungs beside
-                  this read `15m  −0.15%`, and there is no reason for the one
-                  table of returns on the dialog that is not a period to be
-                  read in the other direction. */}
-              <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
-                {t.backdrop.relativeWindow30d}
-              </Typography>
-              <ExcessValue points={backdrop.relative.excess30d} />
-
-              <Box />
-              <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
-                {t.backdrop.relativeWindow7d}
-              </Typography>
-              <ExcessValue points={backdrop.relative.excess7d} />
-            </Box>
+              <Stack direction="row" sx={{ alignItems: 'baseline', gap: 0.5 }}>
+                <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  {t.backdrop.relativeWindow30d}
+                </Typography>
+                <ExcessValue points={backdrop.relative.excess30d} />
+              </Stack>
+              <Box
+                component="span"
+                aria-hidden
+                sx={{ fontSize: 12, color: 'text.secondary', opacity: 0.45 }}
+              >
+                ·
+              </Box>
+              <Stack direction="row" sx={{ alignItems: 'baseline', gap: 0.5 }}>
+                <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  {t.backdrop.relativeWindow7d}
+                </Typography>
+                <ExcessValue points={backdrop.relative.excess7d} />
+              </Stack>
+            </Stack>
           )}
 
-          {/* The sentence rather than the chip. The card has room for one of
-              these at a time and shows the short form; this is the surface
-              somebody opened to read them. */}
+          {/* Short headline tag above the full sentence so the key condition
+              reads in a glance rather than buried inside a paragraph. */}
           {readings.length > 0 && (
-            <Stack sx={{ gap: 0.5 }}>
+            <Stack sx={{ gap: 1 }}>
               {readings.map((reading) => (
-                <Typography
+                <Stack
                   key={reading.kind}
-                  sx={{ fontSize: 12, color: 'text.secondary' }}
+                  sx={{
+                    gap: 0.25,
+                    pl: 1.25,
+                    borderLeft: '2px solid',
+                    borderColor: 'surface.marker',
+                  }}
                 >
-                  {reading.detail}
-                </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'text.primary',
+                      lineHeight: 1.35,
+                      ...numericFont,
+                    }}
+                  >
+                    {reading.label}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                      color: 'text.secondary',
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {reading.detail}
+                  </Typography>
+                </Stack>
               ))}
             </Stack>
           )}
@@ -205,6 +220,7 @@ function BackdropPanel({ instId }: { instId: string }) {
 function ChartSection({
   title,
   note,
+  headerAction,
   data,
   stroke,
   referenceY,
@@ -220,6 +236,7 @@ function ChartSection({
 }: {
   title: string
   note?: string
+  headerAction?: React.ReactNode
   data: SeriesPoint[]
   stroke?: string
   referenceY?: number
@@ -238,13 +255,27 @@ function ChartSection({
 
   return (
     <Box>
-      <Stack direction="row" sx={{ alignItems: 'baseline', gap: 1, mb: 0.5 }}>
-        <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{title}</Typography>
-        {note && (
-          <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
-            {note}
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 1,
+          mb: 0.75,
+        }}
+      >
+        <Stack direction="row" sx={{ alignItems: 'baseline', gap: 1 }}>
+          <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
+            {title}
           </Typography>
-        )}
+          {note && (
+            <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+              {note}
+            </Typography>
+          )}
+        </Stack>
+        {headerAction}
       </Stack>
       {data.length ? (
         <BaseAreaChart
@@ -479,33 +510,11 @@ export default function OkxTickerDetail({
         </IconButton>
       </Stack>
 
-      <Stack
-        direction="row"
-        sx={{
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 2,
-          px: 3,
-          pb: 1.5,
-          flexShrink: 0,
-          backgroundColor: 'background.paper',
-        }}
-      >
-        <OkxMarketMetrics instId={instId} signals={signals} />
-        <SegmentedToggle
-          label={t.detail.window}
-          value={detailWindow}
-          options={windowOptions(t)}
-          onChange={setDetailWindow}
-        />
-      </Stack>
-
       <DialogContent
         sx={{
           px: 3,
           pb: fullScreen ? 'max(24px, env(safe-area-inset-bottom, 0px))' : 3,
-          pt: 0,
+          pt: 0.5,
           ...(fullScreen && {
             flex: '1 1 auto',
             minHeight: 0,
@@ -514,104 +523,173 @@ export default function OkxTickerDetail({
           }),
         }}
       >
-        {detail.loading && !detail.price.length ? (
-          <Stack sx={{ alignItems: 'center', py: 10 }}>
-            <CircularProgress size={28} />
-          </Stack>
-        ) : detail.failed ? (
-          <Typography
-            sx={{
-              fontSize: 13,
-              color: 'text.secondary',
-              py: 10,
-              textAlign: 'center',
-            }}
+        <Stack sx={{ gap: 2.5 }}>
+          {/* Snapshot & diagnosis card: live labeled metrics on top, multi-
+              timeframe ladder and medium-term backdrop side by side below.
+              Kept above and independent of the chart window selector so
+              switching between 24H / 3D / 30D never blanks out this panel. */}
+          <Box
+            sx={(th) => ({
+              borderRadius: '12px',
+              border: `1px solid ${th.vars.palette.surface.border}`,
+              overflow: 'hidden',
+            })}
           >
-            {t.detail.failed}
-          </Typography>
-        ) : (
-          <Stack sx={{ gap: 2.5 }}>
-            {/* Above the charts, and neither governed by the window selector:
-                the periods and the month are the frame a chart is read inside,
-                so they come before it, and changing which stretch the charts
-                cover does not change what the hour has been doing.
+            <Box sx={{ px: 2, py: 1.5 }}>
+              <OkxMarketMetrics
+                instId={instId}
+                signals={signals}
+                variant="labeled"
+              />
+            </Box>
 
-                Side by side on anything wide enough, because each is a short
-                column and one of them alone left the other half of the row
-                empty. Stacked below that, where two columns would be four
-                characters each. */}
+            <Divider />
+
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
-              sx={{ gap: { xs: 2, sm: 4 }, alignItems: 'flex-start' }}
+              divider={
+                <Divider
+                  orientation={fullScreen ? 'horizontal' : 'vertical'}
+                  flexItem
+                />
+              }
             >
-              <Box sx={{ flex: '0 1 auto', minWidth: 0 }}>
+              <Box sx={{ flex: '0 1 auto', minWidth: 0, p: 2 }}>
                 <TimeframeGrid instId={instId} open={open} />
               </Box>
-              <Box sx={{ flex: '1 1 0', minWidth: 0 }}>
+              <Box sx={{ flex: '1 1 0', minWidth: 0, p: 2 }}>
                 <BackdropPanel instId={instId} />
               </Box>
             </Stack>
-            <ChartSection
-              title={t.detail.price}
-              note={t.detail.priceNote}
-              data={detail.price}
-              height={220}
-              syncId={windowSyncId}
-              volumeKey="volume"
-              xDataFormatter={formatWindowTime}
-              xTooltipFormatter={formatTooltipTime}
-              yDataFormatter={(value) => formatNumber(value, 6)}
-              volumeFormatter={(value) => inCoin(compactNumberFormatter(value))}
+          </Box>
+
+          {fullScreen && (
+            <SegmentedToggle
+              label={t.detail.window}
+              value={detailWindow}
+              options={windowOptions(t)}
+              onChange={setDetailWindow}
             />
-            {/* Everything below is a positioning reading, and none of them is a
-                price move, so none of them takes the price's red and green. */}
-            <ChartSection
-              title={t.detail.ratio}
-              note={t.detail.ratioNote}
-              data={detail.ratio}
-              stroke={neutral}
-              referenceY={1}
-              height={150}
-              syncId={windowSyncId}
-              valueName={t.chart.ratio}
-              xDataFormatter={formatWindowTime}
-              xTooltipFormatter={formatTooltipTime}
-              yDataFormatter={(value) => value.toFixed(2)}
-            />
-            <ChartSection
-              title={t.detail.openInterest(symbol)}
-              data={detail.openInterest}
-              stroke={neutral}
-              height={150}
-              syncId={windowSyncId}
-              valueName={t.chart.openInterest}
-              xDataFormatter={formatWindowTime}
-              xTooltipFormatter={formatTooltipTime}
-              yDataFormatter={(value) => compactNumberFormatter(value)}
-              tooltipFormatter={(value) => inCoin(formatNumber(value))}
-            />
-            {/* Last, and on its own: settlements are the exchange's schedule,
-                not the window, so this one covers a different stretch of time
-                from the three above and cannot share their cursor. */}
-            <ChartSection
-              title={t.detail.funding}
-              note={t.detail.fundingNote(detail.funding.length)}
-              data={detail.funding}
-              stroke={neutral}
-              referenceY={0}
-              height={150}
-              valueName={t.chart.funding}
-              xDataFormatter={(value) => format(value, FUNDING_TICK_FORMAT)}
-              yDataFormatter={(value) => value.toFixed(1)}
-              // Signed, like the rate on the card: which side is paying is most
-              // of what a funding reading says, and around zero the sign is the
-              // only thing that carries it.
-              tooltipFormatter={(value) =>
-                `${value > 0 ? '+' : ''}${value.toFixed(2)}‱`
-              }
-            />
-          </Stack>
-        )}
+          )}
+
+          {detail.loading && !detail.price.length ? (
+            <Stack sx={{ gap: 1.5 }}>
+              {!fullScreen && (
+                <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
+                  <SegmentedToggle
+                    label={t.detail.window}
+                    value={detailWindow}
+                    options={windowOptions(t)}
+                    onChange={setDetailWindow}
+                  />
+                </Stack>
+              )}
+              <Stack sx={{ alignItems: 'center', py: 8 }}>
+                <CircularProgress size={28} />
+              </Stack>
+            </Stack>
+          ) : detail.failed ? (
+            <Stack sx={{ gap: 1.5 }}>
+              {!fullScreen && (
+                <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
+                  <SegmentedToggle
+                    label={t.detail.window}
+                    value={detailWindow}
+                    options={windowOptions(t)}
+                    onChange={setDetailWindow}
+                  />
+                </Stack>
+              )}
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  color: 'text.secondary',
+                  py: 8,
+                  textAlign: 'center',
+                }}
+              >
+                {t.detail.failed}
+              </Typography>
+            </Stack>
+          ) : (
+            <Stack sx={{ gap: 2.5 }}>
+              {/* Desktop keeps the window toggle inline on the right of the
+                  first chart it governs; mobile places it above the heading so
+                  it never wedges between the Price title and its chart. */}
+              <ChartSection
+                title={t.detail.price}
+                note={t.detail.priceNote}
+                headerAction={
+                  fullScreen ? undefined : (
+                    <SegmentedToggle
+                      label={t.detail.window}
+                      value={detailWindow}
+                      options={windowOptions(t)}
+                      onChange={setDetailWindow}
+                    />
+                  )
+                }
+                data={detail.price}
+                height={220}
+                syncId={windowSyncId}
+                volumeKey="volume"
+                xDataFormatter={formatWindowTime}
+                xTooltipFormatter={formatTooltipTime}
+                yDataFormatter={(value) => formatNumber(value, 6)}
+                volumeFormatter={(value) =>
+                  inCoin(compactNumberFormatter(value))
+                }
+              />
+              {/* Everything below is a positioning reading, and none of them is
+                  a price move, so none of them takes the price's red and green. */}
+              <ChartSection
+                title={t.detail.ratio}
+                note={t.detail.ratioNote}
+                data={detail.ratio}
+                stroke={neutral}
+                referenceY={1}
+                height={150}
+                syncId={windowSyncId}
+                valueName={t.chart.ratio}
+                xDataFormatter={formatWindowTime}
+                xTooltipFormatter={formatTooltipTime}
+                yDataFormatter={(value) => value.toFixed(2)}
+              />
+              <ChartSection
+                title={t.detail.openInterest(symbol)}
+                data={detail.openInterest}
+                stroke={neutral}
+                height={150}
+                syncId={windowSyncId}
+                valueName={t.chart.openInterest}
+                xDataFormatter={formatWindowTime}
+                xTooltipFormatter={formatTooltipTime}
+                yDataFormatter={(value) => compactNumberFormatter(value)}
+                tooltipFormatter={(value) => inCoin(formatNumber(value))}
+              />
+              {/* Last, and on its own: settlements are the exchange's schedule,
+                  not the window, so this one covers a different stretch of time
+                  from the three above and cannot share their cursor. */}
+              <ChartSection
+                title={t.detail.funding}
+                note={t.detail.fundingNote(detail.funding.length)}
+                data={detail.funding}
+                stroke={neutral}
+                referenceY={0}
+                height={150}
+                valueName={t.chart.funding}
+                xDataFormatter={(value) => format(value, FUNDING_TICK_FORMAT)}
+                yDataFormatter={(value) => value.toFixed(1)}
+                // Signed, like the rate on the card: which side is paying is
+                // most of what a funding reading says, and around zero the sign
+                // is the only thing that carries it.
+                tooltipFormatter={(value) =>
+                  `${value > 0 ? '+' : ''}${value.toFixed(2)}‱`
+                }
+              />
+            </Stack>
+          )}
+        </Stack>
       </DialogContent>
     </Dialog>
   )

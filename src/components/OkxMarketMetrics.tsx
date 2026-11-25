@@ -1,4 +1,4 @@
-import { Chip, Stack, Tooltip } from '@mui/material'
+import { Box, Chip, Stack, Tooltip, Typography } from '@mui/material'
 import { memo } from 'react'
 
 import {
@@ -16,6 +16,7 @@ import { describeFlow, flowRead } from '../utils/openInterest'
 import { signalOf } from '../utils/detectors'
 import type { Signal } from '../utils/signals'
 import { compactNumberFormatter } from '../utils'
+import { numericFont } from '../fonts'
 import { useMessages } from '../i18n'
 
 import { metricChipSx, signalChipSx } from './metricChipSx'
@@ -23,10 +24,17 @@ import { metricChipSx, signalChipSx } from './metricChipSx'
 function OkxMarketMetrics({
   instId,
   signals,
+  variant = 'chips',
 }: {
   instId: string
   /** Built once on the card so chips share the same pass as the pulse/ring. */
   signals: Signal[]
+  /**
+   * `chips` is the compact unlabeled row on each grid card. `labeled` spells
+   * out every metric name in a four-cell strip for the detail dialog, where
+   * there is room to read each figure without hovering.
+   */
+  variant?: 'chips' | 'labeled'
 }) {
   const volCcyQuote = useVolCcyQuote(instId)
   const ratio = useRatio(instId)
@@ -70,11 +78,11 @@ function OkxMarketMetrics({
   const open = Number(openInterestOpen?.value)
   const oiPercent =
     Number.isFinite(live) && open > 0 ? ((live - open) / open) * 100 : null
-  const oiLabel = t.metrics.openInterestChange(
+  const oiValueLabel =
     oiPercent === null
       ? t.common.missing
-      : `${oiPercent > 0 ? '+' : ''}${oiPercent.toFixed(1)}%`,
-  )
+      : `${oiPercent > 0 ? '+' : ''}${oiPercent.toFixed(1)}%`
+  const oiLabel = t.metrics.openInterestChange(oiValueLabel)
   const flow = oiPercent === null ? null : flowRead(pricePercent, oiPercent)
 
   // Which readings are out of range is decided in one place for the whole card,
@@ -151,6 +159,143 @@ function OkxMarketMetrics({
     oiSignal?.detail,
     liquidationSignal?.detail,
   )
+
+  if (variant === 'labeled') {
+    const volumeCaption = [volumeSignal?.label, takerSignal?.label ?? takerLine]
+      .filter(Boolean)
+      .join(' · ')
+    const ratioCaption = [ratioSignal?.label, divergenceSignal?.label]
+      .filter(Boolean)
+      .join(' · ')
+    const fundingCaption = [
+      fundingSignal?.label,
+      fundingShiftSignal?.label,
+      untilFunding !== null
+        ? t.metrics.settlesIn(formatCountdown(untilFunding, t))
+        : null,
+    ]
+      .filter(Boolean)
+      .join(' · ')
+    const oiCaption = [
+      flow ? describeFlow(flow, t) : null,
+      oiSignal?.label,
+      liquidationSignal?.label,
+    ]
+      .filter(Boolean)
+      .join(' · ')
+
+    const items = [
+      {
+        key: 'volume',
+        name: t.metrics.quoteVolume,
+        aria: t.metrics.quoteVolumeAria,
+        value: volumeLabel,
+        caption: volumeCaption,
+        title: volumeTitle,
+        flagged: Boolean(volumeSignal || takerSignal),
+      },
+      {
+        key: 'ratio',
+        name: t.metrics.ratio,
+        aria: t.metrics.ratioAria,
+        value: ratioLabel,
+        caption: ratioCaption,
+        title: ratioTitle,
+        flagged: Boolean(ratioSignal || divergenceSignal),
+      },
+      {
+        key: 'funding',
+        name: t.metrics.funding,
+        aria: t.metrics.fundingAria,
+        // Countdown is printed on the caption line below, so the main value
+        // stays just the rate even when settlement is imminent.
+        value: fundingRateLabel,
+        caption: fundingCaption,
+        title: fundingTitle,
+        flagged: Boolean(fundingSignal || fundingShiftSignal),
+      },
+      {
+        key: 'oi',
+        name: t.metrics.openInterest,
+        aria: t.metrics.openInterestAria,
+        value: oiValueLabel,
+        caption: oiCaption,
+        title: oiTitle,
+        flagged: Boolean(oiSignal || liquidationSignal),
+      },
+    ]
+
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'repeat(2, minmax(0, 1fr))',
+            sm: 'repeat(4, minmax(0, 1fr))',
+          },
+          gap: { xs: 1.5, sm: 2 },
+        }}
+      >
+        {items.map((item) => (
+          <Tooltip key={item.key} title={item.title} arrow>
+            <Stack
+              aria-label={item.aria}
+              sx={{
+                gap: 0.25,
+                minWidth: 0,
+                cursor: 'default',
+              }}
+            >
+              <Typography
+                component="span"
+                noWrap
+                sx={{ fontSize: 11, color: 'text.secondary' }}
+              >
+                {item.name}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Typography
+                  component="span"
+                  noWrap
+                  sx={{
+                    fontSize: 15,
+                    fontWeight: 600,
+                    lineHeight: 1.3,
+                    ...numericFont,
+                    ...(item.flagged
+                      ? {
+                          color: 'signal.main',
+                          backgroundColor: 'signal.surface',
+                          px: 0.75,
+                          py: 0.125,
+                          mx: -0.75,
+                          borderRadius: '6px',
+                        }
+                      : { color: 'text.primary' }),
+                  }}
+                >
+                  {item.value}
+                </Typography>
+              </Box>
+              {item.caption && (
+                <Typography
+                  component="span"
+                  sx={{
+                    fontSize: 11,
+                    lineHeight: 1.35,
+                    color: item.flagged ? 'signal.main' : 'text.secondary',
+                    opacity: item.flagged ? 0.95 : 0.85,
+                  }}
+                >
+                  {item.caption}
+                </Typography>
+              )}
+            </Stack>
+          </Tooltip>
+        ))}
+      </Box>
+    )
+  }
 
   return (
     // Four chips overflow a card at its narrowest, so the row wraps rather than

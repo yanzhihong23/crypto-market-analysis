@@ -33,8 +33,9 @@ const MONTH_LABEL = '30D'
 
 const TRACK_WIDTH = 48
 
-/** Period, move, how unusual the move is, range position, what else it found. */
-const LADDER_COLUMNS = `28px 62px 36px ${TRACK_WIDTH}px minmax(0, 1fr)`
+/** Period, move, optional sigma column, range position, what else it found. */
+const LADDER_COLUMNS_WITH_SIGMA = `28px 62px 36px ${TRACK_WIDTH}px minmax(0, 1fr)`
+const LADDER_COLUMNS_COMPACT = `28px 62px ${TRACK_WIDTH}px minmax(0, 1fr)`
 
 /**
  * Below this a sigma is saying "nothing unusual", which is what an empty cell
@@ -85,12 +86,14 @@ function LadderRow({
   label,
   move,
   deviation,
+  showSigmaColumn,
   position,
   signals,
 }: {
   label: string
   move: number | null
   deviation: number | null
+  showSigmaColumn: boolean
   position: number | null
   signals: RowChip[]
 }) {
@@ -130,20 +133,25 @@ function LadderRow({
       </Typography>
 
       {/* Magnitude only: the move beside it already carries the direction, and
-          a signed sigma next to a signed percent is the same fact twice. */}
-      <Typography
-        sx={{
-          fontSize: 12,
-          ...numericFont,
-          color:
-            sigmas !== null && sigmas >= SIGMA_UNUSUAL
-              ? 'signal.main'
-              : 'text.secondary',
-          opacity: sigmas !== null && sigmas >= SIGMA_UNUSUAL ? 1 : 0.8,
-        }}
-      >
-        {sigmas === null ? '' : formatSigmas(sigmas, t)}
-      </Typography>
+          a signed sigma next to a signed percent is the same fact twice.
+          Collapsed out completely when no rung has a sigma worth printing so
+          the range track stays tucked next to the percent instead of stranded
+          across a 44px void. */}
+      {showSigmaColumn && (
+        <Typography
+          sx={{
+            fontSize: 12,
+            ...numericFont,
+            color:
+              sigmas !== null && sigmas >= SIGMA_UNUSUAL
+                ? 'signal.main'
+                : 'text.secondary',
+            opacity: sigmas !== null && sigmas >= SIGMA_UNUSUAL ? 1 : 0.8,
+          }}
+        >
+          {sigmas === null ? '' : formatSigmas(sigmas, t)}
+        </Typography>
+      )}
 
       {position !== null ? (
         <Tooltip title={t.timeframe.position(Math.round(position * 100))} arrow>
@@ -234,9 +242,41 @@ export default function TimeframeGrid({
     month?.return30d ?? null,
   ])
 
+  const showSigmaColumn = reads.some(
+    (read) =>
+      read.deviation !== null &&
+      Math.abs(read.deviation) >= SIGMA_WORTH_PRINTING,
+  )
+
+  // When price has already broken outside the 30-day range, replace the
+  // softer "near 30d low/high" tag with the exact break label so the rung does
+  // not print both "near 30d low" and "past the low" at once.
+  const monthBroken =
+    month !== null &&
+    month.rangePosition !== null &&
+    (month.rangePosition < 0 || month.rangePosition > 1)
+  const monthChips: RowChip[] = month
+    ? [
+        ...(monthBroken && month.rangePosition !== null
+          ? [
+              {
+                kind: 'range-broken',
+                label: t.timeframe.rangeBroken(month.rangePosition > 1),
+                detail: t.timeframe.rangeBroken(month.rangePosition > 1),
+              },
+            ]
+          : []),
+        ...month.readings.filter(
+          (reading) =>
+            isMonthRungReading(reading) &&
+            !(monthBroken && reading.kind === 'range-position'),
+        ),
+      ]
+    : []
+
   return (
     <Box>
-      <Stack direction="row" sx={{ alignItems: 'baseline', gap: 1, mb: 0.75 }}>
+      <Stack direction="row" sx={{ alignItems: 'baseline', gap: 1, mb: 1 }}>
         <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
           {t.timeframe.title}
         </Typography>
@@ -274,7 +314,9 @@ export default function TimeframeGrid({
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: LADDER_COLUMNS,
+            gridTemplateColumns: showSigmaColumn
+              ? LADDER_COLUMNS_WITH_SIGMA
+              : LADDER_COLUMNS_COMPACT,
             alignItems: 'center',
             columnGap: 1,
             rowGap: 0.75,
@@ -286,6 +328,7 @@ export default function TimeframeGrid({
               label={periodLabelOf(read.period)}
               move={read.returnPercent}
               deviation={read.deviation}
+              showSigmaColumn={showSigmaColumn}
               position={read.position}
               signals={read.signals}
             />
@@ -307,16 +350,18 @@ export default function TimeframeGrid({
                 label={MONTH_LABEL}
                 move={month.return30d}
                 deviation={null}
+                showSigmaColumn={showSigmaColumn}
                 position={month.rangePosition}
-                signals={month.readings.filter(isMonthRungReading)}
+                signals={monthChips}
               />
               {/* Under the track it belongs to rather than beside it: half of a
                   range is only worth saying if the range is said too, and the
                   rung has no room left to say it on one line. */}
-              {month.rangePosition !== null && (
+              {(month.range ||
+                (!monthBroken && month.rangePosition !== null)) && (
                 <Typography
                   sx={{
-                    gridColumn: '4 / -1',
+                    gridColumn: showSigmaColumn ? '4 / -1' : '3 / -1',
                     fontSize: 11,
                     color: 'text.secondary',
                     opacity: 0.8,
@@ -324,9 +369,11 @@ export default function TimeframeGrid({
                     ...numericFont,
                   }}
                 >
-                  {rangePositionLabel(month.rangePosition, t)}
+                  {!monthBroken && month.rangePosition !== null
+                    ? rangePositionLabel(month.rangePosition, t)
+                    : ''}
                   {month.range &&
-                    ` · ${formatNumber(month.range.low, 6)} – ${formatNumber(month.range.high, 6)}`}
+                    `${!monthBroken && month.rangePosition !== null ? ' · ' : ''}${formatNumber(month.range.low, 6)} – ${formatNumber(month.range.high, 6)}`}
                 </Typography>
               )}
             </>
