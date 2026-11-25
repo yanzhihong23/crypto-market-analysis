@@ -56,59 +56,83 @@ interface ChimeNote {
   at: number
   /** Ring duration in seconds. */
   duration: number
+  /** Peak gain for this note. */
+  gain: number
 }
 
-// A-major intervals (A5 / C#6 / E6): cuts through ambient room noise on both
-// laptop and phone speakers without the harshness of a raw buzzer. Two pulses
-// separated by a short beat so a single ping is never lost while typing.
-const CHIMES: Record<AlertTone, readonly ChimeNote[]> = {
-  signal: [
-    { freq: 880, at: 0, duration: 0.24 },
-    { freq: 1108.73, at: 0.13, duration: 0.34 },
-    { freq: 880, at: 0.54, duration: 0.24 },
-    { freq: 1108.73, at: 0.67, duration: 0.4 },
-  ],
-  // Three-note ascending triad, repeated once, so hitting a user-set price
-  // target sounds immediately distinct from an automatic anomaly alert.
-  price: [
-    { freq: 880, at: 0, duration: 0.2 },
-    { freq: 1108.73, at: 0.11, duration: 0.2 },
-    { freq: 1318.51, at: 0.22, duration: 0.34 },
-    { freq: 880, at: 0.64, duration: 0.2 },
-    { freq: 1108.73, at: 0.75, duration: 0.2 },
-    { freq: 1318.51, at: 0.86, duration: 0.44 },
-  ],
+interface ChimeProfile {
+  waveform: OscillatorType
+  /** Harmonic multiplier for shimmer overtone, plus its relative level. */
+  overtoneMultiplier: number
+  overtoneRatio: number
+  notes: readonly ChimeNote[]
+}
+
+/**
+ * Deliberately contrasting profiles so you can tell which kind of alert fired
+ * without looking at the screen:
+ * - `signal`: warm mid-register descending two-note pulse ("worth a glance").
+ * - `price`: bright high-register ascending bell cadence ("target hit now").
+ */
+const CHIMES: Record<AlertTone, ChimeProfile> = {
+  signal: {
+    waveform: 'sine',
+    overtoneMultiplier: 1.5,
+    overtoneRatio: 0.18,
+    notes: [
+      { freq: 698.46, at: 0, duration: 0.22, gain: 0.36 }, // F5
+      { freq: 587.33, at: 0.16, duration: 0.34, gain: 0.34 }, // D5
+      { freq: 698.46, at: 0.62, duration: 0.22, gain: 0.36 }, // F5
+      { freq: 587.33, at: 0.78, duration: 0.4, gain: 0.34 }, // D5
+    ],
+  },
+  price: {
+    waveform: 'triangle',
+    overtoneMultiplier: 2,
+    overtoneRatio: 0.35,
+    notes: [
+      { freq: 1046.5, at: 0, duration: 0.16, gain: 0.36 }, // C6
+      { freq: 1318.51, at: 0.09, duration: 0.16, gain: 0.38 }, // E6
+      { freq: 1567.98, at: 0.18, duration: 0.18, gain: 0.4 }, // G6
+      { freq: 2093.0, at: 0.28, duration: 0.34, gain: 0.42 }, // C7
+      { freq: 1046.5, at: 0.72, duration: 0.16, gain: 0.36 }, // C6
+      { freq: 1318.51, at: 0.81, duration: 0.16, gain: 0.38 }, // E6
+      { freq: 1567.98, at: 0.9, duration: 0.18, gain: 0.4 }, // G6
+      { freq: 2093.0, at: 1.0, duration: 0.44, gain: 0.42 }, // C7
+    ],
+  },
 }
 
 function scheduleNote(
   ctx: AudioContext,
   destination: AudioNode,
   startTime: number,
+  profile: ChimeProfile,
   note: ChimeNote,
 ) {
   const t0 = startTime + note.at
   const tEnd = t0 + note.duration
 
-  // Triangle fundamental carries gentle odd harmonics that stay audible on
-  // small speakers (a bare sine at 0.12 was nearly silent); a quiet octave
-  // sine overtone adds bell-like clarity.
   const fundamental = ctx.createOscillator()
   const overtone = ctx.createOscillator()
   const fundGain = ctx.createGain()
   const overGain = ctx.createGain()
 
-  fundamental.type = 'triangle'
+  fundamental.type = profile.waveform
   fundamental.frequency.setValueAtTime(note.freq, t0)
   overtone.type = 'sine'
-  overtone.frequency.setValueAtTime(note.freq * 2, t0)
+  overtone.frequency.setValueAtTime(note.freq * profile.overtoneMultiplier, t0)
 
   // Ramped attack & exponential decay rather than switched on: avoids clicks.
   fundGain.gain.setValueAtTime(0.0001, t0)
-  fundGain.gain.exponentialRampToValueAtTime(0.36, t0 + 0.012)
+  fundGain.gain.exponentialRampToValueAtTime(note.gain, t0 + 0.01)
   fundGain.gain.exponentialRampToValueAtTime(0.0001, tEnd)
 
   overGain.gain.setValueAtTime(0.0001, t0)
-  overGain.gain.exponentialRampToValueAtTime(0.1, t0 + 0.01)
+  overGain.gain.exponentialRampToValueAtTime(
+    note.gain * profile.overtoneRatio,
+    t0 + 0.008,
+  )
   overGain.gain.exponentialRampToValueAtTime(0.0001, t0 + note.duration * 0.65)
 
   fundamental.connect(fundGain).connect(destination)
@@ -129,14 +153,15 @@ export function beep(tone: AlertTone = 'signal') {
   try {
     audioContext ??= new AudioContext()
     const ctx = audioContext
+    const profile = CHIMES[tone]
 
     const play = () => {
       // Soft compressor prevents clipping if multiple symbols fire together.
       const compressor = ctx.createDynamicsCompressor()
       compressor.connect(ctx.destination)
       const now = ctx.currentTime + 0.01
-      for (const note of CHIMES[tone]) {
-        scheduleNote(ctx, compressor, now, note)
+      for (const note of profile.notes) {
+        scheduleNote(ctx, compressor, now, profile, note)
       }
     }
 

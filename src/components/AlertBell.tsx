@@ -252,16 +252,47 @@ export default function AlertBell() {
                 checked={soundEnabled}
                 action={
                   soundEnabled ? (
-                    <Tooltip title={t.alerts.testSound} arrow>
-                      <IconButton
-                        size="small"
-                        aria-label={t.alerts.testSound}
-                        onClick={() => beep('price')}
-                        sx={{ color: 'text.secondary', p: 0.25 }}
+                    <Stack
+                      direction="row"
+                      sx={{ alignItems: 'center', gap: 0.5, ml: 0.5 }}
+                    >
+                      <ButtonBase
+                        onClick={() => beep('signal')}
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.25,
+                          px: 0.75,
+                          py: 0.25,
+                          borderRadius: '6px',
+                          fontSize: 11,
+                          color: 'text.secondary',
+                          backgroundColor: 'surface.subtle',
+                          '&:hover': { color: 'text.primary' },
+                        }}
                       >
-                        <VolumeUpRoundedIcon sx={{ fontSize: 16 }} />
-                      </IconButton>
-                    </Tooltip>
+                        <VolumeUpRoundedIcon sx={{ fontSize: 13 }} />
+                        {t.alerts.testSignalSound}
+                      </ButtonBase>
+                      <ButtonBase
+                        onClick={() => beep('price')}
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.25,
+                          px: 0.75,
+                          py: 0.25,
+                          borderRadius: '6px',
+                          fontSize: 11,
+                          color: 'signal.main',
+                          backgroundColor: 'signal.surface',
+                          '&:hover': { opacity: 0.85 },
+                        }}
+                      >
+                        <VolumeUpRoundedIcon sx={{ fontSize: 13 }} />
+                        {t.alerts.testPriceSound}
+                      </ButtonBase>
+                    </Stack>
                   ) : undefined
                 }
                 onChange={toggleSound}
