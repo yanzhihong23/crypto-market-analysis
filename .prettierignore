@@ -1,0 +1,9 @@
+# pnpm owns this file. Prettier expands {integrity: ...} flow maps past
+# printWidth and inserts trailing commas that the next install will not keep.
+pnpm-lock.yaml
+
+# Minified search index. Formatting it turns one line into tens of thousands.
+src/assets/quick_search.json
+
+# Local worktrees, not the project.
+.claude/worktrees
