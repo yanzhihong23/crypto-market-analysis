@@ -18,6 +18,12 @@ second. One threshold would either scream on one or never fire on the other.
   window's mean more often than a normal distribution predicts. Two sigma
   flagged 15% of the board; three flags about 3%, which is what "worth a look"
   should mean on a screen this dense.
+- **Winsorised (5% tail) and log-space baselines.** Crypto returns, volume and
+  range are heavy-tailed; a single spike can triple a raw standard deviation and
+  mask real moves for hours. Baselines clamp the 5% tails (falling back to raw
+  stats if clamping flattens a tick-quantised series), right-skewed series
+  (`volume`, `volatility`) score in `log1p` space, and evaluated bars are
+  excluded from their own yardstick to avoid self-contamination.
 - **A baseline needs 20 samples** and a non-zero spread. A window that never
   moved has nothing to be unusual against.
 - **Readings that measure a change also carry an absolute floor.** A symbol that
@@ -42,7 +48,7 @@ Two readings inside one family are usually one event described twice — a new 2
 high on a bar whose range has just expanded is a single move — so the families
 deduplicate rather than accumulate.
 
-Two exceptions:
+Two exceptions and one coupling guard:
 
 - **Positioning counts twice within itself**, because what the crowd holds and
   what it pays to hold it are different measurements that disagree often, so
@@ -55,6 +61,18 @@ Two exceptions:
   of the board at all times. It is excluded from the count but kept in the
   reasons, so when the coil breaks the move rings the card and the two hours of
   winding up appear underneath it.
+- **`spread` + `volatility` alone never rings.** Market makers mechanically
+  widen quotes when candle range jumps, so that pair requires a third confirming
+  signal.
+- **Priority ranking, regime headlines, tiering & escalation cooldown.**
+  Structural readings (`liquidation`, `range-break`) rank ahead of routine sigma
+  deviations; directional combinations classify into regimes (squeeze cascade,
+  confirmed breakout, absorption reversal, trend thrust, crowded squeeze);
+  3-family convergence, liquidations, major flow-confirmed breakouts, or
+  high-conviction backdrop confluence elevate a ring to `high` tier. Alerts can
+  break through the 30m per-symbol cooldown on real escalations (tier upgrade,
+  2→3 families, new liquidation/range-break, or direction flip) after a 60s
+  anti-flap floor, and track realized +5m/+15m/+1h outcomes.
 
 ## The readings
 
@@ -247,6 +265,5 @@ Measured, and left alone deliberately:
   was −0.05: funding pins near its interest-rate floor in a calm market while the
   basis wanders on microstructure. They are treated as separate sources.
 - **`spread` and `volatility`** are mechanically coupled — market makers widen
-  quotes when volatility rises — and they sit in different families, so together
-  they ring. There is no spread history endpoint to backtest this against, so it
-  is an open question rather than a measured one.
+  quotes when volatility rises — so that pair alone is suppressed and requires a
+  third confirming reading before ringing.

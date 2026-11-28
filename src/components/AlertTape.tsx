@@ -242,6 +242,23 @@ export default function AlertTape() {
           <Box component="span" sx={{ fontWeight: 600 }}>
             {symbol}
           </Box>
+          {alert.tier === 'high' && (
+            <Box
+              component="span"
+              sx={{
+                px: 0.5,
+                py: 0.125,
+                borderRadius: '4px',
+                fontSize: 10,
+                fontWeight: 600,
+                lineHeight: 1.2,
+                color: 'signal.main',
+                backgroundColor: 'signal.surface',
+              }}
+            >
+              {t.alerts.highPriorityTag}
+            </Box>
+          )}
           {/* What kind of event it was, then what it was made of — the same
               order, and the same two weights, the bell puts them in. A
               headline on its own says a card is worth looking at; the readings

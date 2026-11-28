@@ -9,17 +9,21 @@ import {
   boardMedianPricePercent,
   subscribeOkxSeriesAny,
 } from '../store/okxRealtimeSeries'
+import { subscribeOkxLiquidationAny } from '../store/okxRealtimeLiquidation'
+import { subscribeOkxSpreadAny } from '../store/okxRealtimeSpread'
+import { getOkxTickerSnapshot } from '../store/okxRealtimeTicker'
 import { beep, isAway, showNotification } from '../utils/alarm'
+import {
+  AlertMemory,
+  DEFAULT_COOLDOWN_MS,
+  DEFAULT_ESCALATION_FLOOR_MS,
+  evaluateAlertOutcomes,
+  memoryOfFlag,
+  shouldEmitAlert,
+} from '../utils/alertEngine'
 import { collectSignals } from '../utils/detectors'
 import { flagStateOf } from '../utils/signals'
 import { currentMessages } from '../i18n'
-
-/**
- * How long a symbol stays quiet after firing. A reading sitting right on the
- * threshold crosses it back and forth for as long as it stays there, and each
- * of those crossings is the same event.
- */
-const COOLDOWN_MS = 1000 * 60 * 30
 
 /**
  * Nothing fires in the first minute. The readings a flag is built from are
@@ -30,26 +34,27 @@ const COOLDOWN_MS = 1000 * 60 * 30
 const STARTUP_GRACE_MS = 1000 * 60
 
 /**
- * Both feeds this listens to write in bursts — the candle poll walks the whole
- * watchlist, and the sample buffer republishes several instruments at once — and
- * a pass is a walk of the board. Collapsing a burst into one pass costs a
- * quarter of a second of latency on an alert that has already been true for as
- * long as it took the reading to arrive.
+ * Feeds write in bursts — the candle poll walks the whole watchlist, and the
+ * realtime buffers republish several instruments at once — so collapsing a
+ * burst into one board pass saves redundant work at negligible latency.
  */
 const PASS_DEBOUNCE_MS = 250
+
+/** How often realized +5m/+15m/+1h outcomes are checked for recent alerts. */
+const OUTCOME_TICK_MS = 1000 * 30
 
 /** How many readings a notification body carries before it stops being one line. */
 const MAX_NOTIFIED_REASONS = 3
 
 /**
  * Watches the same bar the card's ring is drawn from and reports the moment it
- * is crossed, so the board is worth leaving open. It reports edges, not states:
- * a symbol that is still flagged an hour later has not happened again.
+ * is crossed — or when an already-ringing symbol escalates into a higher tier,
+ * adds a third family, flips direction, or hits a liquidation/major breakout.
  */
 export default function useOkxAlerts() {
   useEffect(() => {
     const flagged = new Map<string, boolean>()
-    const firedAt = new Map<string, number>()
+    const lastAlert = new Map<string, AlertMemory>()
     const startedAt = Date.now()
     let passTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -85,7 +90,8 @@ export default function useOkxAlerts() {
           }),
           t,
         )
-        const flag = flagStateOf(signals, t)
+        const backdropReadings = readBackdrop(instId, t).readings
+        const flag = flagStateOf(signals, t, backdropReadings)
         const isNow = flag !== null
 
         // A symbol nobody has looked at yet has no edge to have crossed. This
@@ -95,26 +101,45 @@ export default function useOkxAlerts() {
         const was = flagged.get(instId) ?? false
         flagged.set(instId, isNow)
 
-        if (!known || !flag || was) continue
+        if (!known || !flag) continue
         if (now - startedAt < STARTUP_GRACE_MS) continue
-        if (now - (firedAt.get(instId) ?? 0) < COOLDOWN_MS) continue
 
-        firedAt.set(instId, now)
+        const previous = lastAlert.get(instId)
+        if (
+          !shouldEmitAlert(previous, flag, now, {
+            wasFlagged: was,
+            cooldownMs: DEFAULT_COOLDOWN_MS,
+            escalationFloorMs: DEFAULT_ESCALATION_FLOOR_MS,
+          })
+        ) {
+          continue
+        }
+
+        lastAlert.set(instId, memoryOfFlag(flag, now))
+
+        const livePrice = Number(getOkxTickerSnapshot(instId)?.last)
         useAlertStore.getState().push({
           id: `${instId}-${now}`,
           instId,
           at: now,
           headline: flag.headline,
           reasons: flag.reasons,
-          // Read here rather than inside `flagStateOf`, which decides whether
-          // the card rings and must not be able to see this: none of it can
-          // ring anything, and passing it in would be the first step towards
-          // it quietly doing so.
-          context: readBackdrop(instId, t).readings,
+          context: backdropReadings,
+          tier: flag.tier,
+          regime: flag.regime,
+          direction: flag.direction,
+          triggerPrice:
+            Number.isFinite(livePrice) && livePrice > 0 ? livePrice : undefined,
         })
 
-        const { notificationsEnabled, soundEnabled, quietWhenPresent } =
-          useAlertStore.getState()
+        const {
+          notificationsEnabled,
+          soundEnabled,
+          quietWhenPresent,
+          highPriorityOnly,
+        } = useAlertStore.getState()
+
+        if (highPriorityOnly && flag.tier !== 'high') continue
 
         // Interrupting someone who is already looking at the board would only
         // repeat what the card's ring has already said — unless they have said
@@ -140,7 +165,10 @@ export default function useOkxAlerts() {
       // back would compare against a state from before it left.
       const watched = new Set(instIds)
       for (const instId of flagged.keys()) {
-        if (!watched.has(instId)) flagged.delete(instId)
+        if (!watched.has(instId)) {
+          flagged.delete(instId)
+          lastAlert.delete(instId)
+        }
       }
     }
 
@@ -154,17 +182,33 @@ export default function useOkxAlerts() {
 
     evaluate()
 
-    // Two feeds, because the readings live in two places by design: the polled
-    // yardsticks and the candles come through the persisted store, and the
-    // five-minute moves come off a buffer that deliberately never touches it.
-    // Listening to only the first was enough while every reading was polled.
+    // Subscribe to every source that can flip a detector: persisted store
+    // polls, 5m series & spot index updates, live liquidations, and live book
+    // spread changes.
     const unsubscribeStore = useTickerStore.subscribe(schedulePass)
     const unsubscribeSeries = subscribeOkxSeriesAny(schedulePass)
+    const unsubscribeLiquidation = subscribeOkxLiquidationAny(schedulePass)
+    const unsubscribeSpread = subscribeOkxSpreadAny(schedulePass)
+
+    const outcomeInterval = setInterval(() => {
+      const store = useAlertStore.getState()
+      const updates = evaluateAlertOutcomes(
+        store.alerts,
+        (instId) => Number(getOkxTickerSnapshot(instId)?.last),
+        Date.now(),
+      )
+      if (Object.keys(updates).length) {
+        store.recordOutcomes(updates)
+      }
+    }, OUTCOME_TICK_MS)
 
     return () => {
       if (passTimer) clearTimeout(passTimer)
+      clearInterval(outcomeInterval)
       unsubscribeStore()
       unsubscribeSeries()
+      unsubscribeLiquidation()
+      unsubscribeSpread()
     }
   }, [])
 }

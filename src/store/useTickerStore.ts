@@ -2,7 +2,12 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 import { OkxInstrument, OkxKline, OpenTime, SortBy } from '../types/okx'
-import { Coil, DailyStats, isDailyStats } from '../utils/klineStats'
+import {
+  BetaBaseline,
+  Coil,
+  DailyStats,
+  isDailyStats,
+} from '../utils/klineStats'
 import { Baseline } from '../utils/signals'
 
 import { coalescedLocalStorage } from './coalescedStorage'
@@ -149,10 +154,13 @@ interface TickerStore {
    * answer this for the first half of every day.
    */
   coil: Record<string, Coil | null>
+  /** Rolling 5m beta and residual volatility against BTC, for `strength`. */
+  betaBaseline: Record<string, BetaBaseline | null>
   setMomentumBaseline: (
     instId: string,
     baseline: Baseline | null,
     coil: Coil | null,
+    beta?: BetaBaseline | null,
   ) => void
   /** The same, for five-minute open interest changes. */
   oiChangeBaseline: Record<string, Baseline | null>
@@ -313,6 +321,7 @@ const clearInstIdRecords = (
   momentumBaseline: withoutInstId(state.momentumBaseline, instId),
   momentumBaselineAt: withoutInstId(state.momentumBaselineAt, instId),
   coil: withoutInstId(state.coil, instId),
+  betaBaseline: withoutInstId(state.betaBaseline, instId),
   oiChangeBaseline: withoutInstId(state.oiChangeBaseline, instId),
   dailyStats: withoutInstId(state.dailyStats, instId),
   dailyStatsAt: withoutInstId(state.dailyStatsAt, instId),
@@ -489,14 +498,17 @@ export const useTickerStore = create<TickerStore>()(
       momentumBaseline: {},
       momentumBaselineAt: {},
       coil: {},
+      betaBaseline: {},
       setMomentumBaseline: (
         instId: string,
         baseline: Baseline | null,
         coil: Coil | null,
+        beta: BetaBaseline | null = null,
       ) =>
         set((state) => ({
           momentumBaseline: { ...state.momentumBaseline, [instId]: baseline },
           coil: { ...state.coil, [instId]: coil },
+          betaBaseline: { ...state.betaBaseline, [instId]: beta },
           momentumBaselineAt: {
             ...state.momentumBaselineAt,
             [instId]: Date.now(),

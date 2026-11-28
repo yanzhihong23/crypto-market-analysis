@@ -91,6 +91,13 @@ export const en = {
     /** Gates both channels above, so it reads as a condition on them. */
     onlyWhenAway: 'Only when I am away',
     awayMeans: 'Away is this window not being the one in front.',
+    highPriorityOnly: 'High-priority regimes only',
+    highPriorityOnlyHint:
+      'Skip desktop ping/sound on routine rings; keep liquidations, major breakouts and 3-family signals.',
+    highPriorityTag: 'HIGH',
+    outcomeSummary: (count: number, hitRate: number, avgMove: string) =>
+      `${count} tracked · 15m follow-through ${hitRate}% · avg ${avgMove}`,
+    outcomeLine: (parts: string[]) => `After: ${parts.join(' · ')}`,
     empty: 'Nothing has fired yet',
     /** Names the strip along the bottom, which has no room to name itself. */
     recent: 'Recent alerts',
@@ -522,6 +529,13 @@ export const en = {
     'flow+positioning': 'Flow against a crowded book',
     'price+flow+positioning': 'Move, flow and positioning at once',
     positioning: 'Positioning stretched on two readings',
+    shortSqueeze: 'Short squeeze cascade',
+    longLiquidation: 'Long liquidation cascade',
+    squeezeCascade: 'Forced liquidation cascade',
+    confirmedBreakout: 'Confirmed breakout with flow',
+    absorptionReversal: 'Rejection against flow',
+    trendThrust: 'Directional move confirmed by flow',
+    crowdedSqueeze: 'Move into crowded positioning',
     other: 'Several readings out of range',
   },
 }

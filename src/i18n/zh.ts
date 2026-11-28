@@ -71,6 +71,13 @@ export const zh: Messages = {
     testPriceSound: '目标价音',
     onlyWhenAway: '仅在离开时提醒',
     awayMeans: '离开指当前窗口不在最前。',
+    highPriorityOnly: '仅高优异动发推送/提示音',
+    highPriorityOnlyHint:
+      '常规异动仍亮卡圈与提示条；仅强平、大周期突破、三类共振或底图共振时弹窗/响铃。',
+    highPriorityTag: '重点',
+    outcomeSummary: (count, hitRate, avgMove) =>
+      `已跟踪 ${count} 条 · 15分钟延续率 ${hitRate}% · 均幅 ${avgMove}`,
+    outcomeLine: (parts) => `后续表现：${parts.join(' · ')}`,
     empty: '暂无触发记录',
     recent: '最近提醒',
     hide: '隐藏最近提醒',
@@ -369,6 +376,13 @@ export const zh: Messages = {
     'flow+positioning': '资金与拥挤的持仓相悖',
     'price+flow+positioning': '行情、资金与持仓同时异动',
     positioning: '两项持仓指标同时偏离',
+    shortSqueeze: '空头挤仓行情',
+    longLiquidation: '多头强平踩踏',
+    squeezeCascade: '强平踩踏行情',
+    confirmedBreakout: '放量突破确认',
+    absorptionReversal: '受阻吸收反转',
+    trendThrust: '顺势资金推动',
+    crowdedSqueeze: '行情撞上拥挤仓位',
     other: '多项指标偏离常态',
   },
 }

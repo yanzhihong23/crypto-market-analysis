@@ -72,6 +72,18 @@ const samples = new Map<string, Sample[]>()
 const reads = new Map<string, SpreadRead>()
 
 const listeners = new Map<string, Set<Listener>>()
+const anyListeners = new Set<Listener>()
+
+const ANY_FLUSH_MS = 500
+let anyFlushTimer: ReturnType<typeof setTimeout> | undefined
+
+const scheduleAnyNotify = () => {
+  if (anyFlushTimer) return
+  anyFlushTimer = setTimeout(() => {
+    anyFlushTimer = undefined
+    anyListeners.forEach((listener) => listener())
+  }, ANY_FLUSH_MS)
+}
 
 const recompute = (instId: string) => {
   const buffer = samples.get(instId)
@@ -89,6 +101,7 @@ const recompute = (instId: string) => {
   })
 
   listeners.get(instId)?.forEach((listener) => listener())
+  scheduleAnyNotify()
 }
 
 export const recordOkxSpread = (
@@ -137,6 +150,13 @@ export const subscribeOkxSpread = (instId: string, listener: Listener) => {
   return () => {
     set?.delete(listener)
     if (set?.size === 0) listeners.delete(instId)
+  }
+}
+
+export const subscribeOkxSpreadAny = (listener: Listener) => {
+  anyListeners.add(listener)
+  return () => {
+    anyListeners.delete(listener)
   }
 }
 

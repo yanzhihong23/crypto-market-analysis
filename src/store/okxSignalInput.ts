@@ -54,6 +54,7 @@ export function readSignalInput(
     boardPercent:
       boardPercent ?? boardMedianPricePercent(peerInstIdsOf(instId, state)),
     momentumBaseline: state.momentumBaseline[instId],
+    betaBaseline: state.betaBaseline[instId],
     coil: state.coil[instId],
     daily: state.dailyStats[instId],
     oiChangeBaseline: state.oiChangeBaseline[instId],

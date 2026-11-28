@@ -1,7 +1,14 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-import { formatDeviation, formatSigmas } from '../utils/signals'
+import {
+  formatDeviation,
+  formatSigmas,
+  type FlagTier,
+  type SignalDirection,
+  type SignalRegime,
+} from '../utils/signals'
+import type { AlertOutcomes } from '../utils/alertEngine'
 import type { BackdropReading } from '../utils/backdrop'
 import { currentMessages } from '../i18n'
 
@@ -56,6 +63,16 @@ export interface Alert {
    * Optional, because entries written before this existed have none.
    */
   context?: BackdropReading[]
+  /** Priority tier when fired (`high` for liquidations, 3-family, major breakouts, or backdrop confluence). */
+  tier?: FlagTier
+  /** Interpreted trading regime when fired. */
+  regime?: SignalRegime | null
+  /** Dominant directional lean when fired, used to measure follow-through. */
+  direction?: SignalDirection
+  /** Live contract price when the alert fired, for +5m/+15m/+1h outcome tracking. */
+  triggerPrice?: number
+  /** Realized percent returns measured after the alert fired. */
+  outcomes?: AlertOutcomes
 }
 
 /** Alerts as they were stored before a reading other than the two could fire. */
@@ -77,6 +94,7 @@ const MAX_ALERTS = 50
 interface AlertStore {
   alerts: Alert[]
   push: (alert: Alert) => void
+  recordOutcomes: (updates: Record<string, AlertOutcomes>) => void
   clear: () => void
   priceRules: PriceAlertRule[]
   addPriceRule: (rule: Omit<PriceAlertRule, 'id' | 'createdAt'>) => void
@@ -118,6 +136,13 @@ interface AlertStore {
    */
   quietWhenPresent: boolean
   setQuietWhenPresent: (quiet: boolean) => void
+  /**
+   * When enabled, desktop notifications and sound only fire for `high`-tier
+   * regimes (liquidations, 3-family convergence, major breakouts, or backdrop
+   * confluence); routine alerts still appear on cards, the tape and the log.
+   */
+  highPriorityOnly: boolean
+  setHighPriorityOnly: (enabled: boolean) => void
 }
 
 export const useAlertStore = create<AlertStore>()(
@@ -128,6 +153,19 @@ export const useAlertStore = create<AlertStore>()(
         set((state) => ({
           alerts: [alert, ...state.alerts].slice(0, MAX_ALERTS),
         })),
+      recordOutcomes: (updates: Record<string, AlertOutcomes>) =>
+        set((state) => {
+          const keys = Object.keys(updates)
+          if (!keys.length) return state
+          let changed = false
+          const alerts = state.alerts.map((alert) => {
+            const next = updates[alert.id]
+            if (!next) return alert
+            changed = true
+            return { ...alert, outcomes: { ...alert.outcomes, ...next } }
+          })
+          return changed ? { alerts } : state
+        }),
       clear: () => set({ alerts: [], seenAt: Date.now() }),
       priceRules: [],
       addPriceRule: (rule) =>
@@ -173,6 +211,9 @@ export const useAlertStore = create<AlertStore>()(
       quietWhenPresent: true,
       setQuietWhenPresent: (quietWhenPresent: boolean) =>
         set({ quietWhenPresent }),
+      highPriorityOnly: false,
+      setHighPriorityOnly: (highPriorityOnly: boolean) =>
+        set({ highPriorityOnly }),
     }),
     {
       name: 'alerts',

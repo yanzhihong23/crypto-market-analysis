@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 
 import { fetchOkxOpenInterestHistory } from '../apis'
+import { seedOkxOpenInterestSamples } from '../store/okxRealtimeSeries'
 import { useTickerStore } from '../store/useTickerStore'
 import { sessionStartMs } from '../utils/session'
 import { baselineOf } from '../utils/signals'
@@ -69,6 +70,17 @@ export default function useOkxOpenInterestUpdater() {
         period: '5m',
         limit: 100,
       })
+      if (short?.length) {
+        // Seed the realtime 5m OI buffer with recent historical points so cold
+        // starts do not wait four minutes before detecting OI surges.
+        seedOkxOpenInterestSamples(
+          instId,
+          short.slice(0, 3).map(([ts, oi]) => ({
+            ts: Number(ts),
+            value: Number(oi),
+          })),
+        )
+      }
       setOiChangeBaseline(
         instId,
         short?.length

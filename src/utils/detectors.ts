@@ -15,7 +15,7 @@
  * knowing anything about it.
  */
 
-import { OkxKline } from '../types/okx'
+import type { OkxKline } from '../types/okx'
 import type { Messages } from '../i18n/en'
 
 import {
@@ -24,18 +24,20 @@ import {
   squeezeRead,
 } from './openInterest'
 import {
-  Baseline,
-  Signal,
+  type Baseline,
+  type Signal,
   deviationFrom,
   formatDeviation,
   formatSigmas,
   isAnomalous,
   isAnomalousChange,
+  logDeviationFrom,
 } from './signals'
 import {
-  Coil,
-  DailyStats,
-  KlineStats,
+  type BetaBaseline,
+  type Coil,
+  type DailyStats,
+  type KlineStats,
   barRangePercent,
   klineStatsOf,
   projectedVolume,
@@ -162,6 +164,7 @@ export function momentumSignal(
   return {
     kind: 'momentum',
     deviation,
+    direction: pricePercent > 0 ? 'up' : 'down',
     label: t.signal.momentum(move),
     detail: t.signal.momentumDetail(move, formatSigmas(deviation!, t)),
   }
@@ -173,8 +176,10 @@ export function momentumSignal(
  * happens when something is about to matter, and it happens before the move
  * settles on a side.
  *
- * Only ever an expansion. A bar three sigma *narrower* than usual is a quiet
- * afternoon, and the board has no use for being told about one.
+ * Checks the forming bar first because high-low range is monotonic inside a
+ * candle: if an unfinished bar has already cleared both 3σ (in log space) and
+ * 1.5× the usual range, waiting up to 15 minutes for the close would only hide
+ * the spike while it is happening. Falls back to the newest closed bar.
  */
 export function volatilitySignal(
   {
@@ -184,21 +189,33 @@ export function volatilitySignal(
   },
   t: Messages,
 ): Signal | null {
-  if (!stats?.closed || !stats.range) return null
+  if (!stats?.range) return null
 
-  const range = barRangePercent(stats.closed)
-  if (range === null) return null
+  const evaluateBar = (bar: OkxKline | null) => {
+    if (!bar) return null
+    const range = barRangePercent(bar)
+    if (range === null) return null
+    const deviation = stats.logRange
+      ? logDeviationFrom(range, stats.logRange)
+      : deviationFrom(range, stats.range)
+    if (!isAnomalous(deviation) || deviation! < 0) return null
+    if (range < stats.range!.mean * SURGE_MULTIPLE) return null
+    return { range, deviation: deviation! }
+  }
 
-  const deviation = deviationFrom(range, stats.range)
-  if (!isAnomalous(deviation) || deviation! < 0) return null
-  if (range < stats.range.mean * SURGE_MULTIPLE) return null
+  const hit = evaluateBar(stats.forming) ?? evaluateBar(stats.closed)
+  if (!hit) return null
 
-  const rangeLabel = `${range.toFixed(2)}%`
+  const rangeLabel = `${hit.range.toFixed(2)}%`
   return {
     kind: 'volatility',
-    deviation,
+    deviation: hit.deviation,
+    direction: 'neutral',
     label: t.signal.volatility(rangeLabel),
-    detail: t.signal.volatilityDetail(rangeLabel, formatSigmas(deviation!, t)),
+    detail: t.signal.volatilityDetail(
+      rangeLabel,
+      formatSigmas(hit.deviation, t),
+    ),
   }
 }
 
@@ -241,6 +258,7 @@ export function compressionSignal(
     kind: 'compression',
     // A percentile, not a distance, and the reasons list sorts on distances.
     deviation: null,
+    direction: 'neutral',
     label: t.signal.compression(shareLabel),
     detail: t.signal.compressionDetail(
       shareLabel,
@@ -306,6 +324,7 @@ export function rangeBreakSignal(
   return {
     kind: 'range-break',
     deviation: null,
+    direction: broken.high ? 'up' : 'down',
     label: t.signal.rangeBreak(broken.days, broken.high),
     detail: t.signal.rangeBreakDetail(broken.days, broken.high),
   }
@@ -346,6 +365,7 @@ export function breakoutSignal(
     return {
       kind: 'breakout',
       deviation: null,
+      direction: 'up',
       label: t.signal.breakoutHigh,
       detail: t.signal.breakoutHighDetail,
     }
@@ -354,6 +374,7 @@ export function breakoutSignal(
     return {
       kind: 'breakout',
       deviation: null,
+      direction: 'down',
       label: t.signal.breakoutLow,
       detail: t.signal.breakoutLowDetail,
     }
@@ -394,6 +415,7 @@ export function rejectionSignal(
     return {
       kind: 'rejection',
       deviation: null,
+      direction: 'down',
       label: t.signal.upperWick,
       detail: t.signal.upperWickDetail(Math.round(upper * 100)),
     }
@@ -402,6 +424,7 @@ export function rejectionSignal(
     return {
       kind: 'rejection',
       deviation: null,
+      direction: 'up',
       label: t.signal.lowerWick,
       detail: t.signal.lowerWickDetail(Math.round(lower * 100)),
     }
@@ -410,36 +433,41 @@ export function rejectionSignal(
 }
 
 /**
- * What the symbol did that the board did not. Subtracting the median move takes
- * the market out of the number, which is the difference between "everything is
- * up two percent" and "this one is". Measured in the same sigma the momentum is,
- * because the excess is a return and that is the spread returns have here.
+ * What the symbol did that the board did not. When a correlated 5m beta
+ * against the benchmark is available, nets out `beta * boardPercent` and scales
+ * by the symbol's true idiosyncratic residual sigma so high-beta alts do not
+ * false-fire on routine market moves. Falls back to raw excess over the peer
+ * median for uncorrelated assets or before beta is ready.
  */
 export function strengthSignal(
   {
     pricePercent,
     boardPercent,
     baseline,
+    betaBaseline,
   }: {
     pricePercent?: number | null
     boardPercent?: number | null
     baseline?: Baseline | null
+    betaBaseline?: BetaBaseline | null
   },
   t: Messages,
 ): Signal | null {
-  if (pricePercent == null || boardPercent == null || !baseline) return null
+  if (pricePercent == null || boardPercent == null) return null
 
-  const excess = pricePercent - boardPercent
-  // Against zero rather than the baseline's mean: an excess return has a
-  // meaningful zero of its own, and the mean of this instrument's returns is not
-  // the mean of its returns net of the board's.
-  const deviation = excess / baseline.sigma
+  const beta = betaBaseline ? betaBaseline.beta : 1
+  const sigma = betaBaseline ? betaBaseline.sigma : baseline?.sigma
+  if (!sigma || !(sigma > 0)) return null
+
+  const excess = pricePercent - beta * boardPercent
+  const deviation = excess / sigma
   if (!isAnomalousChange(deviation, excess, MIN_MOVE_PERCENT)) return null
 
   const excessLabel = formatPercent(excess)
   return {
     kind: 'strength',
     deviation,
+    direction: excess > 0 ? 'up' : 'down',
     label: t.signal.strength(excessLabel),
     detail: t.signal.strengthDetail(excessLabel, formatSigmas(deviation, t)),
   }
@@ -449,6 +477,11 @@ export function strengthSignal(
  * More changing hands than usually does. This is the confirmation the price
  * readings need: a move on no volume is a thin book being walked, and it comes
  * back as easily as it went.
+ *
+ * Checks raw forming volume first so a sudden surge in minute 1–2 of a 15m bar
+ * fires immediately without waiting for `MIN_ELAPSED_TO_PROJECT`; then uses
+ * elapsed-projected volume once 20% of the bar has passed; otherwise falls back
+ * to the newest closed bar.
  */
 export function volumeSignal(
   {
@@ -460,27 +493,38 @@ export function volumeSignal(
   },
   t: Messages,
 ): Signal | null {
-  if (!stats?.volume) return null
+  if (!stats?.volume || !(stats.volume.mean > 0)) return null
 
-  // The forming bar where it is far enough along to extrapolate, so a surge is
-  // visible inside the fifteen minutes it happens in; the bar that just closed
-  // otherwise, which is late but still within the window that matters.
+  const evaluateVolume = (volume: number) => {
+    if (!Number.isFinite(volume) || !(volume > 0)) return null
+    const deviation = stats.logVolume
+      ? logDeviationFrom(volume, stats.logVolume)
+      : deviationFrom(volume, stats.volume)
+    if (!isAnomalous(deviation) || deviation! < 0) return null
+    const multiple = volume / stats.volume!.mean
+    if (multiple < SURGE_MULTIPLE) return null
+    return { multiple, deviation: deviation! }
+  }
+
+  const rawForming = Number(stats.forming?.[7])
   const projected = projectedVolume(stats, now)
-  const volume = projected ?? Number(stats.closed?.[7])
-  if (!Number.isFinite(volume) || !(stats.volume.mean > 0)) return null
+  const hit =
+    evaluateVolume(rawForming) ??
+    (projected !== null
+      ? evaluateVolume(projected)
+      : evaluateVolume(Number(stats.closed?.[7])))
+  if (!hit) return null
 
-  const deviation = deviationFrom(volume, stats.volume)
-  if (!isAnomalous(deviation) || deviation! < 0) return null
-
-  const multiple = volume / stats.volume.mean
-  if (multiple < SURGE_MULTIPLE) return null
-
-  const multipleLabel = multiple.toFixed(1)
+  const multipleLabel = hit.multiple.toFixed(1)
   return {
     kind: 'volume',
-    deviation,
+    deviation: hit.deviation,
+    direction: 'neutral',
     label: t.signal.volume(multipleLabel),
-    detail: t.signal.volumeDetail(multipleLabel, formatSigmas(deviation!, t)),
+    detail: t.signal.volumeDetail(
+      multipleLabel,
+      formatSigmas(hit.deviation, t),
+    ),
   }
 }
 
@@ -517,6 +561,7 @@ export function takerFlowSignal(
   return {
     kind: 'taker',
     deviation: deviation!,
+    direction: imbalance > 0 ? 'up' : 'down',
     label: t.signal.taker(share, imbalance > 0),
     detail: t.signal.takerDetail(
       share,
@@ -585,6 +630,8 @@ export function liquidationSignal(
     // No sigma: this is a share of a known quantity, not a distance from a
     // history nothing here keeps.
     deviation: null,
+    // Longs being liquidated pushes price down; shorts being liquidated squeezes price up.
+    direction: longs ? 'down' : 'up',
     label: t.signal.liquidation(shareLabel, longs),
     detail: t.signal.liquidationDetail(shareLabel, longs),
   }
@@ -636,6 +683,12 @@ export function openInterestSignal(
   return {
     kind: 'open-interest',
     deviation,
+    direction:
+      pricePercent != null && pricePercent !== 0
+        ? pricePercent > 0
+          ? 'up'
+          : 'down'
+        : 'neutral',
     label: t.signal.openInterest(change),
     detail: read ? `${detail} · ${describeSqueeze(read, t)}` : detail,
   }
@@ -654,6 +707,7 @@ export function ratioSignal(
   return {
     kind: 'ratio',
     deviation: deviation!,
+    direction: deviation! > 0 ? 'up' : 'down',
     label: t.signal.ratio(formatSigmas(deviation!, t)),
     detail: t.signal.ratioDetail(formatDeviation(deviation!, t)),
   }
@@ -686,6 +740,7 @@ export function divergenceSignal(
   return {
     kind: 'divergence',
     deviation: deviation!,
+    direction: deviation! > 0 ? 'up' : 'down',
     // Above means the elite side is the longer of the two against its own
     // normal, which is the direction anybody reading this wants first.
     label: t.signal.divergence(formatSigmas(deviation!, t), deviation! > 0),
@@ -711,6 +766,7 @@ export function fundingSignal(
   return {
     kind: 'funding',
     deviation,
+    direction: deviation! > 0 ? 'up' : 'down',
     label: t.signal.funding(formatSigmas(deviation!, t)),
     detail: t.signal.fundingDetail(formatDeviation(deviation!, t)),
   }
@@ -746,6 +802,7 @@ export function fundingShiftSignal(
   return {
     kind: 'funding-shift',
     deviation,
+    direction: shift > 0 ? 'up' : 'down',
     label: t.signal.fundingShift(moved),
     detail: t.signal.fundingShiftDetail(moved),
   }
@@ -776,6 +833,7 @@ export function basisSignal(
   return {
     kind: 'basis',
     deviation: null,
+    direction: basis > 0 ? 'up' : 'down',
     label: t.signal.basis(basisLabel),
     detail: t.signal.basisDetail(basisLabel, basis > 0),
   }
@@ -827,6 +885,7 @@ export function spreadSignal(
     // a tick-quantised reading can honestly say about itself, and it is the same
     // thing the volume surge says.
     deviation: null,
+    direction: 'neutral',
     label: t.signal.spread(spread),
     detail: t.signal.spreadDetail(spread, multiple.toFixed(1)),
   }
@@ -855,6 +914,8 @@ export interface SignalInput {
   /** The middle of the board's five-minute moves, to net the market out. */
   boardPercent?: number | null
   momentumBaseline?: Baseline | null
+  /** Rolling 5m beta and residual volatility against BTC, for `strength`. */
+  betaBaseline?: BetaBaseline | null
   /**
    * How quiet the last two hours have been. Off the uncut candles the momentum
    * baseline is taken over rather than off `klines`, which are cut to the
@@ -922,6 +983,7 @@ export function collectSignals(input: SignalInput, t: Messages): Signal[] {
         pricePercent: input.pricePercent,
         boardPercent: input.boardPercent,
         baseline: input.momentumBaseline,
+        betaBaseline: input.betaBaseline,
       },
       t,
     ),

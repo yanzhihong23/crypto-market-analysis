@@ -26,9 +26,13 @@ import {
   notificationPermission,
   requestNotificationPermission,
 } from '../utils/alarm'
+import { summarizeAlertOutcomes } from '../utils/alertEngine'
 import { formatNumber } from '../utils'
 import { numericFont } from '../fonts'
 import { useDateLocale, useMessages } from '../i18n'
+
+const formatSignedPercent = (value: number) =>
+  `${value > 0 ? '+' : ''}${value.toFixed(2)}%`
 
 /**
  * One channel and its switch. There are four of them now, and they only read as
@@ -96,10 +100,16 @@ export default function AlertBell() {
   const setQuietWhenPresent = useAlertStore(
     (state) => state.setQuietWhenPresent,
   )
+  const highPriorityOnly = useAlertStore((state) => state.highPriorityOnly)
+  const setHighPriorityOnly = useAlertStore(
+    (state) => state.setHighPriorityOnly,
+  )
   const t = useMessages()
   const dateLocale = useDateLocale()
   const location = useLocation()
   const navigate = useNavigate()
+
+  const outcomeSummary = useMemo(() => summarizeAlertOutcomes(alerts), [alerts])
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
   const [permission, setPermission] = useState(notificationPermission)
@@ -316,6 +326,22 @@ export default function AlertBell() {
                   {t.alerts.awayMeans}
                 </Typography>
               )}
+
+              <ChannelSwitch
+                label={t.alerts.highPriorityOnly}
+                checked={highPriorityOnly}
+                onChange={setHighPriorityOnly}
+              />
+              {highPriorityOnly && (
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    color: 'text.secondary',
+                  }}
+                >
+                  {t.alerts.highPriorityOnlyHint}
+                </Typography>
+              )}
             </Stack>
           </Stack>
         </Stack>
@@ -428,8 +454,48 @@ export default function AlertBell() {
           </Typography>
         ) : (
           <Box sx={{ maxHeight: 280, overflowY: 'auto' }}>
+            {outcomeSummary && (
+              <Box
+                sx={{
+                  px: 2,
+                  py: 0.75,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  backgroundColor: 'surface.subtle',
+                }}
+              >
+                <Typography
+                  sx={[
+                    {
+                      fontSize: 11,
+                      color: 'text.secondary',
+                    },
+                    ...(Array.isArray(numericFont)
+                      ? numericFont
+                      : [numericFont]),
+                  ]}
+                >
+                  {t.alerts.outcomeSummary(
+                    outcomeSummary.count,
+                    outcomeSummary.hitRate,
+                    formatSignedPercent(outcomeSummary.avgDirectionalMove),
+                  )}
+                </Typography>
+              </Box>
+            )}
             {alerts.map((alert) => {
               const symbol = alert.instId.split('-')[0]
+              const outcomeParts = [
+                alert.outcomes?.m5 !== undefined
+                  ? `5m ${formatSignedPercent(alert.outcomes.m5)}`
+                  : null,
+                alert.outcomes?.m15 !== undefined
+                  ? `15m ${formatSignedPercent(alert.outcomes.m15)}`
+                  : null,
+                alert.outcomes?.h1 !== undefined
+                  ? `1h ${formatSignedPercent(alert.outcomes.h1)}`
+                  : null,
+              ].filter((part): part is string => part !== null)
               return (
                 <ButtonBase
                   key={alert.id}
@@ -461,14 +527,36 @@ export default function AlertBell() {
                       gap: 1,
                     }}
                   >
-                    <Typography
-                      sx={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                      }}
+                    <Stack
+                      direction="row"
+                      sx={{ alignItems: 'center', gap: 0.75, minWidth: 0 }}
                     >
-                      {symbol}
-                    </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: 14,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {symbol}
+                      </Typography>
+                      {alert.tier === 'high' && (
+                        <Box
+                          component="span"
+                          sx={{
+                            px: 0.625,
+                            py: 0.125,
+                            borderRadius: '4px',
+                            fontSize: 10,
+                            fontWeight: 600,
+                            lineHeight: 1.3,
+                            color: 'signal.main',
+                            backgroundColor: 'signal.surface',
+                          }}
+                        >
+                          {t.alerts.highPriorityTag}
+                        </Box>
+                      )}
+                    </Stack>
                     <Stack
                       direction="row"
                       sx={{ alignItems: 'center', gap: 0.25, flexShrink: 0 }}
@@ -546,6 +634,23 @@ export default function AlertBell() {
                       {reading.detail}
                     </Typography>
                   ))}
+                  {outcomeParts.length > 0 && (
+                    <Typography
+                      sx={[
+                        {
+                          fontSize: 11,
+                          color: 'text.secondary',
+                          opacity: 0.85,
+                          mt: 0.25,
+                        },
+                        ...(Array.isArray(numericFont)
+                          ? numericFont
+                          : [numericFont]),
+                      ]}
+                    >
+                      {t.alerts.outcomeLine(outcomeParts)}
+                    </Typography>
+                  )}
                 </ButtonBase>
               )
             })}

@@ -210,3 +210,31 @@ export function useKlineData(instId: string) {
   const getSnapshot = useCallback(() => getInstFieldSnapshot(read), [read])
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
+
+export function useBetaBaseline(instId: string) {
+  const read = useCallback(
+    (state: ReturnType<typeof useTickerStore.getState>) =>
+      state.betaBaseline[instId],
+    [instId],
+  )
+  const subscribe = useCallback(
+    (listener: () => void) => subscribeInstField(read)(listener),
+    [read],
+  )
+  const getSnapshot = useCallback(() => getInstFieldSnapshot(read), [read])
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}
+
+export function useDailyStats(instId: string) {
+  const read = useCallback(
+    (state: ReturnType<typeof useTickerStore.getState>) =>
+      state.dailyStats[instId],
+    [instId],
+  )
+  const subscribe = useCallback(
+    (listener: () => void) => subscribeInstField(read)(listener),
+    [read],
+  )
+  const getSnapshot = useCallback(() => getInstFieldSnapshot(read), [read])
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+}

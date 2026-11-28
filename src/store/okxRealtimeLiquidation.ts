@@ -49,9 +49,23 @@ const reads = new Map<string, LiquidationRead>()
 
 const expiryTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const listeners = new Map<string, Set<Listener>>()
+const anyListeners = new Set<Listener>()
 
-const notify = (instId: string) =>
+const ANY_FLUSH_MS = 250
+let anyFlushTimer: ReturnType<typeof setTimeout> | undefined
+
+const scheduleAnyNotify = () => {
+  if (anyFlushTimer) return
+  anyFlushTimer = setTimeout(() => {
+    anyFlushTimer = undefined
+    anyListeners.forEach((listener) => listener())
+  }, ANY_FLUSH_MS)
+}
+
+const notify = (instId: string) => {
   listeners.get(instId)?.forEach((listener) => listener())
+  scheduleAnyNotify()
+}
 
 /**
  * Rebuilds the window and arms a timer for the moment its oldest event falls
@@ -159,6 +173,13 @@ export const subscribeOkxLiquidation = (instId: string, listener: Listener) => {
   return () => {
     set?.delete(listener)
     if (set?.size === 0) listeners.delete(instId)
+  }
+}
+
+export const subscribeOkxLiquidationAny = (listener: Listener) => {
+  anyListeners.add(listener)
+  return () => {
+    anyListeners.delete(listener)
   }
 }
 

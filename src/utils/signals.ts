@@ -21,8 +21,21 @@
 
 import type { Messages } from '../i18n/en'
 
+import type { BackdropKind, BackdropReading } from './backdrop'
+
 /** Samples of history needed before a mean and a spread mean anything. */
 const MIN_SAMPLES = 20
+
+/**
+ * Tail share clamped at each end when building a baseline. Crypto series are
+ * heavy-tailed: one violent wick inside an eight-hour window can triple the
+ * sample standard deviation and silence every genuine move behind it for the
+ * rest of the session (statistical masking). Winsorising 5% on each tail
+ * preserves the full sample size while stopping one outlier from owning the
+ * yardstick; if clamping flattens a tick-quantised series to zero spread, we
+ * fall back to the raw sample statistics so nothing goes silently blind.
+ */
+const WINSOR_TAIL = 0.05
 
 /**
  * How far from its own mean a reading sits before it earns the flag.
@@ -42,26 +55,62 @@ export interface Baseline {
   sigma: number
 }
 
+function sampleStats(values: number[]): Baseline | null {
+  if (values.length < MIN_SAMPLES) return null
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length
+  const variance =
+    values.reduce((sum, value) => sum + (value - mean) ** 2, 0) /
+    (values.length - 1)
+  const sigma = Math.sqrt(variance)
+  if (!(sigma > 0)) return null
+  return { mean, sigma }
+}
+
+function quantile(sorted: number[], p: number) {
+  const index = (sorted.length - 1) * p
+  const lower = Math.floor(index)
+  const upper = Math.ceil(index)
+  if (lower === upper) return sorted[lower]
+  return sorted[lower] + (sorted[upper] - sorted[lower]) * (index - lower)
+}
+
 /**
- * The shape of a metric's recent history. Kept as two numbers rather than the
- * series itself: it is all the flag needs, it survives being persisted, and it
- * lets a live value be measured against it without refetching anything.
+ * The shape of a metric's recent history, Winsorised against single-bar spikes.
+ * Kept as two numbers rather than the series itself: it is all the flag needs,
+ * it survives being persisted, and it lets a live value be measured against it
+ * without refetching anything.
  */
 export function baselineOf(values: number[]): Baseline | null {
   const usable = values.filter((value) => Number.isFinite(value))
   if (usable.length < MIN_SAMPLES) return null
 
-  const mean = usable.reduce((sum, value) => sum + value, 0) / usable.length
-  const variance =
-    usable.reduce((sum, value) => sum + (value - mean) ** 2, 0) /
-    (usable.length - 1)
-  const sigma = Math.sqrt(variance)
+  const sorted = [...usable].sort((a, b) => a - b)
+  const low = quantile(sorted, WINSOR_TAIL)
+  const high = quantile(sorted, 1 - WINSOR_TAIL)
+  const clamped = usable.map((value) => Math.min(Math.max(value, low), high))
 
-  // A window that never moved has nothing to be unusual against, and dividing
-  // by it would report every reading as infinitely far from normal.
-  if (!(sigma > 0)) return null
+  // Fall back to raw statistics if clamping collapsed a tick-quantised series
+  // (e.g. a spread or funding rate stuck on one level for >90% of the window).
+  return sampleStats(clamped) ?? sampleStats(usable)
+}
 
-  return { mean, sigma }
+/**
+ * Baseline in log1p space for strictly non-negative, right-skewed series such
+ * as bar quote volume and bar percentage range. A linear standard deviation on
+ * a log-normal distribution inflates asymmetrically on surges; measuring
+ * distance in log space makes 3σ correspond cleanly to a rare upper-tail event.
+ */
+export function logBaselineOf(values: number[]): Baseline | null {
+  const transformed = values
+    .filter((value) => Number.isFinite(value) && value >= 0)
+    .map((value) => Math.log1p(value))
+  return baselineOf(transformed)
+}
+
+/** Signed distance in log1p space against a baseline built with `logBaselineOf`. */
+export function logDeviationFrom(value: number, baseline?: Baseline | null) {
+  if (!baseline || !Number.isFinite(value) || value < 0) return null
+  return deviationFrom(Math.log1p(value), baseline)
 }
 
 /**
@@ -222,6 +271,17 @@ export function signalFamily(kind: SignalKind) {
   return SIGNAL_FAMILY[kind]
 }
 
+export type SignalDirection = 'up' | 'down' | 'neutral'
+
+export type FlagTier = 'standard' | 'high'
+
+export type SignalRegime =
+  | 'squeeze-cascade'
+  | 'confirmed-breakout'
+  | 'absorption-reversal'
+  | 'trend-thrust'
+  | 'crowded-squeeze'
+
 export interface Signal {
   kind: SignalKind
   /**
@@ -230,6 +290,8 @@ export interface Signal {
    * two-point-something of anything.
    */
   deviation: number | null
+  /** Implied directional lean of the reading, when it carries one. */
+  direction?: SignalDirection
   /** Chip-sized, for a 236px card: the reading and nothing else. */
   label: string
   /**
@@ -244,14 +306,57 @@ export interface Signal {
 export interface FlagState {
   /** Which families are firing. Two is the bar. */
   families: SignalFamily[]
-  /** Ordered for reading: family by family, largest reading first inside each. */
+  /** Ordered for reading: family by family, highest priority & largest reading first. */
   reasons: Signal[]
   /** The combination in words, for a notification title and the alert list. */
   headline: string
+  /** High when multiple families align, forced exits/major breakouts occur, or backdrop amplifies it. */
+  tier: FlagTier
+  /** Interpreted trading regime when signals form a clear structural pattern. */
+  regime: SignalRegime | null
+  /** Dominant directional lean across the firing signals. */
+  direction: SignalDirection
 }
 
 /** Also the order reasons are listed in, so a headline and its detail agree. */
 const FAMILY_ORDER: SignalFamily[] = ['price', 'flow', 'positioning']
+
+/**
+ * Relative importance inside a family. Structural events without a sigma
+ * (`liquidation`, `range-break`, `breakout`) used to tie at 0 and sink behind
+ * routine 3.1σ deviations, even getting truncated off notifications.
+ */
+const SIGNAL_PRIORITY: Record<SignalKind, number> = {
+  'range-break': 4,
+  momentum: 3,
+  breakout: 3,
+  rejection: 2,
+  strength: 2,
+  volatility: 1,
+  compression: 0,
+  liquidation: 4,
+  'open-interest': 3,
+  taker: 2,
+  volume: 1,
+  basis: 3,
+  'funding-shift': 3,
+  divergence: 2,
+  funding: 2,
+  ratio: 1,
+  spread: 0,
+}
+
+/**
+ * Slow backdrop states that never ring on their own, but elevate an active
+ * intraday ring to `high` tier because the event is landing on a stretched or
+ * wound-up structure.
+ */
+const HIGH_CONVICTION_BACKDROP = new Set<BackdropKind>([
+  'daily-coil',
+  'oi-percentile',
+  'funding-carry',
+  'range-position',
+])
 
 /**
  * Readings that describe a state rather than an event, and so never put a card
@@ -317,6 +422,101 @@ const POSITIONING_SOURCE: Record<SignalKind, PositioningSource | null> = {
   spread: 'spread',
 }
 
+function dominantDirectionOf(reasons: Signal[]): SignalDirection {
+  const directional = reasons.filter(
+    (signal) => signal.direction && signal.direction !== 'neutral',
+  )
+  if (!directional.length) return 'neutral'
+
+  // Price & forced-exit direction leads; fall back to net vote across all reasons.
+  const lead = directional.find(
+    (signal) =>
+      SIGNAL_FAMILY[signal.kind] === 'price' || signal.kind === 'liquidation',
+  )
+  if (lead?.direction) return lead.direction
+
+  let score = 0
+  for (const signal of directional) {
+    score += signal.direction === 'up' ? 1 : -1
+  }
+  if (score > 0) return 'up'
+  if (score < 0) return 'down'
+  return directional[0].direction ?? 'neutral'
+}
+
+function classifyRegime(
+  signals: Signal[],
+  families: SignalFamily[],
+  direction: SignalDirection,
+): SignalRegime | null {
+  const byKind = new Map(signals.map((signal) => [signal.kind, signal]))
+  const hasPrice = families.includes('price')
+  const hasFlow = families.includes('flow')
+  const hasPositioning = families.includes('positioning')
+
+  if (byKind.has('liquidation')) return 'squeeze-cascade'
+
+  const rejection = byKind.get('rejection')
+  const taker = byKind.get('taker')
+  if (
+    rejection &&
+    ((taker?.direction &&
+      rejection.direction &&
+      taker.direction !== rejection.direction) ||
+      hasPositioning ||
+      byKind.has('open-interest'))
+  ) {
+    return 'absorption-reversal'
+  }
+
+  const hasBreak =
+    byKind.has('range-break') ||
+    byKind.has('breakout') ||
+    (byKind.has('compression') && byKind.has('momentum'))
+  if (hasBreak && hasFlow) return 'confirmed-breakout'
+
+  if (hasPrice && hasFlow) {
+    const flowAligned =
+      byKind.has('volume') ||
+      (direction !== 'neutral' &&
+        (taker?.direction === direction ||
+          byKind.get('open-interest')?.direction === direction))
+    if (flowAligned) return 'trend-thrust'
+  }
+
+  if (hasPrice && hasPositioning) return 'crowded-squeeze'
+
+  return null
+}
+
+function headlineOf(
+  families: SignalFamily[],
+  regime: SignalRegime | null,
+  direction: SignalDirection,
+  t: Messages,
+) {
+  if (regime === 'squeeze-cascade') {
+    if (direction === 'up') return t.headline.shortSqueeze
+    if (direction === 'down') return t.headline.longLiquidation
+    return t.headline.squeezeCascade
+  }
+  if (regime === 'confirmed-breakout') {
+    return t.headline.confirmedBreakout
+  }
+  if (regime === 'absorption-reversal') {
+    return t.headline.absorptionReversal
+  }
+  if (regime === 'trend-thrust' && families.length === 2) {
+    return t.headline.trendThrust
+  }
+  if (regime === 'crowded-squeeze' && families.length === 2) {
+    return t.headline.crowdedSqueeze
+  }
+
+  const headlines: Record<string, string> = t.headline
+  return headlines[families.join('+')] ?? t.headline.other
+}
+
 /**
  * Whether the card claims the ring, and what to say if it does.
  *
@@ -325,13 +525,29 @@ const POSITIONING_SOURCE: Record<SignalKind, PositioningSource | null> = {
  * them alone would be a board of rings. The exception is positioning, which
  * counts twice within itself: what the crowd holds and what it pays to hold it
  * are separately sourced and disagree often, so their agreeing is an event.
- * That exception is also the original bar this board shipped with, and the ring
- * it draws has not changed meaning — which is why the two readings have to come
- * from two sources and not merely from two detectors.
+ *
+ * One deliberate suppression: `volatility` and `spread` alone are mechanically
+ * coupled (market makers widen quotes whenever candle range jumps), so that
+ * pair requires a third confirming signal before claiming a ring.
  */
-export function flagStateOf(signals: Signal[], t: Messages): FlagState | null {
+export function flagStateOf(
+  signals: Signal[],
+  t: Messages,
+  backdropReadings?: BackdropReading[],
+): FlagState | null {
   const ringing = signals.filter((signal) => !NEVER_RINGS.includes(signal.kind))
   if (ringing.length < 2) return null
+
+  // Mechanical coupling guard: wide candle + wide spread alone is market-maker
+  // reflex rather than independent cross-family confirmation.
+  if (
+    ringing.length === 2 &&
+    ringing.every(
+      (signal) => signal.kind === 'volatility' || signal.kind === 'spread',
+    )
+  ) {
+    return null
+  }
 
   const families = FAMILY_ORDER.filter((family) =>
     ringing.some((signal) => SIGNAL_FAMILY[signal.kind] === family),
@@ -351,16 +567,38 @@ export function flagStateOf(signals: Signal[], t: Messages): FlagState | null {
       FAMILY_ORDER.indexOf(SIGNAL_FAMILY[a.kind]) -
       FAMILY_ORDER.indexOf(SIGNAL_FAMILY[b.kind])
     if (byFamily !== 0) return byFamily
+    const byPriority = SIGNAL_PRIORITY[b.kind] - SIGNAL_PRIORITY[a.kind]
+    if (byPriority !== 0) return byPriority
     return Math.abs(b.deviation ?? 0) - Math.abs(a.deviation ?? 0)
   })
 
-  // Widened to look the combination up by the joined key, which the dictionary
-  // spells out one entry at a time so a translation cannot miss one.
-  const headlines: Record<string, string> = t.headline
+  const direction = dominantDirectionOf(reasons)
+  const regime = classifyRegime(reasons, families, direction)
+  const headline = headlineOf(families, regime, direction, t)
+
+  const kinds = new Set(reasons.map((signal) => signal.kind))
+  const hasHighBackdrop = Boolean(
+    backdropReadings?.some((reading) =>
+      HIGH_CONVICTION_BACKDROP.has(reading.kind),
+    ),
+  )
+  const tier: FlagTier =
+    families.length >= 3 ||
+    kinds.has('liquidation') ||
+    (kinds.has('range-break') && families.includes('flow')) ||
+    (kinds.has('compression') &&
+      kinds.has('momentum') &&
+      families.includes('flow')) ||
+    hasHighBackdrop
+      ? 'high'
+      : 'standard'
 
   return {
     families,
     reasons,
-    headline: headlines[families.join('+')] ?? t.headline.other,
+    headline,
+    tier,
+    regime,
+    direction,
   }
 }

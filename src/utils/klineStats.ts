@@ -14,9 +14,9 @@
  * calls them; what they mean is decided here.
  */
 
-import { OkxKline } from '../types/okx'
+import type { OkxKline } from '../types/okx'
 
-import { Baseline, baselineOf, medianOf } from './signals'
+import { type Baseline, baselineOf, logBaselineOf, medianOf } from './signals'
 
 /** What a series with no bar spacing to measure is assumed to be. */
 const FALLBACK_BAR_MS = 1000 * 60 * 15
@@ -62,14 +62,108 @@ export interface Coil {
 export interface KlineStats {
   /** Bar length, taken off the series rather than assumed. */
   barMs: number
-  /** Quote volume per closed bar. */
+  /** Winsorised quote volume per closed bar, excluding `closed` itself. */
   volume: Baseline | null
-  /** Range as a share of close, per closed bar, in percent. */
+  /** Log-space quote volume baseline for right-skewed Z-score checks. */
+  logVolume: Baseline | null
+  /** Winsorised range as a share of close, per closed bar, excluding `closed`. */
   range: Baseline | null
+  /** Log-space bar range baseline for right-skewed Z-score checks. */
+  logRange: Baseline | null
   /** Newest bar that has finished. Everything measured against a full bar. */
   closed: OkxKline | null
   /** The bar still forming, when the feed sent one. */
   forming: OkxKline | null
+}
+
+/**
+ * Rolling sensitivity to the benchmark (BTC) over five-minute returns, paired
+ * with the residual volatility of `r_symbol - beta * r_benchmark`. Null when
+ * the series is weakly correlated (e.g. non-crypto perpetuals), letting the
+ * strength detector fall back cleanly to raw excess over the peer median.
+ */
+export interface BetaBaseline {
+  beta: number
+  /** Residual volatility (sigma of `r_symbol - beta * r_benchmark`). */
+  sigma: number
+}
+
+const MIN_BETA_PAIRS = 20
+const MIN_BETA_CORR = 0.35
+const MIN_BETA = 0.25
+const MAX_BETA = 3
+
+/**
+ * Estimates beta and idiosyncratic return sigma of one symbol against a
+ * benchmark's closed 5m bars, matched strictly by timestamp.
+ */
+export function betaBaselineOf(
+  symbolKlines?: OkxKline[],
+  benchmarkKlines?: OkxKline[],
+): BetaBaseline | null {
+  if (!symbolKlines?.length || !benchmarkKlines?.length) return null
+
+  const benchClose = new Map<string, number>()
+  for (const bar of benchmarkKlines) {
+    if (bar[8] !== '1') continue
+    const close = Number(bar[4])
+    if (close > 0) benchClose.set(bar[0], close)
+  }
+
+  // Pair timestamps where both instruments have closed bars, oldest first so
+  // consecutive entries form aligned bar-to-bar returns.
+  const matched: Array<{ sym: number; bench: number }> = []
+  const symClosed = symbolKlines
+    .filter((bar) => bar[8] === '1')
+    .sort((a, b) => Number(a[0]) - Number(b[0]))
+
+  for (const bar of symClosed) {
+    const sym = Number(bar[4])
+    const bench = benchClose.get(bar[0])
+    if (sym > 0 && bench && bench > 0) {
+      matched.push({ sym, bench })
+    }
+  }
+
+  const pairs: Array<{ symRet: number; benchRet: number }> = []
+  for (let i = 1; i < matched.length; i++) {
+    const prev = matched[i - 1]
+    const curr = matched[i]
+    const symRet = ((curr.sym - prev.sym) / prev.sym) * 100
+    const benchRet = ((curr.bench - prev.bench) / prev.bench) * 100
+    if (Number.isFinite(symRet) && Number.isFinite(benchRet)) {
+      pairs.push({ symRet, benchRet })
+    }
+  }
+  if (pairs.length < MIN_BETA_PAIRS) return null
+
+  const meanSym =
+    pairs.reduce((sum, pair) => sum + pair.symRet, 0) / pairs.length
+  const meanBench =
+    pairs.reduce((sum, pair) => sum + pair.benchRet, 0) / pairs.length
+
+  let cov = 0
+  let varBench = 0
+  let varSym = 0
+  for (const pair of pairs) {
+    const ds = pair.symRet - meanSym
+    const db = pair.benchRet - meanBench
+    cov += ds * db
+    varBench += db * db
+    varSym += ds * ds
+  }
+  if (!(varBench > 0) || !(varSym > 0)) return null
+
+  const corr = cov / Math.sqrt(varBench * varSym)
+  if (corr < MIN_BETA_CORR) return null
+
+  const rawBeta = cov / varBench
+  const beta = Math.min(Math.max(rawBeta, MIN_BETA), MAX_BETA)
+  const residuals = pairs.map((pair) => pair.symRet - beta * pair.benchRet)
+  const residualBaseline = baselineOf(residuals)
+  if (!residualBaseline) return null
+
+  return { beta, sigma: residualBaseline.sigma }
 }
 
 /**
@@ -322,22 +416,28 @@ export function klineStatsOf(klines?: OkxKline[]): KlineStats | null {
   if (cached) return cached
 
   const forming = klines[0]?.[8] === '0' ? klines[0] : null
-  const closed = klines.find((kline) => kline[8] === '1') ?? null
   const closedBars = klines.filter((kline) => kline[8] === '1')
+  const closed = closedBars[0] ?? null
+  // Exclude the newest closed bar from its own yardstick so an outsized bar
+  // cannot inflate its own mean and sigma and mask itself below 3σ.
+  const historyBars = closedBars.slice(1)
 
   const spacing =
     klines.length > 1
       ? Math.abs(Number(klines[0][0]) - Number(klines[1][0]))
       : 0
 
+  const historyVolumes = historyBars.map((kline) => Number(kline[7]))
+  const historyRanges = historyBars
+    .map((kline) => barRangePercent(kline))
+    .filter((value): value is number => value !== null)
+
   const stats: KlineStats = {
     barMs: spacing > 0 ? spacing : FALLBACK_BAR_MS,
-    volume: baselineOf(closedBars.map((kline) => Number(kline[7]))),
-    range: baselineOf(
-      closedBars
-        .map((kline) => barRangePercent(kline))
-        .filter((value): value is number => value !== null),
-    ),
+    volume: baselineOf(historyVolumes),
+    logVolume: logBaselineOf(historyVolumes),
+    range: baselineOf(historyRanges),
+    logRange: logBaselineOf(historyRanges),
     closed,
     forming,
   }

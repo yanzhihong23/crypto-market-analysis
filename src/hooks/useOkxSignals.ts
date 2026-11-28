@@ -1,15 +1,19 @@
 import { readSignalInput } from '../store/okxSignalInput'
+import { readBackdrop } from '../store/okxBackdropInput'
 import { useTickerStore } from '../store/useTickerStore'
 import { collectSignals } from '../utils/detectors'
 import { flagStateOf } from '../utils/signals'
 import { useMessages } from '../i18n'
 
-import { useOkxSeriesChange } from './useOkxSeries'
+import { useOkxIndexPrice, useOkxSeriesChange } from './useOkxSeries'
 import { useOkxSpreadRead } from './useOkxSpread'
 import { useOkxLiquidationRead } from './useOkxLiquidation'
 import { useOkxOpenInterest } from './useOkxOpenInterest'
+import useOkxTicker from './useOkxTicker'
 import {
+  useBetaBaseline,
   useCoil,
+  useDailyStats,
   useDivergence,
   useFundingBaseline,
   useFundingPrev,
@@ -30,20 +34,13 @@ import {
  * them. Assembling the inputs in one place is what keeps the ring and the alert
  * from being two implementations of the same rule, and taking the subscriptions
  * here is what makes a card redraw when one of those inputs moves.
- *
- * Not memoised: the whole set is a dozen pieces of arithmetic over a candle
- * summary that is itself cached, which is cheaper than the comparisons a
- * dependency list this wide would cost. The result is a fresh array every render
- * as a consequence, so it is a thing to read, not a thing to put in a
- * dependency list.
- *
- * That also means the sentences come out in whatever language is current
- * without anything having to invalidate them: switching language is a render,
- * and a render is when these are written.
  */
 export default function useOkxSignals(instId: string) {
   const t = useMessages()
 
+  useOkxTicker(instId)
+  useOkxIndexPrice(instId)
+  useDailyStats(instId)
   useKlineData(instId)
   useRatio(instId)
   useDivergence(instId)
@@ -53,6 +50,7 @@ export default function useOkxSignals(instId: string) {
   useFundingShiftBaseline(instId)
   useFundingPrev(instId)
   useMomentumBaseline(instId)
+  useBetaBaseline(instId)
   useCoil(instId)
   useOiChangeBaseline(instId)
   useOkxSeriesChange(instId)
@@ -64,5 +62,6 @@ export default function useOkxSignals(instId: string) {
   useTickerStore((state) => state.groups)
 
   const signals = collectSignals(readSignalInput(instId), t)
-  return { signals, flag: flagStateOf(signals, t) }
+  const backdropReadings = readBackdrop(instId, t).readings
+  return { signals, flag: flagStateOf(signals, t, backdropReadings) }
 }

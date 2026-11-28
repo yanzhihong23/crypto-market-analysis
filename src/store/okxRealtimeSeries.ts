@@ -196,6 +196,60 @@ export const recordOkxPrice = (instId: string, price: number, ts: number) =>
 export const recordOkxOpenInterest = (instId: string, oi: number, ts: number) =>
   record(oiSamples, instId, oi, ts)
 
+/**
+ * Seeds a cold-started buffer with recent historical points (e.g. from the 5m
+ * candle or 5m OI history poll) strictly older than the earliest live sample.
+ * Eliminates the four-minute blind window after a page reload while letting
+ * live websocket ticks take over as soon as they arrive.
+ */
+const seed = (
+  registry: Map<string, Sample[]>,
+  instId: string,
+  incoming: Sample[],
+  now = Date.now(),
+) => {
+  if (!incoming.length) return
+
+  const cutoff = now - RETAIN_MS * 2
+  const valid = incoming
+    .filter(
+      (sample) =>
+        Number.isFinite(sample.value) &&
+        sample.value > 0 &&
+        Number.isFinite(sample.ts) &&
+        sample.ts >= cutoff &&
+        sample.ts <= now,
+    )
+    .sort((a, b) => a.ts - b.ts)
+  if (!valid.length) return
+
+  const existing = registry.get(instId) ?? []
+  const earliestLiveTs = existing.length ? existing[0].ts : Infinity
+  const older = valid.filter((sample) => sample.ts < earliestLiveTs)
+  if (!older.length) return
+
+  const merged = [...older, ...existing]
+  // Keep at least one anchor older than the 5m window when available.
+  const latestTs = merged[merged.length - 1].ts
+  const retainCutoff = latestTs - RETAIN_MS
+  while (merged.length > 2 && merged[1].ts < retainCutoff) merged.shift()
+
+  registry.set(instId, merged)
+  recompute(instId, latestTs)
+}
+
+export const seedOkxPriceSamples = (
+  instId: string,
+  samples: Array<{ ts: number; value: number }>,
+  now?: number,
+) => seed(priceSamples, instId, samples, now)
+
+export const seedOkxOpenInterestSamples = (
+  instId: string,
+  samples: Array<{ ts: number; value: number }>,
+  now?: number,
+) => seed(oiSamples, instId, samples, now)
+
 export const getOkxSeriesChange = (instId: string) => changes.get(instId)
 
 export const subscribeOkxSeries = (instId: string, listener: Listener) =>
@@ -221,6 +275,8 @@ export const setOkxIndexPrice = (indexInstId: string, idxPx: number) => {
   if (!Number.isFinite(idxPx) || indexPrices.get(indexInstId) === idxPx) return
   indexPrices.set(indexInstId, idxPx)
   notifyKey(indexListeners, indexInstId)
+  // Basis signals depend on the live spot index; wake the board alert pass.
+  scheduleAnyNotify()
 }
 
 export const getOkxIndexPrice = (indexInstId: string) =>
