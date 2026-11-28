@@ -267,3 +267,23 @@ Measured, and left alone deliberately:
 - **`spread` and `volatility`** are mechanically coupled — market makers widen
   quotes when volatility rises — so that pair alone is suppressed and requires a
   third confirming reading before ringing.
+
+## Backtesting and Signal Effectiveness Lab
+
+To keep threshold tuning evidence-based rather than anecdotal, the board pairs
+an **offline historical backtester** with an **in-app Signal Lab (`/signals`)**:
+
+- **Offline backtester (`pnpm backtest`)**: Replays the exact production
+  `collectSignals`, `collectBackdrop`, `flagStateOf`, and `shouldEmitAlert`
+  pipeline causally over 5m steps of OKX historical candles and rubik series,
+  reporting continuation rate, average/median directional return, and **MFE /
+  MAE** across tier (`high` vs `standard`), regime, signal kind, backdrop
+  confluence, UTC session, and symbol. Supports `--days`, `--horizon`,
+  `--symbols`, and `--out report.json`.
+- **Live IndexedDB journal & candle backfill**: Every live anomaly alert is
+  stored in IndexedDB (up to 2,000 samples) and backfilled from closed OKX 5m
+  candles for exact `+5m / +15m / +1h / +4h` close return, MFE, and MAE — even
+  across browser restarts.
+- **Signal Lab (`/signals`)**: Visualises KPIs, regime continuation rates,
+  return distributions, and multi-dimensional breakdowns, and supports importing
+  CLI backtest JSON as well as exporting CSV / JSON.

@@ -26,7 +26,7 @@
 
 import type { Messages } from '../i18n/en'
 
-import { Coil, DailyStats } from './klineStats'
+import type { Coil, DailyStats } from './klineStats'
 
 export type BackdropKind =
   | 'daily-coil'

@@ -15,6 +15,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "test": "node --experimental-transform-types --import ./scripts/ts-resolve-hook.mjs --test tests/*.test.ts",
+    "backtest": "node --experimental-transform-types --import ./scripts/ts-resolve-hook.mjs scripts/backtest-signals.ts",
     "preview": "vite preview",
     "lint": "eslint src/ --fix",
     "docs": "node scripts/discipline-docs.ts && prettier --write docs/trading-discipline.md docs/trading-discipline.zh.md",

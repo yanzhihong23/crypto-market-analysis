@@ -160,10 +160,42 @@ export const fetchOkxKlines = ({
   instId,
   period = Period.MINUTE_15,
   limit = 96,
+  after,
+  before,
 }: {
   instId: string
   period?: Period
   /** Capped at 300 by the endpoint. */
   limit?: number
+  after?: string
+  before?: string
 }): Promise<OkxKline[]> =>
-  okxGet('/market/candles', { instId, bar: period, limit })
+  okxGet('/market/candles', {
+    instId,
+    bar: period,
+    limit,
+    ...(after ? { after } : {}),
+    ...(before ? { before } : {}),
+  })
+
+/** Historical candles for windows older than `/market/candles` holds. */
+export const fetchOkxHistoryKlines = ({
+  instId,
+  period = Period.MINUTE_5,
+  limit = 300,
+  after,
+  before,
+}: {
+  instId: string
+  period?: Period
+  limit?: number
+  after?: string
+  before?: string
+}): Promise<OkxKline[]> =>
+  okxGet('/market/history-candles', {
+    instId,
+    bar: period,
+    limit,
+    ...(after ? { after } : {}),
+    ...(before ? { before } : {}),
+  })

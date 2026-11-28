@@ -1,4 +1,4 @@
-import { Messages } from './en'
+import type { Messages } from './en'
 
 /**
  * The same interface in Chinese. Typed as `Messages` rather than inferred, so a
@@ -33,6 +33,7 @@ export const zh: Messages = {
   nav: {
     okx: 'OKX',
     binance: 'Binance',
+    signals: '统计',
     charts: '图表',
     theories: '理论',
     indicators: '指标',
@@ -384,5 +385,85 @@ export const zh: Messages = {
     trendThrust: '顺势资金推动',
     crowdedSqueeze: '行情撞上拥挤仓位',
     other: '多项指标偏离常态',
+  },
+
+  signalLab: {
+    title: '信号有效性统计',
+    subtitle:
+      '基于实盘 IndexedDB 样本库与离线回测数据，按剧本、单信号、底图共振和时段量化方向延续率与 MFE/MAE 盈亏比。',
+    windowAll: '全部',
+    window24h: '24H',
+    window7d: '7D',
+    window30d: '30D',
+    sourceAll: '全部来源',
+    sourceLive: '实盘',
+    sourceBacktest: '回测',
+    backfill: '补全 K 线结果',
+    backfilling: '补全中…',
+    importJson: '导入回测 JSON',
+    exportCsv: '导出 CSV',
+    exportJson: '导出 JSON',
+    clear: '清空',
+    backfillDone: (updated) =>
+      updated > 0
+        ? `已通过 5m 历史 K 线补全 ${updated} 条样本的后续表现。`
+        : '所有已到期样本均已是最新状态。',
+    importDone: (count) => `已导入 ${count} 条样本到统计库。`,
+    importFailed: '无法解析该 JSON 文件中的样本数据。',
+    emptyTitle: '暂无已记录的信号样本',
+    emptyBody:
+      'OKX 看板每次触发异动时会自动写入 IndexedDB，并通过历史 5m K 线精确补算 +5m / +15m / +1h / +4h 收益与 MFE/MAE（关闭页面重开也会自动补齐）。也可以先运行离线回测脚本生成 JSON 并导入查看：',
+    kpiSamples: '样本总数',
+    kpiEvaluated: (evaluated, perDay) =>
+      `已评估 ${evaluated} 条 · ${perDay}/日`,
+    kpiContinuation: '方向延续率',
+    kpiDirectionalDetail: (avg, med) => `均幅 ${avg} · 中位 ${med}`,
+    kpiExcursion: 'MFE / MAE 偏移比',
+    kpiExcursionDetail: (mfe, mae) => `有利 ${mfe} · 不利 ${mae}`,
+    kpiTierCompare: '重点 vs 常规分级',
+    kpiTierLine: (label, cont, avg, count) =>
+      `${label}：${cont} · ${avg}（${count} 条）`,
+    chartRegimeTitle: '各剧本方向延续率（%）',
+    chartDistTitle: '方向收益分布',
+    chartSamples: '样本数',
+    tabRegime: '按剧本',
+    tabKind: '按单信号',
+    tabBackdrop: '按底图共振',
+    tabSession: '按交易时段',
+    tabSymbol: '按品种',
+    colGroup: '分组',
+    colTotal: '触发数',
+    colEval: '已评估',
+    colCont: '延续率',
+    colAvgDir: '平均方向收益',
+    colMedDir: '中位收益',
+    colMfe: '平均 MFE',
+    colMae: '平均 MAE',
+    colRatio: 'MFE/MAE',
+    recentTitle: '最近样本明细',
+    colTime: '时间',
+    colSymbol: '品种',
+    colSource: '来源',
+    colRegime: '剧本与触发信号',
+    colEntry: '触发价',
+    colM5: '5分钟',
+    colM15: '15分钟',
+    colH1: '1小时',
+    colH4: '4小时',
+    badgeLive: '实盘',
+    badgeBacktest: '回测',
+    sessionAsia: '亚盘 (00–08 UTC)',
+    sessionEurope: '欧盘 (08–16 UTC)',
+    sessionUs: '美盘 (16–24 UTC)',
+    backdropNone: '无底图共振',
+    regimeOther: '其他组合',
+    regimes: {
+      'squeeze-cascade': '强平挤仓/踩踏',
+      'confirmed-breakout': '放量突破确认',
+      'absorption-reversal': '受阻吸收反转',
+      'trend-thrust': '顺势资金推动',
+      'crowded-squeeze': '拥挤仓位行情',
+      other: '其他组合',
+    },
   },
 }

@@ -12,6 +12,7 @@ import {
 import { subscribeOkxLiquidationAny } from '../store/okxRealtimeLiquidation'
 import { subscribeOkxSpreadAny } from '../store/okxRealtimeSpread'
 import { getOkxTickerSnapshot } from '../store/okxRealtimeTicker'
+import { putJournalSample } from '../store/signalJournalDb'
 import { beep, isAway, showNotification } from '../utils/alarm'
 import {
   AlertMemory,
@@ -118,8 +119,11 @@ export default function useOkxAlerts() {
         lastAlert.set(instId, memoryOfFlag(flag, now))
 
         const livePrice = Number(getOkxTickerSnapshot(instId)?.last)
+        const triggerPrice =
+          Number.isFinite(livePrice) && livePrice > 0 ? livePrice : undefined
+        const alertId = `${instId}-${now}`
         useAlertStore.getState().push({
-          id: `${instId}-${now}`,
+          id: alertId,
           instId,
           at: now,
           headline: flag.headline,
@@ -128,9 +132,36 @@ export default function useOkxAlerts() {
           tier: flag.tier,
           regime: flag.regime,
           direction: flag.direction,
-          triggerPrice:
-            Number.isFinite(livePrice) && livePrice > 0 ? livePrice : undefined,
+          triggerPrice,
         })
+
+        if (triggerPrice) {
+          void putJournalSample({
+            id: alertId,
+            instId,
+            at: now,
+            headline: flag.headline,
+            tier: flag.tier,
+            regime: flag.regime,
+            direction: flag.direction,
+            families: flag.families,
+            kinds: flag.reasons.map((reason) => reason.kind),
+            backdropKinds: backdropReadings.map((reading) => reading.kind),
+            reasons: flag.reasons.map((reason) => ({
+              kind: reason.kind,
+              label: reason.label,
+              detail: reason.detail,
+              deviation: reason.deviation,
+            })),
+            context: backdropReadings.map((reading) => ({
+              kind: reading.kind,
+              label: reading.label,
+              detail: reading.detail,
+            })),
+            triggerPrice,
+            source: 'live',
+          })
+        }
 
         const {
           notificationsEnabled,

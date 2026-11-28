@@ -28,3 +28,5 @@ dist-ssr
 # source, and the local settings hold one machine's tool permissions.
 .codegraph
 .claude/settings.local.json
+.cache/
+backtest-reports/
